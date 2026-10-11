@@ -5,16 +5,32 @@
 
 ## 苏晚
 
-### 造型 A · 夜市（身价 0）
+v2 定稿（2026-10-11）。全套造型共用一个记忆点：外婆留下的金色星星发夹，戴在左太阳穴上方，“晚星”品牌名和后期的星星元素都从它来。配色走一条线：序章樱花粉（被别人挑选）→ 夜市豆浆白 → 店里夜空藏青 + 金星（有了自己的品牌）→ 小香风奶茶白 → 白西装 + 玫瑰红唇 → 终章星河藏青礼服。
 
 - 立绘：`raw/portrait_suwan_v3.png`
-- 设定图：`turnaround/turnaround_suwan_a_v1.png`
-- 单视图：`turnaround/views/suwan_a_{face,front,34,side,back}.png`
-- 锁定短语：`plain white crew-neck T-shirt, cream canvas bib apron, light-blue straight-leg jeans, white canvas sneakers, long black hair in a loose side braid`
+- 锁脸参考图：`ref/composite/suwan_face_ref.jpg`（所有造型都用它出设定图）
+- 单视图：`turnaround/views/suwan_<造型>_{face,front,34,side,back}.png`
+- 面部锁定（每套都贴）：`large clear doe eyes with double eyelids, small V-shaped face, porcelain-fair skin, soft natural pink lips, glossy straight black hair, a small gold star-shaped hairpin, the warm yellow of a new gold coin, clipped above her left temple`
 
-### 造型 B~E
+| 造型 | 身价 / 章节 | 设定图 | 记忆点 |
+|---|---|---|---|
+| P 订婚礼服 | 序章 | `turnaround_suwan_p_v1.png`（纱裙相连，视图是手动切的） | 樱花粉纱裙、低盘发、订婚钻戒 |
+| A 夜市 | 0 / 第 1 章 | `turnaround_suwan_a_v2.png`（v1 没有发夹，已废弃） | 侧麻花辫、豆浆白围裙上的手缝金星 |
+| B 甜品店主 | 1 万 / 第 2–3 章 | `turnaround_suwan_b_v1.png` | 藏青围裙 + 金线星星、藏青缎带低马尾 |
+| C 小香风 | 1000 万 / 第 4–5 章 | `turnaround_suwan_c_v2.png`（v1 的包上有类似品牌标，已废弃） | 奶茶白粗花呢、黑丝绒蝴蝶结半扎发、珍珠耳钉 |
+| D 白西装 | 10 亿 / 第 6–7 章 | `turnaround_suwan_d_v1.png` | 雪白宽肩西装、玫瑰红唇、星星吊坠 |
+| E 高定礼服 | 1000 亿 / 第 8 章 | 脸 `turnaround_suwan_e_v2.png`；全身 `views_raw/suwan_e_{front,34,side,back}.png` 单张出图 | 星河藏青蓬裙 + 水晶披风、星星钻石耳坠、玫瑰红唇 |
 
-待做（白衬衫店员、小香风、白西装、高定礼服，见策划案 §5）。
+造型锁定短语（原样贴在面部锁定后面）：
+
+- P：`long black hair in an elegant low chignon with a few soft strands framing her face, the gold star hairpin tucked into the hair above her left temple; an off-the-shoulder floor-length ball gown of layered soft tulle, the pale pink of cherry blossom petals, with a fitted bodice embroidered with tiny pearls; a thin diamond necklace; a diamond engagement ring on her left ring finger; pale pink satin heels`
+- A：`long black hair in a loose side braid over her right shoulder tied with a small black hair tie; a plain white crew-neck T-shirt; a cream canvas bib apron, the color of fresh soy milk, with one small hand-stitched gold star on the chest pocket, tied at the back of the waist; light-blue straight-leg jeans with the cuffs rolled once; white canvas sneakers`
+- B：`long black hair in a neat low ponytail tied with a ribbon the deep blue of a night sky; a crisp white oxford shirt with the sleeves rolled to the elbows and the collar open; a long bib apron in deep navy blue, the color of a night sky, with one small star embroidered on the chest in gold thread; slim black ankle-length trousers; white leather sneakers`
+- C：`long black hair half-up, the upper half tied at the back with a black velvet bow, the lower half falling straight past her shoulders; a cropped tweed jacket in cream, the color of milk-tea foam, with black braided trim and round gold buttons; pearl stud earrings; a fitted black knit top; a black pleated skirt to the knee; black Mary Jane shoes with low block heels; a small smooth black leather handbag with a plain round gold clasp, carried on a gold chain over her shoulder`
+- D：`long black hair worn straight and sleek with a center part, falling past her shoulders; lips the deep red of a red rose; an oversized sharply tailored suit, white as fresh snow, with strong shoulders, a single-button blazer and wide-leg trousers; an ivory silk camisole under the blazer; a fine gold necklace with a small star pendant; nude pointed-toe stiletto heels`
+- E：`long black hair in a sleek low chignon, the gold star hairpin set above her left temple; lips the deep red of a red rose; a dramatic haute couture ball gown in deep midnight blue, the color of the night sky: a structured off-the-shoulder corset bodice, an enormous voluminous skirt of many layers of midnight-blue tulle, the whole gown densely embroidered with thousands of tiny crystals and silver threads like a glittering starry galaxy, the crystals growing denser toward the hem, and a long sweeping cathedral train; a sheer midnight-blue cape scattered with crystals flowing from her shoulders to the floor; long star-shaped diamond drop earrings; silver heels`
+
+已用于视频的 `video/ch01_luyu_meet_s01_v5_q4_newlook.mp4` 是 A v1（没有发夹），之后重拍第 1 章时换 A v2。
 
 ## 陆屿
 
@@ -106,15 +122,49 @@ v2 重新设计（2026-10-11）。v1 的灰卫衣在视频中景里剪影是一�
 - 面部锁定：`delicate pretty face, peach-blossom eyes with a slight upward tilt, thin lips, hair the light ash brown of a hazelnut shell, slicked back neatly`
 - A 继承人（`turnaround_fujingshen_a_v2.png`）：`a slim light grey three-piece suit, the pale grey of a new silver coin; a white shirt; a pale blue silk tie; a lapel pin with a deep blue sapphire, the blue of a peacock's neck; a platinum engagement ring on his left hand; light brown leather loafers`
 
-## 待做
+## 反派与配角（v1 定稿，2026-10-11）
 
-苏婉柔、苏父苏母、王姐、周房东。
+纯文字出图，没有参考图；以后出这些人的关键帧时，用 `turnaround/views/<id>_a_face.png` 锁脸。设定图都是 `turnaround/turnaround_<id>_a_v1.png`，提示词 `docs/prompt/turnaround_<id>_a_prompt.txt`。
+
+| 角色 | id | 记忆点 |
+|---|---|---|
+| 苏婉柔 | suyurou | 全身百合白蕾丝、奶油色大缎带蝴蝶结、牛奶巧克力色洋娃娃卷发、永远含泪的下垂眼；戴着从苏晚手上摘下的订婚钻戒 |
+| 苏父 苏卫国 | sufather | 藏青细条纹双排扣西装、红豆沙色领带、粗金表 + 檀木佛珠、灰鬓角短胡茬 |
+| 苏母 林惠珍 | sumother | 梅子紫立领裙、奶白羊绒披肩、双层大珍珠、高髻、红唇红指甲 |
+| 王姐 | wangjie | 豹纹短皮草、红色斜挎腰包、粗金链、栗红色小卷发、叼牙签 |
+| 周房东 | landlord | 棕金佩斯利花衬衫、腰上一大串黄铜钥匙、玻璃泡茶杯、黑框眼镜、地中海、凉鞋配袜 |
+
+- 苏婉柔：`round innocent doe eyes with slightly drooping outer corners that always look a little teary, a small round face, glossy pouty lips the soft pink of cherry jelly, long wavy hair the warm brown of milk chocolate in soft doll-like curls, a big cream satin bow clipped at the back of her head` / `a knee-length lace dress, white as a lily, with short puffed sleeves, a rounded Peter Pan collar and a thin satin ribbon tied at the waist; a fine pearl necklace; a diamond engagement ring on her left ring finger; white lace ankle socks; cream Mary Jane shoes`
+- 苏父：`square face, small sharp eyes under heavy brows, deep frown lines between the brows, a neatly trimmed short salt-and-pepper beard, thick black hair combed into a neat side part with grey temples` / `a double-breasted navy pinstripe suit, the dark blue of an old fountain-pen ink bottle; a white shirt; a silk tie the deep red of a red-bean paste; a heavy gold watch on his left wrist; a bracelet of dark brown sandalwood prayer beads on his right wrist; black polished oxford shoes`
+- 苏母：`thin high-arched eyebrows, sharp almond eyes with a cold gaze, high cheekbones, lips the bright red of a red lacquer box, glossy black hair pulled into a tight high bun` / `a fitted knee-length dress with a mandarin collar, the deep purple of a ripe plum; a cream cashmere shawl draped over her shoulders; a double-strand necklace of large white pearls; a large pear-shaped diamond ring on her right hand; long red nails; a small structured black leather handbag hanging from her forearm; nude pointed pumps`
+- 王姐：`sharp tattooed eyebrows, narrow eyes with thick black eyeliner, a smirking mouth with plum-red lipstick, short tightly permed curly hair dyed the reddish brown of a roasted chestnut, a toothpick held at the corner of her mouth` / `a short faux-fur jacket in loud leopard print; a tight black top; a thick gold chain necklace; several gold bangles on both wrists; a bright red belt bag slung across her chest; black leggings; chunky black platform sneakers`
+- 周房东：`round fleshy face, small squinting eyes behind thick black-framed glasses, a thin black combover across a balding head, a sly half-smile` / `a short-sleeved shirt with a loud brown-and-gold paisley pattern tucked into baggy grey trousers; a black leather belt with a huge ring of brass keys hanging from it; a tall glass tea flask with floating green tea leaves held in his right hand; brown leather sandals worn with grey socks`
+
+总览图：`turnaround/overview_{maleleads_1,maleleads_2,suwan,villains}.jpg`。
 
 ---
 
 # 场景
 
-| 场景 | 空景 | 状态 |
+全部是 9:16 竖版空景，2K，提示词 `docs/prompt/scene_<id>_prompt.txt`，图 `scene/scene_<id>_v1.png`，总览 `scene/overview_scenes.jpg`。甜品店和晚星大厦统一用“夜空藏青 + 金星”的品牌色，和苏晚 B 造型呼应。
+
+| 场景 | id | 用在 |
 |---|---|---|
-| 雨夜夜市 | `scene/scene_nightmarket_v1.png` | 完成 |
-| 订婚宴大厅、甜品店、咖啡馆、法院走廊、慈善晚宴、晚星大厦办公室、外婆老房子 | — | 待做 |
+| 雨夜夜市 | nightmarket | 序章 4、第 1 章；身价 0 点击背景 |
+| 订婚宴大厅 | banquet | 序章 1–3 |
+| 甜品店内 | shop_interior | 第 2–3 章；1 万点击背景 |
+| 甜品店门口 | shop_exterior | 第 2 章开业排队 |
+| 律所办公室 | lawfirm | 第 4 章 |
+| 法庭 | courtroom | 第 4 章 |
+| 慈善晚宴 | gala | 第 5 章 |
+| 后台楼梯间 | stairwell | 第 5 章 |
+| 急诊室 | hospital | 第 5 章、许知衡线 |
+| 落地窗办公室 | office | 1000 万点击背景 |
+| 晚星大厦顶楼 | penthouse | 10 亿点击背景、第 7 章 |
+| 会议室 | boardroom | 第 6 章收购 |
+| 晚星大厦大堂 | lobby | 第 6 章苏父苏母等三小时 |
+| 雨夜大厦门外 | tower_rain | 第 6 章傅景深雨中等待 |
+| 外婆老房子 | grandma_house | 第 7 章 |
+| 发布会舞台 | launch_stage | 第 8 章；1000 亿点击背景 |
+
+男主专属线的场景（咖啡馆、拳馆、赛车场、演唱会后台等）等写到各自支线再补。
