@@ -3,7 +3,7 @@
  * 背景随造型切换，两侧广告加速，底部四个面板入口。布局按 750 设计宽。
  */
 import * as PIXI from 'pixi.js';
-import { outfitFigurePath, outfitScenePath } from '@/data/art';
+import { ICONS, outfitFigurePath, outfitScenePath } from '@/data/art';
 import { BALANCE } from '@/data/balance';
 import { CHAPTERS, heroById, type HeroId } from '@/data/story';
 import type { AreaDef, OutfitDef } from '@/data/world';
@@ -24,16 +24,19 @@ import { formatDuration, formatMoney } from '@/sim/format';
 import type { ChapterDef } from '@/data/story';
 import { nextGoal } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
+import { IconButton } from '@/ui/IconButton';
 import { ProgressBar } from '@/ui/ProgressBar';
-import { COLORS, makeText, roundRect } from '@/ui/theme';
+import { COLORS, drawGlass, makeNumText, makeText } from '@/ui/theme';
 import { fitCover, applyFit, gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
 import { HeroSheet } from './home/HeroSheet';
 import { OutfitSheet } from './home/OutfitSheet';
-import { ShopSheet } from './home/ShopSheet';
+import { ShopMap } from './home/ShopMap';
 import { StorySheet } from './home/StorySheet';
 
 const OFFLINE_MIN_SEC = 60;
-const NAV_H = 132;
+const NAV_H = 120;
+const HUD_H = 168;
+const GOAL_BAR_INSET = 56;
 
 export class HomeScene implements Scene {
   readonly name = 'home';
@@ -44,22 +47,22 @@ export class HomeScene implements Scene {
   private readonly _hudCard = new PIXI.Graphics();
   private readonly _figure = new PIXI.Sprite(PIXI.Texture.EMPTY);
   private readonly _tapPill = new PIXI.Graphics();
-  private readonly _netWorth = makeText('', 56, COLORS.roseDeep, true);
-  private readonly _netWorthLabel = makeText('身价', 24, COLORS.inkSoft);
-  private readonly _money = makeText('', 30, COLORS.ink, true);
-  private readonly _income = makeText('', 24, COLORS.inkSoft);
-  private readonly _goalLabel = makeText('', 22, COLORS.inkSoft);
-  private readonly _goalBar = new ProgressBar(560, 16, COLORS.gold);
+  private readonly _netWorth = makeNumText('', 56);
+  private readonly _netWorthLabel = makeText('身价', 20, COLORS.textOnGlassSoft);
+  private readonly _money = makeText('', 30, COLORS.textOnGlass, true);
+  private readonly _income = makeText('', 22, COLORS.textOnGlassSoft);
+  private readonly _goalLabel = makeText('', 20, COLORS.textOnGlassSoft);
+  private readonly _goalBar = new ProgressBar(Game.logicWidth - GOAL_BAR_INSET * 2, 6, COLORS.champagne, COLORS.white, 0.18);
   private readonly _tapArea = new PIXI.Container();
-  private readonly _tapLabel = makeText('点我做甜品', 28, COLORS.white, true);
+  private readonly _tapLabel = makeText('点我做甜品', 26, COLORS.champagne, true);
   private readonly _floatLayer = new PIXI.Container();
   private readonly _skillBtn: Button;
-  private readonly _boostBtn: Button;
-  private readonly _rushBtn: Button;
+  private readonly _boostBtn: IconButton;
+  private readonly _rushBtn: IconButton;
   private readonly _nav = new PIXI.Container();
   private readonly _gm: Button | null = null;
 
-  private readonly _shopSheet = new ShopSheet();
+  private readonly _shopSheet = new ShopMap();
   private readonly _heroSheet = new HeroSheet();
   private readonly _storySheet = new StorySheet();
   private readonly _outfitSheet = new OutfitSheet();
@@ -69,18 +72,15 @@ export class HomeScene implements Scene {
   private _busy = false;
 
   constructor() {
-    this._netWorthLabel.anchor.set(0.5, 0);
-    this._netWorth.anchor.set(0.5, 0);
-    this._money.anchor.set(0.5, 0);
-    this._income.anchor.set(0.5, 0);
-    this._goalLabel.anchor.set(0.5, 0);
+    this._money.anchor.set(1, 0);
+    this._income.anchor.set(1, 0);
     this._tapLabel.anchor.set(0.5);
 
     this._buildTapArea();
 
-    this._skillBtn = new Button({ width: 360, height: 96, label: '', sub: '', color: COLORS.rose, onTap: () => this._upgradeSkill() });
-    this._boostBtn = new Button({ width: 150, height: 120, label: '直播带货', sub: '收益×2', color: COLORS.gold, fontSize: 26, onTap: () => this._liveBoost() });
-    this._rushBtn = new Button({ width: 150, height: 120, label: '接急单', sub: '', color: COLORS.gold, fontSize: 26, onTap: () => this._rushOrder() });
+    this._skillBtn = new Button({ width: 380, height: 84, label: '', sub: '', variant: 'glass', fontSize: 28, onTap: () => this._upgradeSkill() });
+    this._boostBtn = new IconButton({ icon: ICONS.live, label: '直播带货', sub: '收益×2', size: 96, onTap: () => this._liveBoost() });
+    this._rushBtn = new IconButton({ icon: ICONS.gift, label: '接急单', sub: '', size: 96, onTap: () => this._rushOrder() });
 
     this._buildNav();
 
@@ -137,28 +137,30 @@ export class HomeScene implements Scene {
     if (isTextureReady(this._bgSprite.texture)) {
       applyFit(this._bgSprite, fitCover(this._bgSprite.texture.width, this._bgSprite.texture.height, W, H));
     }
-    this._hudCard.clear().beginFill(COLORS.white, 0.82).drawRoundedRect(24, top - 12, W - 48, 262, 28).endFill();
+    const hudY = top - 8;
+    drawGlass(this._hudCard.clear(), 24, hudY, W - 48, HUD_H, 28);
+    this._netWorthLabel.position.set(GOAL_BAR_INSET, hudY + 18);
+    this._netWorth.position.set(GOAL_BAR_INSET - 2, hudY + 40);
+    this._money.position.set(W - GOAL_BAR_INSET, hudY + 26);
+    this._income.position.set(W - GOAL_BAR_INSET, hudY + 68);
+    this._goalLabel.position.set(GOAL_BAR_INSET, hudY + 114);
+    this._goalBar.position.set(GOAL_BAR_INSET, hudY + 146);
 
-    this._netWorthLabel.position.set(W / 2, top);
-    this._netWorth.position.set(W / 2, top + 30);
-    this._money.position.set(W / 2, top + 100);
-    this._income.position.set(W / 2, top + 142);
-    this._goalLabel.position.set(W / 2, top + 186);
-    this._goalBar.position.set((W - 560) / 2, top + 220);
-
-    const navTop = bottom - NAV_H;
-    const midY = (top + 260 + navTop - 140) / 2;
-    this._layoutFigure(top + 270, navTop - 140);
-    this._boostBtn.position.set(96, midY - 80);
-    this._rushBtn.position.set(W - 96, midY - 80);
-    this._skillBtn.position.set(W / 2, navTop - 80);
+    const hudBottom = hudY + HUD_H;
+    const navTop = bottom - NAV_H - 16;
+    const skillY = navTop - 62;
+    this._layoutFigure(hudBottom + 16, skillY - 52);
+    const sideY = hudBottom + (skillY - hudBottom) * 0.42;
+    this._boostBtn.position.set(80, sideY);
+    this._rushBtn.position.set(W - 80, sideY);
+    this._skillBtn.position.set(W / 2, skillY);
     this._nav.position.set(0, navTop);
-    this._gm?.position.set(W - 70, top + 20);
+    this._gm?.position.set(W - 80, hudBottom + 260);
   }
 
   private _buildTapArea(): void {
     this._figure.anchor.set(0.5, 1);
-    this._tapPill.beginFill(COLORS.roseDeep, 0.92).drawRoundedRect(-110, -28, 220, 56, 28).endFill();
+    drawGlass(this._tapPill, -110, -28, 220, 56, 28, 0.58);
     this._tapArea.addChild(this._figure, this._tapPill, this._tapLabel);
     this._tapArea.eventMode = 'static';
     this._tapArea.cursor = 'pointer';
@@ -174,7 +176,7 @@ export class HomeScene implements Scene {
     let h = boxH;
     if (isTextureReady(this._figure.texture)) {
       const tex = this._figure.texture;
-      const scale = Math.min(boxH / tex.height, (W - 340) / tex.width);
+      const scale = Math.min(boxH / tex.height, (W - 300) / tex.width);
       this._figure.scale.set(scale);
       w = tex.width * scale;
       h = tex.height * scale;
@@ -197,18 +199,22 @@ export class HomeScene implements Scene {
 
   private _buildNav(): void {
     const W = Game.logicWidth;
-    this._nav.addChild(roundRect(W, NAV_H + 200, 0, COLORS.card));
-    const items: [string, () => void][] = [
-      ['产业', () => this._shopSheet.open()],
-      ['男主', () => this._heroSheet.open()],
-      ['剧情', () => this._storySheet.open()],
-      ['衣橱', () => this._outfitSheet.open()],
+    this._nav.addChild(drawGlass(new PIXI.Graphics(), 24, 0, W - 48, NAV_H, NAV_H / 2, 0.58));
+    const items: [string, string, () => void][] = [
+      [ICONS.shop, '产业', () => this._shopSheet.open()],
+      [ICONS.rose, '男主', () => this._heroSheet.open()],
+      [ICONS.story, '剧情', () => this._storySheet.open()],
+      [ICONS.wardrobe, '衣橱', () => this._outfitSheet.open()],
     ];
-    const w = W / items.length;
-    items.forEach(([label, open], i) => {
-      const btn = new Button({ width: w - 24, height: 96, label, color: COLORS.roseDeep, fontSize: 30, onTap: open });
-      btn.position.set(w * i + w / 2, NAV_H / 2);
+    const w = (W - 48) / items.length;
+    items.forEach(([icon, label, open], i) => {
+      const btn = new IconButton({ icon, label, size: 84, plate: false, onTap: open });
+      btn.position.set(24 + w * i + w / 2, NAV_H / 2 - 12);
       this._nav.addChild(btn);
+      if (i > 0) {
+        const sep = new PIXI.Graphics().beginFill(COLORS.champagne, 0.25).drawRect(24 + w * i, 30, 1, NAV_H - 60).endFill();
+        this._nav.addChild(sep);
+      }
     });
   }
 
@@ -221,7 +227,12 @@ export class HomeScene implements Scene {
     TweenManager.to({ target: this._tapArea.scale, props: { x: 1, y: 1 }, duration: 0.15, ease: Ease.easeOutBack });
 
     const p = this._floatLayer.toLocal(e.global);
-    const label = makeText(`+${formatMoney(amount)}`, GameState.comboActive ? 40 : 32, GameState.comboActive ? COLORS.roseDeep : COLORS.gold, true);
+    const label = makeNumText(`+${formatMoney(amount)}`, GameState.comboActive ? 44 : 36, GameState.comboActive ? COLORS.white : COLORS.champagne);
+    label.style.dropShadow = true;
+    label.style.dropShadowColor = COLORS.glass;
+    label.style.dropShadowBlur = 6;
+    label.style.dropShadowDistance = 0;
+    label.style.dropShadowAlpha = 0.9;
     label.anchor.set(0.5);
     label.position.set(p.x, p.y - 30);
     this._floatLayer.addChild(label);
@@ -280,14 +291,14 @@ export class HomeScene implements Scene {
     this._netWorth.text = formatMoney(save.netWorth);
     this._money.text = `¥ ${formatMoney(save.money)}`;
     const boostLeft = (save.boostUntil - now) / 1000;
-    this._income.text = `每秒 +${formatMoney(GameState.incomePerSec)}${boostLeft > 0 ? `（直播中 ${formatDuration(boostLeft)}）` : ''}`;
+    this._income.text = `${boostLeft > 0 ? `直播中 ${formatDuration(boostLeft)} · ` : ''}每秒 +${formatMoney(GameState.incomePerSec)}`;
 
     const goal = nextGoal(save);
-    this._goalLabel.text = goal ? `下一章：${goal.label}  ${formatMoney(save.netWorth)} / ${formatMoney(goal.target)}` : '全部章节已解锁';
+    this._goalLabel.text = goal ? `下一章 · ${goal.label}    ${formatMoney(save.netWorth)} / ${formatMoney(goal.target)}` : '全部章节已解锁';
     this._goalBar.progress = goal ? goal.progress : 1;
 
     const cost = skillUpgradeCost(save.skillLevel);
-    this._skillBtn.setLabel(`手艺 Lv.${save.skillLevel}`, `升级 ¥${formatMoney(cost)}`);
+    this._skillBtn.setLabel(`手艺 Lv.${save.skillLevel}`, `升级  ¥ ${formatMoney(cost)}`);
     this._skillBtn.setEnabled(save.money >= cost);
 
     const cd = rushOrderCooldownLeft(save, now);

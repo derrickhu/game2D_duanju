@@ -15,9 +15,29 @@ export const COLORS = {
   disabled: 0xD8CCCF,
   mask: 0x1A1014,
   white: 0xFFFFFF,
+  /** 主界面和产业地图：烟灰磨砂玻璃 + 香槟金描边，压在写实背景上不抢人物 */
+  glass: 0x1C1417,
+  champagne: 0xECCE96,
+  champagneDeep: 0xC9A266,
+  textOnGlass: 0xF7F0EA,
+  textOnGlassSoft: 0xCFC3BC,
 } as const;
 
 export const FONT = 'PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif';
+export const FONT_NUM = 'Didot, Georgia, Times New Roman, serif';
+
+export const GLASS_ALPHA = 0.5;
+
+export function drawGlass(g: PIXI.Graphics, x: number, y: number, w: number, h: number, r: number, alpha = GLASS_ALPHA): PIXI.Graphics {
+  g.lineStyle(2, COLORS.champagne, 0.55, 0);
+  g.beginFill(COLORS.glass, alpha).drawRoundedRect(x, y, w, h, r).endFill();
+  g.lineStyle(0);
+  return g;
+}
+
+export function makeNumText(text: string, size: number, fill: number = COLORS.champagne): PIXI.Text {
+  return new PIXI.Text(text, { fontFamily: FONT_NUM, fontSize: size, fill, fontWeight: '400' });
+}
 
 export function textStyle(size: number, fill: number = COLORS.ink, bold = false): Partial<PIXI.ITextStyle> {
   return { fontFamily: FONT, fontSize: size, fill, fontWeight: bold ? '700' : '400' };

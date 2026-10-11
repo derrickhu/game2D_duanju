@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { AudioManager } from '@/core/AudioManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
-import { COLORS, makeText } from './theme';
+import { COLORS, drawGlass, makeText } from './theme';
 
 export interface ButtonOptions {
   width: number;
@@ -11,6 +11,8 @@ export interface ButtonOptions {
   color?: number;
   textColor?: number;
   fontSize?: number;
+  /** solid：色块；glass：磨砂玻璃 + 香槟金字；gold：香槟金实心 + 深色字 */
+  variant?: 'solid' | 'glass' | 'gold';
   onTap: () => void;
 }
 
@@ -26,9 +28,13 @@ export class Button extends PIXI.Container {
     super();
     this._opts = opts;
     const size = opts.fontSize ?? 30;
-    this._label = makeText(opts.label, size, opts.textColor ?? COLORS.white, true);
+    const variant = opts.variant ?? 'solid';
+    const textColor = opts.textColor ?? (variant === 'glass' ? COLORS.champagne : variant === 'gold' ? COLORS.glass : COLORS.white);
+    this._label = makeText(opts.label, size, textColor, true);
     this._label.anchor.set(0.5);
-    this._sub = opts.sub !== undefined ? makeText(opts.sub, Math.round(size * 0.72), opts.textColor ?? COLORS.white) : null;
+    this._sub = opts.sub !== undefined
+      ? makeText(opts.sub, Math.round(size * 0.72), variant === 'glass' ? COLORS.textOnGlassSoft : textColor)
+      : null;
     this._sub?.anchor.set(0.5);
     this.addChild(this._bg, this._label);
     if (this._sub) this.addChild(this._sub);
@@ -65,8 +71,19 @@ export class Button extends PIXI.Container {
 
   private _layout(): void {
     const { width: w, height: h } = this._opts;
-    const color = this._enabled ? this._opts.color ?? COLORS.rose : COLORS.disabled;
-    this._bg.clear().beginFill(color).drawRoundedRect(-w / 2, -h / 2, w, h, Math.min(h / 2, 24)).endFill();
+    const r = Math.min(h / 2, 24);
+    const variant = this._opts.variant ?? 'solid';
+    this._bg.clear();
+    if (variant === 'glass') {
+      drawGlass(this._bg, -w / 2, -h / 2, w, h, h / 2);
+      this.alpha = this._enabled ? 1 : 0.6;
+    } else if (variant === 'gold') {
+      const color = this._enabled ? COLORS.champagne : COLORS.disabled;
+      this._bg.beginFill(color).drawRoundedRect(-w / 2, -h / 2, w, h, h / 2).endFill();
+    } else {
+      const color = this._enabled ? this._opts.color ?? COLORS.rose : COLORS.disabled;
+      this._bg.beginFill(color).drawRoundedRect(-w / 2, -h / 2, w, h, r).endFill();
+    }
     if (this._sub) {
       this._label.y = -h * 0.16;
       this._sub.y = h * 0.24;

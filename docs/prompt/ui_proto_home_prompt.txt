@@ -1,0 +1,13 @@
+Vertical 9:16 mobile game screen mockup, a refined redesign of the attached screenshot. Keep the same rainy night-market alley background and the same young woman in the white T-shirt and cream canvas apron standing in the center, she stays the clear focus and fills the middle of the screen.
+
+UI style: elegant modern Chinese urban romance drama, like a premium lifestyle app. Thin frosted-glass panels with a slight dark smoky tint, hairline borders in champagne gold like the edge of a new brass coin, small soft shadows. Typography: clean sans-serif, numbers in a slim elegant serif.
+
+Top: one slim frosted bar under the status area, left side shows "身价" with a large champagne-gold number, right side shows cash "¥" and "每秒 +0" in small white text, a very thin gold progress line along the bottom edge of the bar labeled "下一章 · 第一单".
+
+Left and right edges at mid height: two small round frosted buttons with tiny gold line icons, one a live-stream camera labeled "直播", one a delivery box labeled "急单".
+
+Bottom center above the dock: a slim pill button "手艺 Lv.1 · 升级 ¥50" in frosted glass with gold text.
+
+Bottom dock: a single slim frosted bar with four evenly spaced items, each a thin champagne-gold line icon above a small white label: a shop building "产业", a rose "男主", a film clapperboard "剧情", a clothes hanger "衣橱".
+
+Color palette: smoky charcoal glass, champagne gold, soft white text, a touch of dusty rose. Photographic realistic background and character, flat clean UI on top.

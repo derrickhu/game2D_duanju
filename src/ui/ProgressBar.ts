@@ -5,9 +5,15 @@ export class ProgressBar extends PIXI.Container {
   private readonly _bg = new PIXI.Graphics();
   private readonly _fill = new PIXI.Graphics();
 
-  constructor(private readonly _w: number, private readonly _h: number, private readonly _color: number = COLORS.rose) {
+  constructor(
+    private readonly _w: number,
+    private readonly _h: number,
+    private readonly _color: number = COLORS.rose,
+    trackColor: number = COLORS.cardMuted,
+    trackAlpha = 1,
+  ) {
     super();
-    this._bg.beginFill(COLORS.cardMuted).drawRoundedRect(0, 0, _w, _h, _h / 2).endFill();
+    this._bg.beginFill(trackColor, trackAlpha).drawRoundedRect(0, 0, _w, _h, _h / 2).endFill();
     this.addChild(this._bg, this._fill);
   }
 
