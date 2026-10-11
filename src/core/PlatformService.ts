@@ -522,6 +522,50 @@ class PlatformServiceClass {
     });
   }
 
+  /**
+   * 二进制下载。开发者工具对 *.tcb.qcloud.la 的 wx.downloadFile 会直接 aborted，
+   * 同一条地址用 request + arraybuffer 可以拿到文件。
+   */
+  requestArrayBuffer(url: string, timeoutMs?: number): Promise<ArrayBuffer> {
+    if (typeof this._api?.request === 'function') {
+      return new Promise((resolve, reject) => {
+        this._api.request({
+          url,
+          method: 'GET',
+          responseType: 'arraybuffer',
+          dataType: '其他',
+          timeout: timeoutMs,
+          success: (res: any) => {
+            const statusCode = Number(res?.statusCode || 0);
+            if (statusCode < 200 || statusCode >= 300) {
+              reject(new Error(`request status=${statusCode || 'unknown'} url=${url}`));
+              return;
+            }
+            const data = res?.data;
+            if (!(data instanceof ArrayBuffer) || data.byteLength < 64) {
+              reject(new Error(`request empty body url=${url}`));
+              return;
+            }
+            resolve(data);
+          },
+          fail: (err: any) => {
+            let msg = 'request fail';
+            try { msg = err?.errMsg || err?.message || msg; } catch (_) {}
+            reject(new Error(msg));
+          },
+        });
+      });
+    }
+    const fetchFn = (globalThis as any).fetch as typeof fetch | undefined;
+    if (typeof fetchFn !== 'function') {
+      return Promise.reject(new Error('no http transport available'));
+    }
+    return fetchFn(url).then((res) => {
+      if (!res.ok) throw new Error(`request status=${res.status} url=${url}`);
+      return res.arrayBuffer();
+    });
+  }
+
   downloadFile(opts: { url: string; timeoutMs?: number }): Promise<{ tempFilePath: string }> {
     return new Promise((resolve, reject) => {
       if (typeof this._api?.downloadFile !== 'function') {

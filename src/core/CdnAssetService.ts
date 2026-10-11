@@ -242,6 +242,9 @@ class CdnAssetServiceClass {
         if (!res.tempFilePath) throw new Error('downloadFile missing tempFilePath');
 
         fs.copyFileSync(res.tempFilePath, cachePath);
+        if (String(res.tempFilePath).includes('/_in_')) {
+          try { fs.unlinkSync(res.tempFilePath); } catch (_) {}
+        }
         const size = this._getLocalFileSize(cachePath);
         const expected = this._manifest?.files?.[logicalPath]?.size;
         if (size < 64 || (typeof expected === 'number' && expected > 0 && size !== expected)) {
@@ -257,7 +260,7 @@ class CdnAssetServiceClass {
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes('status=404') || attempt >= this._config.downloadRetry) {
-          console.warn(`[CDN] 下载失败 ${logicalPath}:`, e);
+          console.warn(`[CDN] 下载失败 ${logicalPath}: ${msg}`);
           return false;
         }
         await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
@@ -275,13 +278,32 @@ class CdnAssetServiceClass {
       });
   }
 
-  private _downloadUrl(url: string): Promise<{ tempFilePath?: string }> {
-    return Platform.downloadFile({ url })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn(`[CDN] downloadFile fail: ${url}, ${msg}`);
-        throw err instanceof Error ? err : new Error(msg);
+  private async _downloadUrl(url: string): Promise<{ tempFilePath?: string }> {
+    try {
+      return await Platform.downloadFile({ url, timeoutMs: this._config.downloadTimeoutMs });
+    } catch (err) {
+      let msg = 'downloadFile fail';
+      try { msg = err instanceof Error ? err.message : String(err); } catch (_) {}
+      console.warn(`[CDN] downloadFile fail，改用 request: ${msg}`);
+      const data = await Platform.requestArrayBuffer(url, this._config.downloadTimeoutMs);
+      const fs = this._getFs();
+      const tmp = `${this._getCacheRootPath()}/_in_${Date.now()}_${Math.floor(Math.random() * 1e6)}.tmp`;
+      if (!fs) throw new Error('no fs for request fallback');
+      this._ensureCacheDir(tmp);
+      await new Promise<void>((resolve, reject) => {
+        fs.writeFile({
+          filePath: tmp,
+          data,
+          success: () => resolve(),
+          fail: (e: any) => {
+            let why = 'writeFile fail';
+            try { why = e?.errMsg || why; } catch (_) {}
+            reject(new Error(why));
+          },
+        });
       });
+      return { tempFilePath: tmp };
+    }
   }
 
   private _loadCachedManifest(): void {

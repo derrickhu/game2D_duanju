@@ -38,6 +38,16 @@ const REWARD_SFX = new Set<SfxId>(['level_up', 'chapter_unlock', 'meet_hero', 'b
 const REWARD_VOL = 1;
 const TAG = '[Audio]';
 
+function errText(err: unknown): string {
+  try {
+    if (err instanceof Error) return err.message;
+    if (err && typeof err === 'object' && 'errMsg' in err) return String((err as { errMsg?: string }).errMsg || '');
+    return String(err);
+  } catch (_) {
+    return 'unknown';
+  }
+}
+
 interface AudioSettings {
   musicEnabled: boolean;
   soundEnabled: boolean;
@@ -107,7 +117,7 @@ class AudioManagerClass {
   preloadSfx(): Promise<void> {
     this.init();
     return CdnAssetService.preloadPaths(SFX_IDS.map((id) => this.sfxPath(id))).catch((err) => {
-      console.warn(TAG, '音效预加载失败', err);
+      console.warn(TAG, `音效预加载失败 ${errText(err)}`);
     });
   }
 
@@ -146,7 +156,7 @@ class AudioManagerClass {
         this.playResolvedSfx(id, src, volume, logical);
       })
       .catch((err) => {
-        console.warn(TAG, `音效 "${id}" 资源未就绪`, err);
+        console.warn(TAG, `音效 "${id}" 资源未就绪 ${errText(err)}`);
       });
   }
 
@@ -175,7 +185,7 @@ class AudioManagerClass {
       })
       .catch((err) => {
         if (seq !== this.bgmRequestSeq) return;
-        console.warn(TAG, `BGM "${logical}" 资源未就绪`, err);
+        console.warn(TAG, `BGM "${logical}" 资源未就绪 ${errText(err)}`);
       });
   }
 
@@ -239,7 +249,7 @@ class AudioManagerClass {
       try {
         audio.play();
       } catch (error) {
-        console.warn(TAG, `音效 "${name}" play()`, error);
+        console.warn(TAG, `音效 "${name}" play() ${errText(error)}`);
         cleanup();
       }
     };
@@ -323,7 +333,7 @@ class AudioManagerClass {
               } catch (_) {}
               return;
             }
-            console.warn(TAG, 'BGM failed', this.bgmSrc || src, error);
+            console.warn(TAG, `BGM failed ${this.bgmSrc || src} ${errText(error)}`);
           });
           if (typeof ctx.onCanplay === 'function') {
             ctx.onCanplay(() => this.playBackgroundMusic());

@@ -69,7 +69,7 @@ class VideoServiceClass {
         layer.destroy({ children: true });
         if (scene) scene.visible = true;
         for (const p of hiddenPanels) if (!p.destroyed) p.visible = true;
-        if (result === 'error') ToastManager.show('剧情视频制作中，敬请期待');
+        if (result === 'error') ToastManager.show('视频没播出来，再点一次试试');
         resolve(result);
       };
 
@@ -83,10 +83,38 @@ class VideoServiceClass {
       layer.addChild(skip);
       if (!watchedBefore) setTimeout(() => { if (!skip.destroyed) skip.visible = true; }, SKIP_DELAY_SEC * 1000);
 
-      player = Platform.isMinigame && typeof Platform.api?.createVideo === 'function'
-        ? this._playNative(url, finish)
-        : this._playBrowser(url, finish);
-      if (!player) finish('error');
+      const loading = makeText('视频加载中', 32, COLORS.white, true);
+      loading.anchor.set(0.5);
+      loading.position.set(Game.logicWidth / 2, Game.logicHeight / 2);
+      layer.addChild(loading);
+
+      const start = (sources: string[]): void => {
+        if (settled) return;
+        const src = sources[0];
+        const rest = sources.slice(1);
+        if (!src) {
+          finish('error');
+          return;
+        }
+        try { player?.destroy(); } catch (_) {}
+        const onFail = (): void => {
+          console.warn(`[Video] 播放失败 ${videoId} ${src.slice(0, 80)}`);
+          if (rest.length > 0) start(rest);
+          else finish('error');
+        };
+        player = Platform.isMinigame && typeof Platform.api?.createVideo === 'function'
+          ? this._playNative(src, finish, onFail, () => { if (!loading.destroyed) loading.visible = false; })
+          : this._playBrowser(src, finish);
+        if (!player) onFail();
+      };
+
+      if (!(Platform.isMinigame && typeof Platform.api?.createVideo === 'function')) {
+        start([url]);
+        return;
+      }
+      void CdnAssetService.resolveOrDownload(videoPath(videoId)).then((local) => {
+        start(videoSources(local, url));
+      }).catch(() => start([url]));
     });
   }
 
@@ -105,7 +133,12 @@ class VideoServiceClass {
     return layer;
   }
 
-  private _playNative(src: string, finish: (r: VideoResult) => void): { destroy(): void } | null {
+  private _playNative(
+    src: string,
+    finish: (r: VideoResult) => void,
+    onFail: () => void,
+    onPlay: () => void,
+  ): { destroy(): void } | null {
     try {
       const top = Math.round((Game.safeTop + TOP_BAR) * Game.contentScale);
       const bottom = Math.round((Game.safeBottom + BOTTOM_BAR) * Game.contentScale);
@@ -122,17 +155,14 @@ class VideoServiceClass {
         enableProgressGesture: false,
         obeyMuteSwitch: false,
         objectFit: 'contain',
-        backgroundColor: '#000000',
       });
       video.onEnded(() => finish('ended'));
-      video.onError((e) => {
-        console.warn('[Video] 播放失败', src, e);
-        finish('error');
-      });
+      video.onPlay(() => onPlay());
+      video.onError(() => { setTimeout(onFail, 0); });
       video.play();
       return video;
-    } catch (e) {
-      console.warn('[Video] createVideo 失败', e);
+    } catch (_) {
+      console.warn('[Video] createVideo 失败');
       return null;
     }
   }
@@ -150,6 +180,15 @@ class VideoServiceClass {
     void el.play().catch(() => finish('error'));
     return { destroy: () => el.remove() };
   }
+}
+
+/** 本地缓存、wxfile 路径、在线地址，按顺序试。同一条不重复。 */
+function videoSources(local: string, remote: string): string[] {
+  const list = [local];
+  const alt = CdnAssetService.toInnerAudioSrc(local);
+  if (!list.includes(alt)) list.push(alt);
+  if (!list.includes(remote)) list.push(remote);
+  return list;
 }
 
 export const VideoService = new VideoServiceClass();
