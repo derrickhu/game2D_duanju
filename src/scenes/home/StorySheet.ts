@@ -30,6 +30,16 @@ export class StorySheet extends Sheet {
         const tip = makeText(`身价达到 ${formatMoney(ch.unlockNetWorth)} 解锁`, 22, COLORS.inkSoft);
         tip.position.set(28, 76);
         row.addChild(tip);
+      } else if (ch.videos.length === 1) {
+        const vid = ch.videos[0];
+        const seen = save.watched.includes(vid);
+        const watch = new Button({
+          width: 180, height: 60, label: seen ? '再看一遍' : '观看', fontSize: 26,
+          color: seen ? COLORS.inkSoft : COLORS.rose,
+          onTap: () => { if (!this.dragging) void playStory(vid).then(() => this.rebuild()); },
+        });
+        watch.position.set(118, 110);
+        row.addChild(watch);
       } else {
         ch.videos.forEach((vid, i) => {
           const seen = save.watched.includes(vid);

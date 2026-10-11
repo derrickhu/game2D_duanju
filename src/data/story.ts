@@ -24,7 +24,7 @@ export interface ChapterDef {
 }
 
 export const CHAPTERS: readonly ChapterDef[] = [
-  { id: 0, title: '序章 · 订婚宴', unlockNetWorth: 0, videos: ['ch00_s01', 'ch00_s02', 'ch00_s03', 'ch00_s04'] },
+  { id: 0, title: '序章 · 订婚宴', unlockNetWorth: 0, videos: ['ch00'] },
   { id: 1, title: '第一单', unlockNetWorth: 1e4, videos: ['ch01_s01', 'ch01_s02', 'ch01_s03', 'ch01_s04'] },
   { id: 2, title: '我的店', unlockNetWorth: 1e5, videos: ['ch02_s01', 'ch02_s02', 'ch02_s03', 'ch02_s04'] },
   { id: 3, title: '砸场', unlockNetWorth: 1e6, videos: ['ch03_s01', 'ch03_s02', 'ch03_s03', 'ch03_s04'] },
@@ -82,7 +82,11 @@ export function heroForShop(shop: ShopId): HeroDef | null {
 function buildVideoCatalog(): Map<string, VideoDef> {
   const map = new Map<string, VideoDef>();
   for (const ch of CHAPTERS) {
-    ch.videos.forEach((id, i) => map.set(id, { id, title: `${ch.title} · ${i + 1}`, kind: 'main' }));
+    ch.videos.forEach((id, i) => map.set(id, {
+      id,
+      title: ch.videos.length === 1 ? ch.title : `${ch.title} · ${i + 1}`,
+      kind: 'main',
+    }));
   }
   const stages = ['初遇', '心动', '暧昧', '告白', '专属约会'];
   for (const hero of HEROES) {

@@ -109,7 +109,7 @@ test('急单保底和直播叠加封顶', () => {
 test('章节、视频解锁、番外广告', () => {
   const s = createSave(NOW);
   assert.equal(currentChapter(0), 0);
-  assert.ok(isVideoUnlocked(s, 'ch00_s01'));
+  assert.ok(isVideoUnlocked(s, 'ch00'));
   assert.ok(!isVideoUnlocked(s, 'ch01_s01'));
   s.netWorth = 1e4;
   assert.ok(isVideoUnlocked(s, 'ch01_s01'));
