@@ -1,8 +1,9 @@
 /**
- * 主界面：顶部身价 / 钱 / 每秒收益，中间点击区，两侧广告加速，底部四个面板入口。
- * 美术到位前全部是色块占位，布局按 750 设计宽。
+ * 主界面：顶部身价 / 钱 / 每秒收益，中间是当前造型的女主立绘（点她赚钱），
+ * 背景随造型切换，两侧广告加速，底部四个面板入口。布局按 750 设计宽。
  */
 import * as PIXI from 'pixi.js';
+import { outfitFigurePath, outfitScenePath } from '@/data/art';
 import { BALANCE } from '@/data/balance';
 import { CHAPTERS, heroById, type HeroId } from '@/data/story';
 import type { AreaDef, OutfitDef } from '@/data/world';
@@ -24,6 +25,7 @@ import { nextGoal } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
 import { ProgressBar } from '@/ui/ProgressBar';
 import { COLORS, makeText, roundRect } from '@/ui/theme';
+import { fitCover, applyFit, gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
 import { HeroSheet } from './home/HeroSheet';
 import { OutfitSheet } from './home/OutfitSheet';
 import { ShopSheet } from './home/ShopSheet';
@@ -37,6 +39,10 @@ export class HomeScene implements Scene {
   readonly container = new PIXI.Container();
 
   private readonly _bg = new PIXI.Graphics();
+  private readonly _bgSprite = new PIXI.Sprite(PIXI.Texture.EMPTY);
+  private readonly _hudCard = new PIXI.Graphics();
+  private readonly _figure = new PIXI.Sprite(PIXI.Texture.EMPTY);
+  private readonly _tapPill = new PIXI.Graphics();
   private readonly _netWorth = makeText('', 56, COLORS.roseDeep, true);
   private readonly _netWorthLabel = makeText('身价', 24, COLORS.inkSoft);
   private readonly _money = makeText('', 30, COLORS.ink, true);
@@ -44,7 +50,7 @@ export class HomeScene implements Scene {
   private readonly _goalLabel = makeText('', 22, COLORS.inkSoft);
   private readonly _goalBar = new ProgressBar(560, 16, COLORS.gold);
   private readonly _tapArea = new PIXI.Container();
-  private readonly _tapLabel = makeText('做甜品', 40, COLORS.white, true);
+  private readonly _tapLabel = makeText('点我做甜品', 28, COLORS.white, true);
   private readonly _floatLayer = new PIXI.Container();
   private readonly _skillBtn: Button;
   private readonly _boostBtn: Button;
@@ -78,7 +84,7 @@ export class HomeScene implements Scene {
     this._buildNav();
 
     this.container.addChild(
-      this._bg, this._netWorthLabel, this._netWorth, this._money, this._income,
+      this._bg, this._bgSprite, this._hudCard, this._netWorthLabel, this._netWorth, this._money, this._income,
       this._goalLabel, this._goalBar, this._tapArea, this._floatLayer,
       this._skillBtn, this._boostBtn, this._rushBtn, this._nav,
     );
@@ -98,15 +104,19 @@ export class HomeScene implements Scene {
   }
 
   onEnter(): void {
-    this.relayout();
+    this._applyOutfit();
     this._refreshHud();
     if (!this._tickerBound) {
       this._tickerBound = true;
       Game.ticker.add(() => this._update(Game.ticker.deltaMS / 1000));
       EventBus.on(EV.moneyChanged, () => this._shopSheet.refreshAffordable());
+      EventBus.on(EV.saveChanged, () => this._applyOutfit());
       EventBus.on(EV.chapterUnlocked, (ch: ChapterDef) => this._onChapter(ch));
       EventBus.on(EV.areaUnlocked, (a: AreaDef) => ToastManager.show(`新城区开放：${a.name}`, 'success'));
-      EventBus.on(EV.outfitUnlocked, (o: OutfitDef) => ToastManager.show(`新造型解锁：${o.name}`, 'success'));
+      EventBus.on(EV.outfitUnlocked, (o: OutfitDef) => {
+        GameState.setOutfit(o.id);
+        ToastManager.show(`换上新造型：${o.name}`, 'success');
+      });
       EventBus.on(EV.shopChanged, () => this._shopSheet.rebuild());
       EventBus.on(EV.heroChanged, (id: HeroId, met: boolean) => { if (met) this._onMeetHero(id); });
     }
@@ -119,6 +129,10 @@ export class HomeScene implements Scene {
     const top = Game.safeTop;
     const bottom = H - Game.safeBottom;
     this._bg.clear().beginFill(COLORS.bg).drawRect(0, 0, W, H).endFill();
+    if (isTextureReady(this._bgSprite.texture)) {
+      applyFit(this._bgSprite, fitCover(this._bgSprite.texture.width, this._bgSprite.texture.height, W, H));
+    }
+    this._hudCard.clear().beginFill(COLORS.white, 0.82).drawRoundedRect(24, top - 12, W - 48, 262, 28).endFill();
 
     this._netWorthLabel.position.set(W / 2, top);
     this._netWorth.position.set(W / 2, top + 30);
@@ -129,7 +143,7 @@ export class HomeScene implements Scene {
 
     const navTop = bottom - NAV_H;
     const midY = (top + 260 + navTop - 140) / 2;
-    this._tapArea.position.set(W / 2, midY);
+    this._layoutFigure(top + 270, navTop - 140);
     this._boostBtn.position.set(96, midY - 80);
     this._rushBtn.position.set(W - 96, midY - 80);
     this._skillBtn.position.set(W / 2, navTop - 80);
@@ -138,14 +152,42 @@ export class HomeScene implements Scene {
   }
 
   private _buildTapArea(): void {
-    const circle = new PIXI.Graphics();
-    circle.beginFill(COLORS.goldLight).drawCircle(0, 0, 200).endFill();
-    circle.beginFill(COLORS.rose).drawCircle(0, 0, 160).endFill();
-    this._tapArea.addChild(circle, this._tapLabel);
+    this._figure.anchor.set(0.5, 1);
+    this._tapPill.beginFill(COLORS.roseDeep, 0.92).drawRoundedRect(-110, -28, 220, 56, 28).endFill();
+    this._tapArea.addChild(this._figure, this._tapPill, this._tapLabel);
     this._tapArea.eventMode = 'static';
     this._tapArea.cursor = 'pointer';
-    this._tapArea.hitArea = new PIXI.Circle(0, 0, 200);
     this._tapArea.on('pointerdown', (e: PIXI.FederatedPointerEvent) => this._onTap(e));
+  }
+
+  /** 立绘脚底贴 bottom，高度占满 top~bottom；贴图未就绪时只留按钮 */
+  private _layoutFigure(top: number, bottom: number): void {
+    const W = Game.logicWidth;
+    const boxH = Math.max(320, bottom - top);
+    this._tapArea.position.set(W / 2, bottom);
+    let w = 360;
+    let h = boxH;
+    if (isTextureReady(this._figure.texture)) {
+      const tex = this._figure.texture;
+      const scale = Math.min(boxH / tex.height, (W - 340) / tex.width);
+      this._figure.scale.set(scale);
+      w = tex.width * scale;
+      h = tex.height * scale;
+    }
+    this._tapPill.position.set(0, -24);
+    this._tapLabel.position.set(0, -24);
+    this._tapArea.hitArea = new PIXI.Rectangle(-Math.max(w, 240) / 2, -h, Math.max(w, 240), h + 20);
+  }
+
+  private _applyOutfit(): void {
+    const id = GameState.save.outfit;
+    const bgPath = outfitScenePath(id);
+    const figPath = outfitFigurePath(id);
+    this._bgSprite.texture = gameTexture(bgPath);
+    this._figure.texture = gameTexture(figPath);
+    whenTextureReady(bgPath, () => this.relayout());
+    whenTextureReady(figPath, () => this.relayout());
+    this.relayout();
   }
 
   private _buildNav(): void {

@@ -24,7 +24,7 @@ export interface CdnConfig {
 
 export const CDN_CONFIG: CdnConfig = {
   enabled: true,
-  appId: '',
+  appId: 'wx06d4ac75bc87dec2',
   cloudEnv: 'rosa-env-d7grf78r5dbd37323',
   cloudBucket: '726f-rosa-env-d7grf78r5dbd37323-1414200063',
   baseUrl: 'https://726f-rosa-env-d7grf78r5dbd37323-1414200063.tcb.qcloud.la',
@@ -41,6 +41,7 @@ export const CDN_CONFIG: CdnConfig = {
     'subpkg_images/portrait_',
     'subpkg_images/scene_',
     'subpkg_images/city_',
+    'subpkg_images/suwan_',
     'subpkg_audio/',
     'videos/',
   ],

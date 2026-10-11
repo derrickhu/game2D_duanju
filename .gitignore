@@ -6,3 +6,5 @@ node_modules/
 build/
 minigame/game-bundle.js
 project.private.config.json
+minigame/videos/
+.cdn_upload/

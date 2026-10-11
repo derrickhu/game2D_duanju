@@ -15,6 +15,8 @@ import { SaveManager } from '@/managers/SaveManager';
 import { HomeScene } from '@/scenes/HomeScene';
 import { LoadingScene } from '@/scenes/LoadingScene';
 import { ensureBootSubpackages } from '@/utils/bootSubpackages';
+import { preloadTextures } from '@/utils/assets';
+import { outfitFigurePath, outfitScenePath } from '@/data/art';
 
 const BOOT_HOLD_MS = 480;
 
@@ -82,6 +84,10 @@ async function main(): Promise<void> {
 
   await CdnAssetService.fetchManifest();
   await bootPacks;
+  const outfit = GameState.save.outfit;
+  await preloadTextures([outfitScenePath(outfit), outfitFigurePath(outfit)], (done, total) => {
+    loading.setProgress(0.6 + done / total * 0.4);
+  });
   loading.setProgress(1);
 
   await new Promise<void>((resolve) => {

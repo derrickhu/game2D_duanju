@@ -1,7 +1,7 @@
 {
-  "description": "短剧逆袭女性向小游戏 · 微信。用微信开发者工具打开 build/wechat/。appid 申请后填这里。",
+  "description": "短剧逆袭女性向小游戏 · 微信。用微信开发者工具打开 build/wechat/。appid 已填。",
   "projectname": "game2D_duanju",
-  "appid": "touristappid",
+  "appid": "wx06d4ac75bc87dec2",
   "compileType": "game",
   "libVersion": "3.12.1",
   "isGameTourist": false,
@@ -40,6 +40,7 @@
       { "type": "glob", "value": "subpkg_images/portrait_*" },
       { "type": "glob", "value": "subpkg_images/scene_*" },
       { "type": "glob", "value": "subpkg_images/city_*" },
+      { "type": "glob", "value": "subpkg_images/suwan_*" },
       { "type": "folder", "value": "subpkg_audio" }
     ],
     "include": []

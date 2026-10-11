@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { heroPortraitPath } from '@/data/art';
 import { BOND_LEVELS, MAX_BOND } from '@/data/balance';
 import { HEROES, type HeroDef } from '@/data/story';
 import { shopById } from '@/data/world';
@@ -11,6 +12,7 @@ import { bondBlockReason, effectiveBond, isVideoAdPending, isVideoUnlocked } fro
 import { Button } from '@/ui/Button';
 import { Sheet } from '@/ui/Sheet';
 import { COLORS, makeText, roundRect } from '@/ui/theme';
+import { applyGray, gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
 
 const ROW_H = 236;
 
@@ -36,10 +38,27 @@ export class HeroSheet extends Sheet {
     const row = new PIXI.Container();
     row.addChild(roundRect(width, ROW_H, 24, met ? COLORS.card : COLORS.cardMuted));
 
-    // 立绘到位前用色块占位
-    const avatar = roundRect(120, 160, 18, met ? COLORS.goldLight : COLORS.disabled);
-    avatar.position.set(24, 24);
-    row.addChild(avatar);
+    const frame = roundRect(120, 160, 18, met ? COLORS.goldLight : COLORS.disabled);
+    frame.position.set(24, 24);
+    row.addChild(frame);
+    const path = heroPortraitPath(hero.id);
+    const tex = gameTexture(path);
+    if (isTextureReady(tex)) {
+      const avatar = new PIXI.Sprite(tex);
+      avatar.anchor.set(0.5);
+      avatar.scale.set(Math.max(120 / tex.width, 160 / tex.height));
+      avatar.position.set(84, 104);
+      const mask = roundRect(120, 160, 18, COLORS.white);
+      mask.position.set(24, 24);
+      avatar.mask = mask;
+      if (!met) {
+        applyGray(avatar);
+        avatar.alpha = 0.45;
+      }
+      row.addChild(mask, avatar);
+    } else {
+      whenTextureReady(path, () => { if (this.isOpen) this.rebuild(); });
+    }
 
     const name = makeText(met ? `${hero.name} · ${hero.title}` : '？？？', 30, COLORS.ink, true);
     name.position.set(168, 24);
