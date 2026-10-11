@@ -83,6 +83,7 @@ async function main(): Promise<void> {
   initialSaveLoaded = true;
 
   await CdnAssetService.fetchManifest();
+  void AudioManager.preloadSfx();
   await bootPacks;
   const outfit = GameState.save.outfit;
   await preloadTextures([outfitScenePath(outfit), outfitFigurePath(outfit)], (done, total) => {
@@ -96,6 +97,7 @@ async function main(): Promise<void> {
   SceneManager.register(new HomeScene());
   SceneManager.switchTo('home');
   GameState.start();
+  AudioManager.playBgm('home');
 
   // 首帧之后再挂分享菜单，太早调用真机会静默失败
   globalThis.setTimeout(() => {

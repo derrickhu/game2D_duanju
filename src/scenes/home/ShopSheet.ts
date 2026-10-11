@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { heroForShop } from '@/data/story';
 import { AREAS, SHOPS, type ShopDef } from '@/data/world';
+import { AudioManager } from '@/core/AudioManager';
 import { ToastManager } from '@/core/ToastManager';
 import { GameState } from '@/managers/GameState';
 import { shopIncome, shopUpgradeCost } from '@/sim/economy';
@@ -83,6 +84,7 @@ export class ShopSheet extends Sheet {
             ToastManager.show('钱还不够');
             return;
           }
+          AudioManager.play('coin_spend');
           this.rebuild();
         },
       });

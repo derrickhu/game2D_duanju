@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { AudioManager } from '@/core/AudioManager';
 import { Game } from '@/core/Game';
 import { OverlayManager } from '@/core/OverlayManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
@@ -47,6 +48,7 @@ export abstract class Sheet extends PIXI.Container {
     this._isOpen = true;
     this.visible = true;
     this._scrollY = 0;
+    AudioManager.play('ui_open');
     this.relayout();
     const target = this._card.y;
     this._card.y = Game.logicHeight;
@@ -61,6 +63,7 @@ export abstract class Sheet extends PIXI.Container {
       this.visible = false;
       return;
     }
+    AudioManager.play('ui_close');
     TweenManager.to({
       target: this._card,
       props: { y: Game.logicHeight },

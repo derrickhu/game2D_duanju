@@ -32,7 +32,7 @@ export const CHAPTERS: readonly ChapterDef[] = [
   { id: 5, title: '慈善晚宴', unlockNetWorth: 1e8, videos: ['ch05_s01', 'ch05_s02', 'ch05_s03', 'ch05_s04'] },
   { id: 6, title: '收购苏氏', unlockNetWorth: 1e9, videos: ['ch06_s01', 'ch06_s02', 'ch06_s03', 'ch06_s04'] },
   { id: 7, title: '身世', unlockNetWorth: 1e10, videos: ['ch07_s01', 'ch07_s02', 'ch07_s03', 'ch07_s04'] },
-  { id: 8, title: '全城首富', unlockNetWorth: 1e11, videos: ['ch08_s01', 'ch08_s02', 'ch08_s03'] },
+  { id: 8, title: '全城首富', unlockNetWorth: 1e11, videos: ['ch08_s01', 'ch08_s02', 'ch08_s03', 'ch08_s04'] },
 ];
 
 export type HeroId =

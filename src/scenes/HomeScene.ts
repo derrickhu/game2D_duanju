@@ -8,6 +8,7 @@ import { BALANCE } from '@/data/balance';
 import { CHAPTERS, heroById, type HeroId } from '@/data/story';
 import type { AreaDef, OutfitDef } from '@/data/world';
 import { EV } from '@/config/events';
+import { AudioManager } from '@/core/AudioManager';
 import { EventBus } from '@/core/EventBus';
 import { Game } from '@/core/Game';
 import { Platform } from '@/core/PlatformService';
@@ -112,8 +113,12 @@ export class HomeScene implements Scene {
       EventBus.on(EV.moneyChanged, () => this._shopSheet.refreshAffordable());
       EventBus.on(EV.saveChanged, () => this._applyOutfit());
       EventBus.on(EV.chapterUnlocked, (ch: ChapterDef) => this._onChapter(ch));
-      EventBus.on(EV.areaUnlocked, (a: AreaDef) => ToastManager.show(`新城区开放：${a.name}`, 'success'));
+      EventBus.on(EV.areaUnlocked, (a: AreaDef) => {
+        AudioManager.play('level_up');
+        ToastManager.show(`新城区开放：${a.name}`, 'success');
+      });
       EventBus.on(EV.outfitUnlocked, (o: OutfitDef) => {
+        AudioManager.play('item_reveal');
         GameState.setOutfit(o.id);
         ToastManager.show(`换上新造型：${o.name}`, 'success');
       });
@@ -209,6 +214,7 @@ export class HomeScene implements Scene {
 
   private _onTap(e: PIXI.FederatedPointerEvent): void {
     const amount = GameState.tap();
+    AudioManager.play('coin_tap');
     Platform.vibrateShort('light');
     TweenManager.cancelTarget(this._tapArea.scale);
     this._tapArea.scale.set(0.95);
@@ -230,7 +236,8 @@ export class HomeScene implements Scene {
   }
 
   private _upgradeSkill(): void {
-    if (!GameState.upgradeSkill()) ToastManager.show('钱还不够');
+    if (GameState.upgradeSkill()) AudioManager.play('upgrade');
+    else ToastManager.show('钱还不够');
     this._refreshHud();
   }
 
@@ -253,6 +260,7 @@ export class HomeScene implements Scene {
     }
     Platform.showRewardedVideo('rushOrder', () => {
       const amount = GameState.claimRushOrder();
+      AudioManager.play('coin_gain');
       ToastManager.show(`急单完成 +${formatMoney(amount)}`, 'success');
     });
   }
@@ -320,6 +328,7 @@ export class HomeScene implements Scene {
     });
     if (!double) {
       GameState.claimOffline(1);
+      AudioManager.play('coin_gain');
       return;
     }
     let rewarded = false;
@@ -327,11 +336,13 @@ export class HomeScene implements Scene {
       Platform.showRewardedVideo('offlineDouble', () => { rewarded = true; }, resolve);
     });
     const got = GameState.claimOffline(rewarded ? 2 : 1);
+    AudioManager.play('coin_gain');
     ToastManager.show(`领取 ¥${formatMoney(got)}`, 'success');
   }
 
   private _onChapter(ch: ChapterDef): void {
     if (GameState.save.tutorialStep < TUTORIAL_DONE && ch.id >= 1) GameState.setTutorialStep(TUTORIAL_DONE);
+    AudioManager.play('chapter_unlock');
     void Platform.showModal({
       title: `第 ${ch.id} 章解锁`,
       content: `「${ch.title}」剧情已更新，现在观看吗？`,
@@ -342,6 +353,7 @@ export class HomeScene implements Scene {
 
   private _onMeetHero(id: HeroId): void {
     const hero = heroById(id);
+    AudioManager.play('meet_hero');
     ToastManager.show(`遇见了${hero.name}`, 'success');
     void playStory(hero.bondVideos[0]);
   }

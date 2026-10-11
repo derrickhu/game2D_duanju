@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { AudioManager } from '@/core/AudioManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
 import { COLORS, makeText } from './theme';
 
@@ -46,6 +47,7 @@ export class Button extends PIXI.Container {
     this.on('pointerup', release);
     this.on('pointerupoutside', release);
     this.on('pointertap', () => {
+      AudioManager.play(this._enabled ? 'ui_click' : 'ui_deny');
       if (this._enabled) this._opts.onTap();
     });
   }

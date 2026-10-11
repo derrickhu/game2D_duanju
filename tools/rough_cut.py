@@ -53,7 +53,7 @@ def main():
         p = os.path.join(tmp, f"s{k}.png")
         text_png(text, p)
         inputs += ["-i", p]
-        filters.append(f"[{last}][{idx}:v]overlay=0:0:enable='between(t,{a},{b})'[o{k}]")
+        filters.append(f"[{last}][{idx}:v]overlay=0:0:enable='gte(t,{a})*lt(t,{b})'[o{k}]")
         last, idx = f"o{k}", idx + 1
 
     if spec.get("title"):

@@ -1,0 +1,31 @@
+{
+  "defaults": { "bitrate": "96k", "prompt_influence": 0.45 },
+  "sfx": [
+    { "name": "ui_click", "duration": 0.2, "output": "../../minigame/subpkg_audio/ui_click.mp3",
+      "text": "single crisp soft plastic UI button tick, bright and light, very short, dry, no reverb, no music, no voice" },
+    { "name": "ui_open", "duration": 0.45, "output": "../../minigame/subpkg_audio/ui_open.mp3",
+      "text": "soft quick upward airy swish with a tiny glassy chime at the end, panel sliding open, dry, no music, no voice" },
+    { "name": "ui_close", "duration": 0.35, "output": "../../minigame/subpkg_audio/ui_close.mp3",
+      "text": "soft quick downward airy swish, panel sliding closed, gentle, dry, no music, no voice" },
+    { "name": "ui_deny", "duration": 0.35, "output": "../../minigame/subpkg_audio/ui_deny.mp3",
+      "text": "two short soft low muted plastic bloops descending, gentle error buzz, dry, no reverb, no music, no voice" },
+    { "name": "coin_tap", "duration": 0.25, "output": "../../minigame/subpkg_audio/coin_tap.mp3",
+      "text": "single small bright metal coin clink, light and crisp, very short, dry, no music, no voice" },
+    { "name": "coin_gain", "duration": 0.7, "output": "../../minigame/subpkg_audio/coin_gain.mp3",
+      "text": "a handful of bright gold coins cascading into a pile with a soft sparkling shimmer, quick decay, dry, no music, no voice" },
+    { "name": "coin_spend", "duration": 0.5, "output": "../../minigame/subpkg_audio/coin_spend.mp3",
+      "text": "cash register drawer ding with a soft paper banknote rustle, short, dry, no music, no voice" },
+    { "name": "upgrade", "duration": 0.8, "output": "../../minigame/subpkg_audio/upgrade.mp3",
+      "text": "quick rising three-note glassy celesta arpeggio with a light sparkle tail, cheerful, dry, no voice" },
+    { "name": "level_up", "duration": 1.6, "output": "../../minigame/subpkg_audio/level_up.mp3",
+      "text": "triumphant bright rising harp glissando into a warm major chord chime with sparkling shimmer, short room, no voice" },
+    { "name": "chapter_unlock", "duration": 2.2, "output": "../../minigame/subpkg_audio/chapter_unlock.mp3",
+      "text": "dramatic soft orchestral string swell rising into a bright bell chime hit, cinematic reveal, short hall reverb, no voice" },
+    { "name": "meet_hero", "duration": 1.8, "output": "../../minigame/subpkg_audio/meet_hero.mp3",
+      "text": "romantic heartbeat thump twice followed by a dreamy sparkling music box chime rising, soft and sweet, no voice" },
+    { "name": "bond_up", "duration": 1.2, "output": "../../minigame/subpkg_audio/bond_up.mp3",
+      "text": "warm soft rising piano and celesta two-note motif with a gentle sparkle, sweet romantic, dry, no voice" },
+    { "name": "item_reveal", "duration": 0.9, "output": "../../minigame/subpkg_audio/item_reveal.mp3",
+      "text": "magical sparkle whoosh ending in a clear glassy ding, item appearing, bright, dry, no voice" }
+  ]
+}

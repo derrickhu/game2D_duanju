@@ -10,6 +10,7 @@
  */
 import * as PIXI from 'pixi.js';
 import { VIDEOS, videoPath } from '@/data/story';
+import { AudioManager } from '@/core/AudioManager';
 import { CdnAssetService } from '@/core/CdnAssetService';
 import { Game } from '@/core/Game';
 import { OverlayManager } from '@/core/OverlayManager';
@@ -48,6 +49,7 @@ class VideoServiceClass {
     const def = VIDEOS.get(videoId);
     const url = CdnAssetService.publicUrl(videoPath(videoId));
     this._playing = true;
+    AudioManager.pauseBackgroundMusic();
 
     return new Promise<VideoResult>((resolve) => {
       const scene = SceneManager.current?.container;
@@ -62,6 +64,7 @@ class VideoServiceClass {
         if (settled) return;
         settled = true;
         this._playing = false;
+        AudioManager.playBackgroundMusic();
         try { player?.destroy(); } catch (_) {}
         layer.destroy({ children: true });
         if (scene) scene.visible = true;

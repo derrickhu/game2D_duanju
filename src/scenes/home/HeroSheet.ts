@@ -3,6 +3,7 @@ import { heroPortraitPath } from '@/data/art';
 import { BOND_LEVELS, MAX_BOND } from '@/data/balance';
 import { HEROES, type HeroDef } from '@/data/story';
 import { shopById } from '@/data/world';
+import { AudioManager } from '@/core/AudioManager';
 import { ToastManager } from '@/core/ToastManager';
 import { GameState } from '@/managers/GameState';
 import { playStory } from '@/services/StoryService';
@@ -104,6 +105,7 @@ export class HeroSheet extends Sheet {
             ToastManager.show('钱还不够');
             return;
           }
+          AudioManager.play('bond_up');
           ToastManager.show(`与${hero.name}的关系更近了`, 'success');
           this.rebuild();
         },
