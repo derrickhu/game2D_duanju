@@ -8,6 +8,8 @@ export const EV = {
   outfitUnlocked: 'outfit:unlocked',
   videoWatched: 'video:watched',
   boostChanged: 'boost:changed',
+  staffChanged: 'staff:changed',
+  questChanged: 'quest:changed',
   tutorialStepChanged: 'tutorial:stepChanged',
   tutorialCompleted: 'tutorial:completed',
 } as const;

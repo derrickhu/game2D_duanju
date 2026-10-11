@@ -47,6 +47,23 @@ export function makeText(text: string, size: number, fill: number = COLORS.ink, 
   return new PIXI.Text(text, textStyle(size, fill, bold));
 }
 
+/** 一排五角星，点亮前 lit 颗；原点在第一颗中心 */
+export function drawStars(g: PIXI.Graphics, lit: number, total: number, r: number, gap = r * 0.5): PIXI.Graphics {
+  for (let s = 0; s < total; s++) {
+    const cx = s * (r * 2 + gap);
+    const pts: number[] = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = i % 2 === 0 ? r : r * 0.45;
+      pts.push(cx + Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    if (s < lit) g.lineStyle(0).beginFill(COLORS.champagne).drawPolygon(pts).endFill();
+    else g.lineStyle(1.5, COLORS.champagne, 0.5).beginFill(COLORS.glass, 0.4).drawPolygon(pts).endFill();
+  }
+  g.lineStyle(0);
+  return g;
+}
+
 export function roundRect(w: number, h: number, r: number, fill: number, alpha = 1): PIXI.Graphics {
   const g = new PIXI.Graphics();
   g.beginFill(fill, alpha).drawRoundedRect(0, 0, w, h, r).endFill();

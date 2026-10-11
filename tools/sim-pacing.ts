@@ -4,13 +4,17 @@
  */
 import { CHAPTERS, HEROES } from '../src/data/story.ts';
 import { SHOPS } from '../src/data/world.ts';
-import { buyShop, investBond, tap, tick, upgradeSkill } from '../src/sim/actions.ts';
+import { STAFF } from '../src/data/staff.ts';
+import { buyShop, investBond, tap, tick, upgradeSkill, upgradeStaff } from '../src/sim/actions.ts';
 import {
   bondUpgradeCost, baseIncomePerSec, shopIncome, shopUpgradeCost, skillUpgradeCost, skillValue,
+  staffIncome, staffIncomePerSec, staffUpgradeCost,
 } from '../src/sim/economy.ts';
 import { formatDuration, formatMoney } from '../src/sim/format.ts';
 import { createSave, type GameSave } from '../src/sim/save.ts';
-import { bondBlockReason, currentChapter, isShopUnlocked } from '../src/sim/unlocks.ts';
+import { bondBlockReason, currentChapter, isShopUnlocked, isStaffAvailable } from '../src/sim/unlocks.ts';
+
+const WITH_STAFF = !process.argv.includes('--no-staff');
 
 const TAPS_PER_SEC = Number(process.argv[2] ?? 4);
 const MAX_SEC = 30 * 3600;
@@ -35,6 +39,14 @@ function options(s: GameSave): Option[] {
     const next = shopIncome(hero.shop, s.shops[hero.shop] ?? 0, lv + 1);
     out.push({ score: bondUpgradeCost(hero.id, lv) / Math.max(next - base, 1e-9), buy: () => investBond(s, hero.id) });
   }
+  if (WITH_STAFF) {
+    for (const st of STAFF) {
+      if (!isStaffAvailable(s, st.id)) continue;
+      const lv = s.staff[st.id] ?? 0;
+      const gain = staffIncome(st.id, lv + 1) - staffIncome(st.id, lv);
+      out.push({ score: staffUpgradeCost(st.id, lv) / Math.max(gain, 1e-9), buy: () => !!upgradeStaff(s, st.id) });
+    }
+  }
   const tapGain = (skillValue(s.skillLevel + 1) - skillValue(s.skillLevel)) * TAPS_PER_SEC;
   out.push({ score: skillUpgradeCost(s.skillLevel) / Math.max(tapGain, 1e-9), buy: () => upgradeSkill(s) });
   return out.sort((a, b) => a.score - b.score);
@@ -42,7 +54,7 @@ function options(s: GameSave): Option[] {
 
 const s = createSave(0);
 let reached = 0;
-console.log(`贪心玩家，每秒点击 ${TAPS_PER_SEC} 次，不看广告\n`);
+console.log(`贪心玩家，每秒点击 ${TAPS_PER_SEC} 次，不看广告${WITH_STAFF ? '' : '，不招店员'}\n`);
 for (let t = 1; t <= MAX_SEC; t++) {
   for (let i = 0; i < TAPS_PER_SEC; i++) tap(s, t * 1000, false);
   tick(s, 1, t * 1000);
@@ -56,10 +68,11 @@ for (let t = 1; t <= MAX_SEC; t++) {
     const def = CHAPTERS[reached];
     console.log(
       `第 ${def.id} 章 ${def.title.padEnd(6, '　')} ${formatDuration(t).padStart(10)}`
-      + `  身价 ${formatMoney(s.netWorth).padStart(8)}  每秒 ${formatMoney(baseIncomePerSec(s)).padStart(8)}`,
+      + `  身价 ${formatMoney(s.netWorth).padStart(8)}  每秒 ${formatMoney(baseIncomePerSec(s)).padStart(8)}`
+      + `  店员占 ${(100 * staffIncomePerSec(s) / Math.max(baseIncomePerSec(s), 1e-9)).toFixed(0).padStart(3)}%`,
     );
   }
   if (reached >= CHAPTERS.length - 1) break;
 }
 if (reached < CHAPTERS.length - 1) console.log(`\n${formatDuration(MAX_SEC)} 内只到第 ${reached} 章`);
-console.log('\n门店等级', JSON.stringify(s.shops), '\n羁绊', JSON.stringify(s.bonds), '\n技能', s.skillLevel);
+console.log('\n门店等级', JSON.stringify(s.shops), '\n羁绊', JSON.stringify(s.bonds), '\n技能', s.skillLevel, '\n店员', JSON.stringify(s.staff));

@@ -2,6 +2,7 @@
  * 游戏内美术路径。场景、立绘、头像、城市地图在 CDN（见 CdnConfig.cdnPrefixes）；
  * UI 图标很小，打在 images 分包里，保证首屏就有。
  */
+import type { StaffId } from './staff.ts';
 import type { HeroId } from './story.ts';
 import type { OutfitId, ShopId } from './world.ts';
 
@@ -14,6 +15,7 @@ export const ICONS = {
   gift: 'subpkg_images/icon_gift.png',
   lock: 'subpkg_images/icon_lock.png',
   coins: 'subpkg_images/icon_coins.png',
+  staff: 'subpkg_images/icon_staff.png',
 } as const;
 
 /** 产业页城市地图（750×1334，等距微缩城市，招牌留空，店名由程序叠加） */
@@ -44,6 +46,11 @@ export function outfitScenePath(id: OutfitId): string {
 /** 女主当前造型的全身立绘（透明底） */
 export function outfitFigurePath(id: OutfitId): string {
   return `subpkg_images/suwan_${id}.png`;
+}
+
+/** 店员全身立绘（透明底，高 960） */
+export function staffFigurePath(id: StaffId): string {
+  return `subpkg_images/staff_${id}.png`;
 }
 
 export function heroPortraitPath(id: HeroId): string {

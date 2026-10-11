@@ -1,6 +1,6 @@
 /**
- * 主界面：顶部身价 / 钱 / 每秒收益，中间是当前造型的女主立绘（点她赚钱），
- * 背景随造型切换，两侧广告加速，底部四个面板入口。布局按 750 设计宽。
+ * 主界面：顶部身价 / 钱 / 每秒收益和主线任务条，中间是当前造型的女主立绘（点她赚钱），
+ * 背景随造型切换，两侧广告加速，底部五个面板入口。布局按 750 设计宽。
  */
 import * as PIXI from 'pixi.js';
 import { ICONS, outfitFigurePath, outfitScenePath } from '@/data/art';
@@ -31,12 +31,14 @@ import { fitCover, applyFit, gameTexture, isTextureReady, whenTextureReady } fro
 import { HeroSheet } from './home/HeroSheet';
 import { OutfitSheet } from './home/OutfitSheet';
 import { ShopMap } from './home/ShopMap';
+import { StaffSheet, staffHasAffordable } from './home/StaffSheet';
 import { StorySheet } from './home/StorySheet';
 
 const OFFLINE_MIN_SEC = 60;
 const NAV_H = 120;
 const HUD_H = 168;
 const GOAL_BAR_INSET = 56;
+const QUEST_H = 64;
 
 export class HomeScene implements Scene {
   readonly name = 'home';
@@ -66,6 +68,15 @@ export class HomeScene implements Scene {
   private readonly _heroSheet = new HeroSheet();
   private readonly _storySheet = new StorySheet();
   private readonly _outfitSheet = new OutfitSheet();
+  private readonly _staffSheet = new StaffSheet();
+  private readonly _staffDot = new PIXI.Graphics();
+
+  private readonly _quest = new PIXI.Container();
+  private readonly _questBg = new PIXI.Graphics();
+  private readonly _questTag = makeText('任务', 20, COLORS.glass, true);
+  private readonly _questTitle = makeText('', 24, COLORS.textOnGlass, true);
+  private readonly _questInfo = makeText('', 20, COLORS.champagne);
+  private readonly _questBtn: Button;
 
   private _tickerBound = false;
   private _hudTimer = 0;
@@ -82,11 +93,13 @@ export class HomeScene implements Scene {
     this._boostBtn = new IconButton({ icon: ICONS.live, label: '直播带货', sub: '收益×2', size: 96, onTap: () => this._liveBoost() });
     this._rushBtn = new IconButton({ icon: ICONS.gift, label: '接急单', sub: '', size: 96, onTap: () => this._rushOrder() });
 
+    this._questBtn = new Button({ width: 120, height: 48, label: '领取', variant: 'gold', fontSize: 24, onTap: () => this._claimQuest() });
+    this._buildQuest();
     this._buildNav();
 
     this.container.addChild(
       this._bg, this._bgSprite, this._hudCard, this._netWorthLabel, this._netWorth, this._money, this._income,
-      this._goalLabel, this._goalBar, this._tapArea, this._floatLayer,
+      this._goalLabel, this._goalBar, this._quest, this._tapArea, this._floatLayer,
       this._skillBtn, this._boostBtn, this._rushBtn, this._nav,
     );
 
@@ -110,7 +123,10 @@ export class HomeScene implements Scene {
     if (!this._tickerBound) {
       this._tickerBound = true;
       Game.ticker.add(() => this._update(Game.ticker.deltaMS / 1000));
-      EventBus.on(EV.moneyChanged, () => this._shopSheet.refreshAffordable());
+      EventBus.on(EV.moneyChanged, () => {
+        this._shopSheet.refreshAffordable();
+        this._staffSheet.refreshAffordable();
+      });
       EventBus.on(EV.saveChanged, () => this._applyOutfit());
       EventBus.on(EV.chapterUnlocked, (ch: ChapterDef) => this._onChapter(ch));
       EventBus.on(EV.areaUnlocked, (a: AreaDef) => {
@@ -122,7 +138,11 @@ export class HomeScene implements Scene {
         GameState.setOutfit(o.id);
         ToastManager.show(`换上新造型：${o.name}`, 'success');
       });
-      EventBus.on(EV.shopChanged, () => this._shopSheet.rebuild());
+      EventBus.on(EV.shopChanged, () => {
+        this._shopSheet.rebuild();
+        this._staffSheet.rebuild();
+      });
+      EventBus.on(EV.staffChanged, () => this._shopSheet.rebuild());
       EventBus.on(EV.heroChanged, (id: HeroId, met: boolean) => { if (met) this._onMeetHero(id); });
     }
     void this._enterFlow();
@@ -147,9 +167,10 @@ export class HomeScene implements Scene {
     this._goalBar.position.set(GOAL_BAR_INSET, hudY + 146);
 
     const hudBottom = hudY + HUD_H;
+    this._quest.position.set(24, hudBottom + 12);
     const navTop = bottom - NAV_H - 16;
     const skillY = navTop - 62;
-    this._layoutFigure(hudBottom + 16, skillY - 52);
+    this._layoutFigure(hudBottom + 12 + QUEST_H + 12, skillY - 52);
     const sideY = hudBottom + (skillY - hudBottom) * 0.42;
     this._boostBtn.position.set(80, sideY);
     this._rushBtn.position.set(W - 80, sideY);
@@ -203,19 +224,63 @@ export class HomeScene implements Scene {
     const items: [string, string, () => void][] = [
       [ICONS.shop, '产业', () => this._shopSheet.open()],
       [ICONS.rose, '男主', () => this._heroSheet.open()],
+      [ICONS.staff, '店员', () => this._staffSheet.open()],
       [ICONS.story, '剧情', () => this._storySheet.open()],
       [ICONS.wardrobe, '衣橱', () => this._outfitSheet.open()],
     ];
     const w = (W - 48) / items.length;
     items.forEach(([icon, label, open], i) => {
-      const btn = new IconButton({ icon, label, size: 84, plate: false, onTap: open });
+      const btn = new IconButton({ icon, label, size: 80, plate: false, onTap: open });
       btn.position.set(24 + w * i + w / 2, NAV_H / 2 - 12);
       this._nav.addChild(btn);
+      if (label === '店员') {
+        this._staffDot.beginFill(COLORS.rose).drawCircle(0, 0, 8).endFill();
+        this._staffDot.position.set(btn.x + 26, btn.y - 26);
+        this._staffDot.visible = false;
+        this._nav.addChild(this._staffDot);
+      }
       if (i > 0) {
         const sep = new PIXI.Graphics().beginFill(COLORS.champagne, 0.25).drawRect(24 + w * i, 30, 1, NAV_H - 60).endFill();
         this._nav.addChild(sep);
       }
     });
+  }
+
+  private _buildQuest(): void {
+    const w = Game.logicWidth - 48;
+    drawGlass(this._questBg, 0, 0, w, QUEST_H, QUEST_H / 2, 0.55);
+    const tagBg = new PIXI.Graphics().beginFill(COLORS.champagne).drawRoundedRect(12, 14, 64, QUEST_H - 28, (QUEST_H - 28) / 2).endFill();
+    this._questTag.anchor.set(0.5);
+    this._questTag.position.set(44, QUEST_H / 2);
+    this._questTitle.anchor.set(0, 0.5);
+    this._questTitle.position.set(92, QUEST_H / 2);
+    this._questInfo.anchor.set(1, 0.5);
+    this._questInfo.position.set(w - 24, QUEST_H / 2);
+    this._questBtn.position.set(w - 72, QUEST_H / 2);
+    this._quest.addChild(this._questBg, tagBg, this._questTag, this._questTitle, this._questInfo, this._questBtn);
+    this._quest.eventMode = 'static';
+    this._quest.hitArea = new PIXI.Rectangle(0, 0, w, QUEST_H);
+  }
+
+  private _refreshQuest(): void {
+    const q = GameState.quest;
+    this._quest.visible = !!q;
+    if (!q) return;
+    const progress = q.done ? '' : `（${formatMoney(q.current)}/${formatMoney(q.target)}）`;
+    this._questTitle.text = `${q.quest.title}${progress}`;
+    this._questBtn.visible = q.done;
+    this._questInfo.visible = !q.done;
+    this._questInfo.text = `奖励 ¥${formatMoney(q.reward)}`;
+    const maxW = Game.logicWidth - 48 - 92 - (q.done ? 150 : this._questInfo.width + 40);
+    this._questTitle.scale.set(Math.min(1, maxW / Math.max(1, this._questTitle.width / this._questTitle.scale.x)));
+  }
+
+  private _claimQuest(): void {
+    const got = GameState.claimQuest();
+    if (got <= 0) return;
+    AudioManager.play('coin_gain');
+    ToastManager.show(`任务完成 +¥${formatMoney(got)}`, 'success');
+    this._refreshHud();
   }
 
   private _onTap(e: PIXI.FederatedPointerEvent): void {
@@ -305,6 +370,8 @@ export class HomeScene implements Scene {
     this._rushBtn.setLabel('接急单', cd > 0 ? formatDuration(cd) : `+${formatMoney(rushOrderReward(save))}`);
     this._rushBtn.setEnabled(cd <= 0 && rushOrdersLeftToday(save, now) > 0);
     this._boostBtn.setLabel('直播带货', boostLeft > 0 ? '续播 +10分' : '收益×2');
+    this._refreshQuest();
+    this._staffDot.visible = staffHasAffordable();
   }
 
   /** 首次进入播序章；之后检查离线收益 */

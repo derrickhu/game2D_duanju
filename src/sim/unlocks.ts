@@ -1,5 +1,6 @@
 /** 由身价和存档推导的解锁状态。只读，不改存档。 */
 import { MAX_BOND } from '../data/balance.ts';
+import { staffById, type StaffId } from '../data/staff.ts';
 import { CHAPTERS, HEROES, VIDEOS, heroById, type ChapterDef, type HeroId } from '../data/story.ts';
 import { AREAS, OUTFITS, SHOPS, type AreaDef, type OutfitDef, type ShopDef, type ShopId } from '../data/world.ts';
 import type { GameSave } from './save.ts';
@@ -13,6 +14,11 @@ export function currentChapter(netWorth: number): number {
 export function isShopUnlocked(save: GameSave, id: ShopId): boolean {
   const shop = SHOPS.find((s) => s.id === id);
   return !!shop && save.netWorth >= shop.unlockNetWorth;
+}
+
+/** 所属门店开业后才能招聘 */
+export function isStaffAvailable(save: GameSave, id: StaffId): boolean {
+  return (save.shops[staffById(id).shop] ?? 0) > 0;
 }
 
 export function unlockedAreas(netWorth: number): AreaDef[] {

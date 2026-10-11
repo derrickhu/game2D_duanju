@@ -1,3 +1,4 @@
+import type { StaffId } from '../data/staff.ts';
 import type { HeroId } from '../data/story.ts';
 import type { OutfitId, ShopId } from '../data/world.ts';
 
@@ -22,6 +23,11 @@ export interface GameSave {
   tutorialStep: number;
   createdAt: number;
   taps: number;
+  /** 店员等级，0 或缺省表示未录用 */
+  staff: Partial<Record<StaffId, number>>;
+  /** 当前主线任务序号（已领奖的条数） */
+  questIndex: number;
+  liveBoosts: number;
 }
 
 export function createSave(now = Date.now()): GameSave {
@@ -41,6 +47,9 @@ export function createSave(now = Date.now()): GameSave {
     tutorialStep: 0,
     createdAt: now,
     taps: 0,
+    staff: {},
+    questIndex: 0,
+    liveBoosts: 0,
   };
 }
 
@@ -58,6 +67,9 @@ export function normalizeSave(raw: unknown, now = Date.now()): GameSave {
     skillLevel: Math.max(1, Math.floor(nonNegative(r.skillLevel) || 1)),
     shops: { ...(r.shops ?? {}) },
     bonds: { ...(r.bonds ?? {}) },
+    staff: { ...(r.staff ?? {}) },
+    questIndex: Math.floor(nonNegative(r.questIndex)),
+    liveBoosts: Math.floor(nonNegative(r.liveBoosts)),
     watched: Array.isArray(r.watched) ? [...r.watched] : [],
     adUnlocked: Array.isArray(r.adUnlocked) ? [...r.adUnlocked] : [],
     rushOrder: { ...base.rushOrder, ...(r.rushOrder ?? {}) },

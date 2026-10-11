@@ -2,11 +2,14 @@ import assert from 'node:assert/strict';
 import { formatMoney } from '../src/sim/format.ts';
 import { createSave, normalizeSave } from '../src/sim/save.ts';
 import {
-  maxAffordableLevels, shopIncome, shopUpgradeCost, shopUpgradeCostN, skillValue, tapValue,
+  areaStaffMultiplier, baseIncomePerSec, maxAffordableLevels, shopIncome, shopUpgradeCost, shopUpgradeCostN,
+  skillValue, staffIncome, staffStar, staffUpgradeCost, tapValue,
 } from '../src/sim/economy.ts';
 import {
-  buyShop, claimRushOrder, computeOffline, investBond, startLiveBoost, tap, tick, upgradeSkill,
+  buyShop, claimRushOrder, computeOffline, investBond, startLiveBoost, tap, tick, upgradeSkill, upgradeStaff,
 } from '../src/sim/actions.ts';
+import { claimQuest, currentQuest } from '../src/sim/quests.ts';
+import { STAFF } from '../src/data/staff.ts';
 import {
   bondBlockReason, crossedThresholds, currentChapter, effectiveBond, isVideoAdPending, isVideoUnlocked, nextGoal,
 } from '../src/sim/unlocks.ts';
@@ -135,6 +138,52 @@ test('坏档兜底', () => {
   assert.equal(s.netWorth, 0);
   assert.equal(s.skillLevel, 1);
   assert.equal(normalizeSave(null, NOW).version, 1);
+});
+
+test('店员：开店才能招，星级翻倍，升星提示', () => {
+  const s = createSave(NOW);
+  s.money = 1e9;
+  assert.equal(upgradeStaff(s, 'abei'), null);
+  buyShop(s, 'stall', 1);
+  assert.equal(staffUpgradeCost('abei', 0), 300);
+  const hired = upgradeStaff(s, 'abei');
+  assert.equal(hired?.hired, true);
+  assert.equal(staffIncome('abei', 1), 1);
+  for (let i = 1; i < 9; i++) upgradeStaff(s, 'abei');
+  const r = upgradeStaff(s, 'abei');
+  assert.equal(s.staff.abei, 10);
+  assert.equal(r?.newStar, 2);
+  assert.equal(staffStar(10), 2);
+  assert.equal(staffIncome('abei', 10), 20);
+  assert.equal(staffStar(100), 5);
+  assert.equal(STAFF.length, 20);
+});
+
+test('店员：录满城区门店 ×2，计入每秒收益', () => {
+  const s = createSave(NOW);
+  s.money = 1e12;
+  s.netWorth = 1e4;
+  buyShop(s, 'stall', 10);
+  buyShop(s, 'dessert', 1);
+  assert.equal(areaStaffMultiplier(s, 'oldstreet'), 1);
+  for (const id of ['abei', 'linqi', 'xiaoman', 'wenyan'] as const) upgradeStaff(s, id);
+  assert.equal(areaStaffMultiplier(s, 'oldstreet'), 2);
+  const shops = (shopIncome('stall', 10, 0) + shopIncome('dessert', 1, 1)) * 2;
+  const staff = 1 + 1.2 + 20 * 1 + 20 * 1.2;
+  assert.ok(Math.abs(baseIncomePerSec(s) - (shops + staff)) < 1e-9);
+});
+
+test('主线任务：完成才能领，按顺序推进', () => {
+  const s = createSave(NOW);
+  assert.equal(currentQuest(s)?.done, false);
+  assert.equal(claimQuest(s), 0);
+  for (let i = 0; i < 20; i++) tap(s, NOW, false);
+  assert.equal(currentQuest(s)?.done, true);
+  assert.equal(claimQuest(s), 200);
+  assert.equal(s.questIndex, 1);
+  assert.equal(currentQuest(s)?.quest.title, '手艺升到 Lv5');
+  s.questIndex = 999;
+  assert.equal(currentQuest(s), null);
 });
 
 console.log(`\n${passed} passed`);

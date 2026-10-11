@@ -1,13 +1,14 @@
 /** 改存档的玩家操作。全部同步、纯数据，UI 层负责发事件和存盘。 */
 import { BALANCE, MAX_BOND } from '../data/balance.ts';
+import type { StaffId } from '../data/staff.ts';
 import { CHAPTERS, heroForShop, type HeroId } from '../data/story.ts';
 import type { ShopId } from '../data/world.ts';
 import {
   bondUpgradeCost, incomePerSec, baseIncomePerSec, maxAffordableLevels,
-  shopUpgradeCostN, skillUpgradeCost, tapValue,
+  shopUpgradeCostN, skillUpgradeCost, staffStar, staffUpgradeCost, tapValue,
 } from './economy.ts';
 import type { GameSave } from './save.ts';
-import { bondBlockReason, currentChapter, isShopUnlocked } from './unlocks.ts';
+import { bondBlockReason, currentChapter, isShopUnlocked, isStaffAvailable } from './unlocks.ts';
 
 export function earn(save: GameSave, amount: number): void {
   if (!(amount > 0)) return;
@@ -54,6 +55,27 @@ export function buyShop(save: GameSave, id: ShopId, count: number | 'max'): BuyS
     metHero = hero.id;
   }
   return { levels: n, cost, metHero };
+}
+
+export interface StaffUpgradeResult {
+  level: number;
+  cost: number;
+  hired: boolean;
+  /** 这次升级跨过的新星级；没升星为 0 */
+  newStar: number;
+}
+
+/** 录用（level 0 → 1）或升一级 */
+export function upgradeStaff(save: GameSave, id: StaffId): StaffUpgradeResult | null {
+  if (!isStaffAvailable(save, id)) return null;
+  const level = save.staff[id] ?? 0;
+  const cost = staffUpgradeCost(id, level);
+  if (save.money < cost) return null;
+  save.money -= cost;
+  save.staff[id] = level + 1;
+  const before = staffStar(level);
+  const after = staffStar(level + 1);
+  return { level: level + 1, cost, hired: level === 0, newStar: level > 0 && after > before ? after : 0 };
 }
 
 export function upgradeSkill(save: GameSave): boolean {
@@ -128,6 +150,7 @@ export function startLiveBoost(save: GameSave, now: number): void {
   const from = Math.max(now, save.boostUntil);
   const until = from + BALANCE.liveBoostSec * 1000;
   save.boostUntil = Math.min(until, now + BALANCE.liveBoostMaxSec * 1000);
+  save.liveBoosts += 1;
 }
 
 export function markWatched(save: GameSave, videoId: string): boolean {

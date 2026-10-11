@@ -3,6 +3,7 @@
  * 负责每帧结算挂机收益、跨门槛发解锁事件、定时存盘。
  */
 import { BALANCE } from '@/data/balance';
+import type { StaffId } from '@/data/staff';
 import type { HeroId } from '@/data/story';
 import type { OutfitId, ShopId } from '@/data/world';
 import { EV } from '@/config/events';
@@ -11,6 +12,7 @@ import { Game } from '@/core/Game';
 import { SaveManager } from '@/managers/SaveManager';
 import * as A from '@/sim/actions';
 import { incomePerSec } from '@/sim/economy';
+import { claimQuest, currentQuest, type QuestProgress } from '@/sim/quests';
 import type { GameSave } from '@/sim/save';
 import { crossedThresholds } from '@/sim/unlocks';
 
@@ -58,6 +60,26 @@ class GameStateClass {
       if (r.metHero) EventBus.emit(EV.heroChanged, r.metHero, true);
     }
     return r;
+  }
+
+  upgradeStaff(id: StaffId): A.StaffUpgradeResult | null {
+    const r = this._mutate(() => A.upgradeStaff(this.save, id));
+    if (r) EventBus.emit(EV.staffChanged, id, r);
+    return r;
+  }
+
+  get quest(): QuestProgress | null {
+    return currentQuest(this.save);
+  }
+
+  /** 领当前任务奖励；没完成返回 0 */
+  claimQuest(): number {
+    const got = this._mutate(() => claimQuest(this.save));
+    if (got > 0) {
+      EventBus.emit(EV.questChanged);
+      this.flush();
+    }
+    return got;
   }
 
   upgradeSkill(): boolean {

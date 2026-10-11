@@ -12,7 +12,7 @@ import { OverlayManager } from '@/core/OverlayManager';
 import { ToastManager } from '@/core/ToastManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
 import { GameState } from '@/managers/GameState';
-import { shopIncome, shopUpgradeCost } from '@/sim/economy';
+import { shopIncomeIn, shopUpgradeCost } from '@/sim/economy';
 import { formatMoney } from '@/sim/format';
 import { effectiveBond, isShopUnlocked } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
@@ -297,8 +297,8 @@ export class ShopMap extends PIXI.Container {
 
     let detail: string;
     if (!unlocked) detail = `身价达到 ${formatMoney(shop.unlockNetWorth)} 解锁`;
-    else if (level === 0) detail = `开店后每秒 +${formatMoney(shopIncome(shop.id, 1, bond))}`;
-    else detail = `每秒 +${formatMoney(shopIncome(shop.id, level, bond))}  →  +${formatMoney(shopIncome(shop.id, level + 1, bond))}`;
+    else if (level === 0) detail = `开店后每秒 +${formatMoney(shopIncomeIn(save, shop.id, 1))}`;
+    else detail = `每秒 +${formatMoney(shopIncomeIn(save, shop.id, level))}  →  +${formatMoney(shopIncomeIn(save, shop.id, level + 1))}`;
     const detailText = makeText(detail, 24, unlocked ? COLORS.champagne : COLORS.textOnGlassSoft);
     detailText.position.set(x + 32, y + 116);
     this._card.addChild(detailText);
