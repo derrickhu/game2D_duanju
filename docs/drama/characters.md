@@ -5,7 +5,7 @@
 
 ## 苏晚
 
-v2 定稿（2026-10-11）。全套造型共用一个记忆点：外婆留下的金色星星发夹，戴在左太阳穴上方，“晚星”品牌名和后期的星星元素都从它来。配色走一条线：序章樱花粉（被别人挑选）→ 夜市豆浆白 → 店里夜空藏青 + 金星（有了自己的品牌）→ 小香风奶茶白 → 白西装 + 玫瑰红唇 → 终章星河藏青礼服。
+v2 定稿（2026-10-11）。全套造型共用一个记忆点：外婆留下的金色星星发夹，戴在左太阳穴上方，“晚星”品牌名和后期的星星元素都从它来。配色走一条线：序章樱花粉（被别人挑选）→ 夜市豆浆白 → 店里夜空藏青 + 金星（有了自己的品牌）→ 小香风奶茶白 → 晚宴香槟金 → 白西装 + 玫瑰红唇 → 终章星河藏青礼服。
 
 - 立绘：`raw/portrait_suwan_v3.png`
 - 锁脸参考图：`ref/composite/suwan_face_ref.jpg`（所有造型都用它出设定图）
@@ -17,7 +17,8 @@ v2 定稿（2026-10-11）。全套造型共用一个记忆点：外婆留下的�
 | P 订婚礼服 | 序章 | `turnaround_suwan_p_v1.png`（纱裙相连，视图是手动切的） | 樱花粉纱裙、低盘发、订婚钻戒 |
 | A 夜市 | 0 / 第 1 章 | `turnaround_suwan_a_v2.png`（v1 没有发夹，已废弃） | 侧麻花辫、豆浆白围裙上的手缝金星 |
 | B 甜品店主 | 1 万 / 第 2–3 章 | `turnaround_suwan_b_v1.png` | 藏青围裙 + 金线星星、藏青缎带低马尾 |
-| C 小香风 | 1000 万 / 第 4–5 章 | `turnaround_suwan_c_v2.png`（v1 的包上有类似品牌标，已废弃） | 奶茶白粗花呢、黑丝绒蝴蝶结半扎发、珍珠耳钉 |
+| C 小香风 | 1000 万 / 第 4 章 | `turnaround_suwan_c_v2.png`（v1 的包上有类似品牌标，已废弃） | 奶茶白粗花呢、黑丝绒蝴蝶结半扎发、珍珠耳钉 |
+| C2 晚宴礼服 | 1 亿 / 第 5 章（慈善晚宴到急诊室） | `turnaround_suwan_c2_v1.png`（v2 发夹画成空心星，未用） | C 的晚宴版：香槟金缎面抹胸直筒长裙、腰后黑丝绒大蝴蝶结 + 长飘带、黑丝绒发结、珍珠吊坠耳环 |
 | D 白西装 | 10 亿 / 第 6–7 章 | `turnaround_suwan_d_v1.png` | 雪白宽肩西装、玫瑰红唇、星星吊坠 |
 | E 高定礼服 | 1000 亿 / 第 8 章 | 脸 `turnaround_suwan_e_v2.png`；全身 `views_raw/suwan_e_{front,34,side,back}.png` 单张出图 | 星河藏青蓬裙 + 水晶披风、星星钻石耳坠、玫瑰红唇 |
 
@@ -27,6 +28,7 @@ v2 定稿（2026-10-11）。全套造型共用一个记忆点：外婆留下的�
 - A：`long black hair in a loose side braid over her right shoulder tied with a small black hair tie; a plain white crew-neck T-shirt; a cream canvas bib apron, the color of fresh soy milk, with one small hand-stitched gold star on the chest pocket, tied at the back of the waist; light-blue straight-leg jeans with the cuffs rolled once; white canvas sneakers`
 - B：`long black hair in a neat low ponytail tied with a ribbon the deep blue of a night sky; a crisp white oxford shirt with the sleeves rolled to the elbows and the collar open; a long bib apron in deep navy blue, the color of a night sky, with one small star embroidered on the chest in gold thread; slim black ankle-length trousers; white leather sneakers`
 - C：`long black hair half-up, the upper half tied at the back with a black velvet bow, the lower half falling straight past her shoulders; a cropped tweed jacket in cream, the color of milk-tea foam, with black braided trim and round gold buttons; pearl stud earrings; a fitted black knit top; a black pleated skirt to the knee; black Mary Jane shoes with low block heels; a small smooth black leather handbag with a plain round gold clasp, carried on a gold chain over her shoulder`
+- C2：`long black hair half-up, the upper half tied at the back with a black velvet bow with long ribbon tails, the lower half falling in soft waves past her shoulders; a slim floor-length column evening gown of liquid silk satin in champagne gold, the soft shimmering color of a glass of champagne, with a straight-across strapless neckline; a large black velvet bow at the back of the waist with two long velvet ribbon tails; pearl drop earrings; a single strand of small pearls at the throat; a thin gold bracelet; black satin pointed heels`
 - D：`long black hair worn straight and sleek with a center part, falling past her shoulders; lips the deep red of a red rose; an oversized sharply tailored suit, white as fresh snow, with strong shoulders, a single-button blazer and wide-leg trousers; an ivory silk camisole under the blazer; a fine gold necklace with a small star pendant; nude pointed-toe stiletto heels`
 - E：`long black hair in a sleek low chignon, the gold star hairpin set above her left temple; lips the deep red of a red rose; a dramatic haute couture ball gown in deep midnight blue, the color of the night sky: a structured off-the-shoulder corset bodice, an enormous voluminous skirt of many layers of midnight-blue tulle, the whole gown densely embroidered with thousands of tiny crystals and silver threads like a glittering starry galaxy, the crystals growing denser toward the hem, and a long sweeping cathedral train; a sheer midnight-blue cape scattered with crystals flowing from her shoulders to the floor; long star-shaped diamond drop earrings; silver heels`
 
