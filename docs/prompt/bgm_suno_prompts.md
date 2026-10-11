@@ -1,5 +1,7 @@
 # BGM · Suno 提示词
 
+已接入（2026-10-11）：《甜点店的午后》→ `bgm_home.mp3`（主界面循环），《音乐盒的旋律》→ `bgm_romance.mp3`（打开男主面板时切换，关掉回到主界面曲）。母版在 `game_assets/duanju/assets/audio/`。
+
 Suno 没有公开 API，在 suno.com 用 Custom 模式手动生成。下载 mp3 后放到 `minigame/subpkg_audio/`，文件名如下，再跑 `node scripts/stage_cdn.mjs` 上传 CDN。
 
 两首共用标志性乐器：**钢琴 + 拨弦 + 轻柔弦乐**，只改速度和配器密度。

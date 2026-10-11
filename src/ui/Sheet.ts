@@ -59,6 +59,7 @@ export abstract class Sheet extends PIXI.Container {
   close(silent = false): void {
     if (!this._isOpen) return;
     this._isOpen = false;
+    this.onClose();
     if (silent) {
       this.visible = false;
       return;
@@ -94,6 +95,8 @@ export abstract class Sheet extends PIXI.Container {
   }
 
   protected onOpen(): void {}
+
+  protected onClose(): void {}
 
   protected abstract build(content: PIXI.Container, width: number): void;
 

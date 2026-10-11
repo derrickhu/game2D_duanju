@@ -160,6 +160,10 @@ class AudioManagerClass {
   playBgm(id: BgmId): void {
     this.init();
     const logical = this.bgmPath(id);
+    if (this.bgmId === id && this.bgmSrc) {
+      this.playBackgroundMusic();
+      return;
+    }
     this.bgmId = id;
     this.bgmLogical = logical;
     this.bgmHttpsTried = false;

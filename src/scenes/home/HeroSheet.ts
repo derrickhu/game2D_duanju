@@ -22,6 +22,14 @@ export class HeroSheet extends Sheet {
     super('男主');
   }
 
+  protected onOpen(): void {
+    AudioManager.playBgm('romance');
+  }
+
+  protected onClose(): void {
+    AudioManager.playBgm('home');
+  }
+
   protected build(content: PIXI.Container, width: number): void {
     let y = 0;
     for (const hero of HEROES) {
