@@ -64,6 +64,22 @@ export function drawStars(g: PIXI.Graphics, lit: number, total: number, r: numbe
   return g;
 }
 
+/** 一排爱心表示羁绊阶段；原点在第一颗中心 */
+export function drawHearts(g: PIXI.Graphics, lit: number, total: number, r: number, gap = r * 0.6): PIXI.Graphics {
+  for (let s = 0; s < total; s++) {
+    const cx = s * (r * 2 + gap);
+    const on = s < lit;
+    if (on) g.lineStyle(0).beginFill(COLORS.rose);
+    else g.lineStyle(1.5, COLORS.champagne, 0.55).beginFill(COLORS.glass, 0.4);
+    g.moveTo(cx, r * 0.9)
+      .bezierCurveTo(cx - r * 1.3, r * 0.05, cx - r * 1.05, -r * 1.05, cx, -r * 0.35)
+      .bezierCurveTo(cx + r * 1.05, -r * 1.05, cx + r * 1.3, r * 0.05, cx, r * 0.9)
+      .endFill();
+  }
+  g.lineStyle(0);
+  return g;
+}
+
 export function roundRect(w: number, h: number, r: number, fill: number, alpha = 1): PIXI.Graphics {
   const g = new PIXI.Graphics();
   g.beginFill(fill, alpha).drawRoundedRect(0, 0, w, h, r).endFill();

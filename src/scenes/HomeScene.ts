@@ -5,7 +5,7 @@
 import * as PIXI from 'pixi.js';
 import { ICONS, outfitFigurePath, outfitScenePath } from '@/data/art';
 import { BALANCE } from '@/data/balance';
-import { CHAPTERS, heroById, type HeroId } from '@/data/story';
+import { CHAPTERS, HEROES, heroById, type HeroId } from '@/data/story';
 import type { AreaDef, OutfitDef } from '@/data/world';
 import { EV } from '@/config/events';
 import { AudioManager } from '@/core/AudioManager';
@@ -24,11 +24,13 @@ import { formatDuration, formatMoney } from '@/sim/format';
 import type { ChapterDef } from '@/data/story';
 import { nextGoal } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
+import { showDialog } from '@/ui/Dialog';
 import { IconButton } from '@/ui/IconButton';
 import { ProgressBar } from '@/ui/ProgressBar';
 import { COLORS, drawGlass, makeNumText, makeText } from '@/ui/theme';
 import { fitCover, applyFit, gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
 import { HeroSheet } from './home/HeroSheet';
+import { heroHasNews } from './home/heroInfo';
 import { OutfitSheet } from './home/OutfitSheet';
 import { ShopMap } from './home/ShopMap';
 import { StaffSheet, staffHasAffordable } from './home/StaffSheet';
@@ -70,7 +72,7 @@ export class HomeScene implements Scene {
   private readonly _storySheet = new StorySheet();
   private readonly _outfitSheet = new OutfitSheet();
   private readonly _staffSheet = new StaffSheet();
-  private readonly _staffDot = new PIXI.Graphics();
+  private readonly _navDots = new Map<string, PIXI.Graphics>();
 
   private readonly _quest = new PIXI.Container();
   private readonly _questBg = new PIXI.Graphics();
@@ -127,6 +129,7 @@ export class HomeScene implements Scene {
       EventBus.on(EV.moneyChanged, () => {
         this._shopSheet.refreshAffordable();
         this._staffSheet.refreshAffordable();
+        this._heroSheet.refreshAffordable();
       });
       EventBus.on(EV.saveChanged, () => this._applyOutfit());
       EventBus.on(EV.chapterUnlocked, (ch: ChapterDef) => this._onChapter(ch));
@@ -154,7 +157,7 @@ export class HomeScene implements Scene {
     const H = Game.logicHeight;
     const top = Game.safeTop;
     const bottom = H - Game.safeBottom;
-    this._bg.clear().beginFill(COLORS.bg).drawRect(0, 0, W, H).endFill();
+    this._bg.clear().beginFill(COLORS.glass).drawRect(0, 0, W, H).endFill();
     if (isTextureReady(this._bgSprite.texture)) {
       applyFit(this._bgSprite, fitCover(this._bgSprite.texture.width, this._bgSprite.texture.height, W, H));
     }
@@ -236,12 +239,11 @@ export class HomeScene implements Scene {
       const btn = new IconButton({ icon, label, size: 80, plate: false, onTap: open });
       btn.position.set(24 + w * i + w / 2, NAV_H / 2 - 12);
       this._nav.addChild(btn);
-      if (label === '店员') {
-        this._staffDot.beginFill(COLORS.rose).drawCircle(0, 0, 8).endFill();
-        this._staffDot.position.set(btn.x + 26, btn.y - 26);
-        this._staffDot.visible = false;
-        this._nav.addChild(this._staffDot);
-      }
+      const dot = new PIXI.Graphics().beginFill(COLORS.rose).drawCircle(0, 0, 8).endFill();
+      dot.position.set(btn.x + 26, btn.y - 26);
+      dot.visible = false;
+      this._navDots.set(label, dot);
+      this._nav.addChild(dot);
       if (i > 0) {
         const sep = new PIXI.Graphics().beginFill(COLORS.champagne, 0.25).drawRect(24 + w * i, 30, 1, NAV_H - 60).endFill();
         this._nav.addChild(sep);
@@ -377,7 +379,14 @@ export class HomeScene implements Scene {
     this._rushBtn.setEnabled(cd <= 0 && rushOrdersLeftToday(save, now) > 0);
     this._boostBtn.setLabel('直播带货', boostLeft > 0 ? '续播 +10分' : '收益×2');
     this._refreshQuest();
-    this._staffDot.visible = staffHasAffordable();
+    this._setNavDot('店员', staffHasAffordable());
+    this._setNavDot('男主', HEROES.some(heroHasNews));
+    this._setNavDot('剧情', CHAPTERS.some((ch) => save.netWorth >= ch.unlockNetWorth && ch.videos.some((v) => !save.watched.includes(v))));
+  }
+
+  private _setNavDot(label: string, on: boolean): void {
+    const dot = this._navDots.get(label);
+    if (dot) dot.visible = on;
   }
 
   /** 首次进入播序章；之后检查离线收益 */
@@ -404,7 +413,7 @@ export class HomeScene implements Scene {
       GameState.flush();
       return;
     }
-    const double = await Platform.showModal({
+    const double = await showDialog({
       title: '离线收益',
       content: `你离开的 ${formatDuration(off.seconds)} 里，店里赚了 ¥${formatMoney(off.amount)}`,
       confirmText: '看广告翻倍',
@@ -427,7 +436,7 @@ export class HomeScene implements Scene {
   private _onChapter(ch: ChapterDef): void {
     if (GameState.save.tutorialStep < TUTORIAL_DONE && ch.id >= 1) GameState.setTutorialStep(TUTORIAL_DONE);
     AudioManager.play('chapter_unlock');
-    void Platform.showModal({
+    void showDialog({
       title: `第 ${ch.id} 章解锁`,
       content: `「${ch.title}」剧情已更新，现在观看吗？`,
       confirmText: '去看',

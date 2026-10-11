@@ -53,6 +53,11 @@ export function staffFigurePath(id: StaffId): string {
   return `subpkg_images/staff_${id}.png`;
 }
 
+/** 男主全身像（透明底，高 1280，3/4 侧身） */
+export function heroFigurePath(id: HeroId): string {
+  return `subpkg_images/hero_${id}.png`;
+}
+
 export function heroPortraitPath(id: HeroId): string {
   return `subpkg_images/portrait_${id}.jpg`;
 }

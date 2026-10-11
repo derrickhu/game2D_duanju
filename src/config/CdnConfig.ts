@@ -43,6 +43,7 @@ export const CDN_CONFIG: CdnConfig = {
     'subpkg_images/city_',
     'subpkg_images/suwan_',
     'subpkg_images/staff_',
+    'subpkg_images/hero_',
     'subpkg_audio/',
     'videos/',
   ],

@@ -8,9 +8,9 @@ export class ProgressBar extends PIXI.Container {
   constructor(
     private readonly _w: number,
     private readonly _h: number,
-    private readonly _color: number = COLORS.rose,
-    trackColor: number = COLORS.cardMuted,
-    trackAlpha = 1,
+    private readonly _color: number = COLORS.champagne,
+    trackColor: number = COLORS.white,
+    trackAlpha = 0.18,
   ) {
     super();
     this._bg.beginFill(trackColor, trackAlpha).drawRoundedRect(0, 0, _w, _h, _h / 2).endFill();

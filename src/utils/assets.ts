@@ -175,6 +175,35 @@ export function applyGray(target: PIXI.DisplayObject): void {
   target.filters = [_gray];
 }
 
+const figurePaths = new WeakMap<PIXI.Sprite, string>();
+
+/**
+ * 立绘按框等比缩放；贴图没到时先隐藏，到了只改这一张，不用重建整页。
+ * onReady 在缩放完成后调用（比如做个淡入）。
+ */
+export function showFigure(sprite: PIXI.Sprite, path: string, boxW: number, boxH: number, onReady?: () => void): void {
+  const apply = (): void => {
+    if (sprite.destroyed) return;
+    const tex = sprite.texture;
+    if (!isTextureReady(tex)) return;
+    sprite.scale.set(Math.min(boxW / tex.width, boxH / tex.height));
+    sprite.visible = true;
+    onReady?.();
+  };
+  figurePaths.set(sprite, path);
+  sprite.texture = gameTexture(path);
+  if (isTextureReady(sprite.texture)) {
+    apply();
+    return;
+  }
+  sprite.visible = false;
+  whenTextureReady(path, () => {
+    if (sprite.destroyed || figurePaths.get(sprite) !== path) return;
+    sprite.texture = gameTexture(path);
+    apply();
+  });
+}
+
 export function fitSpriteInBox(sprite: PIXI.Sprite, boxW: number, boxH: number, fallback = 256): number {
   const { w, h } = readyTextureSize(sprite.texture, fallback);
   const scale = Math.min(boxW / Math.max(1, w), boxH / Math.max(1, h));

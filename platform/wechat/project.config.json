@@ -42,6 +42,7 @@
       { "type": "glob", "value": "subpkg_images/city_*" },
       { "type": "glob", "value": "subpkg_images/suwan_*" },
       { "type": "glob", "value": "subpkg_images/staff_*" },
+      { "type": "glob", "value": "subpkg_images/hero_*" },
       { "type": "folder", "value": "subpkg_audio" }
     ],
     "include": []

@@ -22,8 +22,8 @@ export class LoadingScene implements Scene {
   readonly container = new PIXI.Container();
   private readonly _bg = new PIXI.Graphics();
   private readonly _photo = new PIXI.Sprite(PIXI.Texture.EMPTY);
-  private readonly _title = makeText('假千金逆袭', 64, COLORS.roseDeep, true);
-  private readonly _tip = makeText('正在加载…', 26, COLORS.inkSoft);
+  private readonly _title = makeText('假千金逆袭', 64, COLORS.champagne, true);
+  private readonly _tip = makeText('正在加载…', 26, COLORS.textOnGlassSoft);
   private readonly _bar = new ProgressBar(460, 18, COLORS.champagne, COLORS.white, 0.28);
   private readonly _notice = new PIXI.Container();
   private readonly _noticeBg = new PIXI.Graphics();
@@ -57,7 +57,7 @@ export class LoadingScene implements Scene {
   relayout(): void {
     const W = Game.logicWidth;
     const H = Game.logicHeight;
-    this._bg.clear().beginFill(COLORS.bg).drawRect(0, 0, W, H).endFill();
+    this._bg.clear().beginFill(COLORS.glass).drawRect(0, 0, W, H).endFill();
     const ready = isTextureReady(this._photo.texture);
     this._photo.visible = ready;
     this._title.visible = !ready;
