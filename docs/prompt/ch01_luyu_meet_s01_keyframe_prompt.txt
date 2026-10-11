@@ -1,0 +1,9 @@
+Start frame of a shot from a Chinese urban romance short drama, vertical 9:16, cinematic film still, photorealistic digital humans with the same faces as the reference.
+
+The reference image contains three panels: panel 1 is the heroine Su Wan (face, braid and outfit), panel 2 is Lu Yu (face, hair and outfit), panel 3 is the night market location. Keep both faces, hairstyles and outfits exactly as in the reference, and place them in the location from panel 3.
+
+Moment: a rainy night at the night market. Su Wan stands behind her old wooden dessert cart in the left half of the frame, both hands spread over the glass display case to shield it from the rain, raindrops on her hair and shoulders, looking up with surprise. Lu Yu stands close beside the cart in the right half of the frame, slightly behind her, holding a black umbrella tilted fully over Su Wan and the cart, his own right shoulder and hair getting wet in the rain, looking down at her calmly. Both faces are clearly visible, turned three-quarters toward the camera.
+
+Camera: medium two-shot from the waist up at chest height, both characters fill the frame.
+
+Lighting: night scene, warm orange string lights and stall lamps behind them forming soft bokeh, a soft warm key light from the stall lamp on their faces, cool blue rim light from the rainy sky, visible streaks of falling rain backlit by the bulbs, wet reflections on the cart. Rich cinematic color grading like a high-budget Chinese web drama.

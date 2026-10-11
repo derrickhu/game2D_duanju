@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.DS_Store
+node_modules/
+.bundle/
+build/
+minigame/game-bundle.js
+project.private.config.json

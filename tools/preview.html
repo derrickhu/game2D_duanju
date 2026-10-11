@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>duanju 浏览器预览</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #222; }
+    canvas { display: block; margin: 0 auto; width: 375px; height: 667px; }
+  </style>
+</head>
+<body>
+  <!-- 先 npm run build，再在仓库根目录 python3 -m http.server 8765，打开 /tools/preview.html -->
+  <canvas width="375" height="667"></canvas>
+  <script src="../.bundle/game-bundle.js"></script>
+</body>
+</html>

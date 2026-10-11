@@ -1,0 +1,160 @@
+var _runtime = require('./runtime.js');
+var _nativeApi = _runtime.getNativePlatformApi();
+
+var _diagMsgs = [];
+var _diagStart = Date.now();
+function _diag(msg) {
+  var ts = Date.now() - _diagStart;
+  var line = '[' + ts + 'ms] ' + msg;
+  _diagMsgs.push(line);
+  try { console.log(line); } catch (_) {}
+}
+
+function _showDiag() {
+  try {
+    if (_nativeApi && _nativeApi.showModal) {
+      _nativeApi.showModal({
+        title: '启动诊断',
+        content: _diagMsgs.join('\n'),
+        showCancel: false,
+      });
+    }
+  } catch (_) {}
+}
+
+_diag('game.js 开始执行, host=' + _runtime.detectMinigamePlatform());
+
+try {
+  if (typeof GameGlobal !== 'undefined') {
+    GameGlobal.onError = function (msg) {
+      _diag('onError:' + msg);
+      _showDiag();
+    };
+    GameGlobal.onUnhandledRejection = function (ev) {
+      _diag('unhandledRej:' + (ev && ev.reason || ev));
+      _showDiag();
+    };
+  }
+} catch (_) {}
+
+function _logSystemInfo() {
+  try {
+    if (!_nativeApi || typeof _nativeApi.getSystemInfoSync !== 'function') return;
+    var _si = _nativeApi.getSystemInfoSync();
+    _diag('platform:' + _si.platform + ' system:' + _si.system);
+  } catch (e) {
+    _diag('getSystemInfo失败:' + e);
+  }
+}
+
+function _installAdapter() {
+  _diag('加载 pixi-adapter...');
+  try {
+    require('./pixi-adapter/index');
+    _diag('pixi-adapter OK');
+  } catch (e) {
+    _diag('pixi-adapter 失败!!:' + e);
+    _showDiag();
+  }
+
+  if (typeof Intl === 'undefined') {
+    _diag('Intl不存在,注入polyfill');
+    var _g = typeof GameGlobal !== 'undefined' ? GameGlobal : (typeof globalThis !== 'undefined' ? globalThis : {});
+    _g.Intl = {};
+  }
+}
+
+var _started = false;
+function _startGame(reason) {
+  if (_started) return;
+  _started = true;
+  if (reason) _diag(reason);
+  _diag('加载 game-bundle...');
+  try {
+    require('./game-bundle.js');
+    _diag('game-bundle OK');
+  } catch (e) {
+    _diag('game-bundle 失败!!:' + e);
+    _showDiag();
+  }
+  _diag('全部加载完成');
+}
+
+function _errText(err) {
+  return String((err && (err.errMsg || err.message)) || err || '');
+}
+
+function _isDevtools() {
+  try {
+    return !!( _nativeApi && _nativeApi.getSystemInfoSync && _nativeApi.getSystemInfoSync().platform === 'devtools');
+  } catch (_) {
+    return false;
+  }
+}
+
+function _requireImagesEntry() {
+  try {
+    require('./subpkg_images/game.js');
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function _kickSubpackages() {
+  if (!_nativeApi || typeof _nativeApi.loadSubpackage !== 'function') {
+    if (_requireImagesEntry()) _diag('无 loadSubpackage,已 require 图片入口');
+    return;
+  }
+  try {
+    _nativeApi.loadSubpackage({
+      name: 'images',
+      success: function () { _diag("图片分包开始下载/已就绪"); },
+      fail: function (err) {
+        _diag('图片分包失败:' + _errText(err));
+      },
+    });
+  } catch (e) {
+    _diag('loadSubpackage 异常:' + e);
+  }
+}
+
+function _loadImagesThenStart() {
+  // 主包先出 Loading。images 分包由这里并行踢下载，main 里等齐再预加载首屏图。
+  // 开发者工具里 loadSubpackage 常挂起，本地文件已在磁盘。
+  if (_isDevtools()) {
+    if (_requireImagesEntry()) _diag('devtools 已 require 图片分包入口');
+    _startGame('devtools 跳过等待 loadSubpackage');
+    return;
+  }
+  _kickSubpackages();
+  _startGame('先出 loading，分包并行');
+}
+
+var _bootScheduled = false;
+function _bootAfterBridge() {
+  if (_bootScheduled) return;
+  _bootScheduled = true;
+  _logSystemInfo();
+  _installAdapter();
+  _loadImagesThenStart();
+}
+
+// 开发者工具刚切工程时 jsbridge 还没好，立刻 getSystemInfo / 装 adapter 会刷红。
+// 等一帧再启动；onShow 再兜一层（真机冷启动有时 setTimeout 0 仍偏早）。
+var _nextTick = (typeof setTimeout === 'function')
+  ? function (cb) { setTimeout(cb, 0); }
+  : function (cb) { cb(); };
+_nextTick(_bootAfterBridge);
+try {
+  if (_nativeApi && typeof _nativeApi.onShow === 'function') {
+    _nativeApi.onShow(function () { _bootAfterBridge(); });
+  }
+} catch (_) {}
+
+setTimeout(function () {
+  if (typeof GameGlobal !== 'undefined' && !GameGlobal.__gameRendered) {
+    _diag('12秒超时 - 游戏未渲染');
+    _showDiag();
+  }
+}, 12000);

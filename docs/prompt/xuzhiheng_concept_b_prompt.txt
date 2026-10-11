@@ -1,0 +1,20 @@
+Character concept sheet for a live-action-style Chinese AI short drama, one single 16:9 image split into two panels side by side. Hyper-realistic digital human in the style of top Chinese short-drama male leads: idealized handsome, porcelain-fair skin with fine natural texture, real hair strands, real fabric texture, cinematic color grading.
+
+The reference image provides only the rendering style: realism level, skin, lighting, color grading. Create a brand-new person with the features below.
+
+Character: Xu Zhiheng, 29, a doctor, gentle as jade, distant at first glance but deeply attentive. Design direction "night-shift surgeon": capable, tired, unexpectedly cute.
+Face: gentle almond-shaped eyes, soft straight eyebrows, slender oval face, a warm faint smile.
+Signature features, clearly visible:
+- Short soft black hair under a surgical scrub cap printed with tiny yellow rubber ducks.
+- A surgical mask pulled down under his chin.
+- A thin red string bracelet on his left wrist.
+Outfit:
+- Surgical scrubs in deep teal, the color of a peacock feather.
+- A long white doctor's coat worn open over the scrubs.
+- White clogs.
+Silhouette: the teal scrubs form a strong color block inside the open white coat; tall, about 185 cm.
+
+Left panel: chest-up portrait, he looks at the camera with tired but gentle eyes and a small smile, pulling the mask down with one finger. Shallow depth of field.
+Right panel: full body, sitting on a bench in a quiet hospital corridor at night, holding a cup of instant noodles, the corridor lights dim.
+
+Both panels share soft cool night corridor lighting with one warm lamp. Clean picture showing only the character and the scene.

@@ -1,0 +1,47 @@
+{
+  "description": "短剧逆袭女性向小游戏 · 微信。用微信开发者工具打开 build/wechat/。appid 申请后填这里。",
+  "projectname": "game2D_duanju",
+  "appid": "touristappid",
+  "compileType": "game",
+  "libVersion": "3.12.1",
+  "isGameTourist": false,
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {},
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "localPlugins": false,
+    "condition": false,
+    "swc": false,
+    "compileWorklet": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "disableUseStrict": false,
+    "minifyWXML": true,
+    "useCompilerPlugins": false,
+    "disableSWC": true,
+    "compileHotReLoad": true
+  },
+  "packOptions": {
+    "ignore": [
+      { "type": "folder", "value": "videos" },
+      { "type": "glob", "value": "subpkg_images/portrait_*" },
+      { "type": "glob", "value": "subpkg_images/scene_*" },
+      { "type": "glob", "value": "subpkg_images/city_*" },
+      { "type": "folder", "value": "subpkg_audio" }
+    ],
+    "include": []
+  }
+}
