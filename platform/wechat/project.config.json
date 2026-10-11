@@ -1,5 +1,5 @@
 {
-  "description": "短剧逆袭女性向小游戏 · 微信。用微信开发者工具打开 build/wechat/。appid 已填。",
+  "description": "短剧逆袭女性向小游戏 · 微信。用微信开发者工具打开 build/wechat/。appid 已填。es6 必须保持 false：打开后开发者工具会用 SWC 重编 game-bundle.js，并插入小游戏里不存在的 @swc/runtime。",
   "projectname": "game2D_duanju",
   "appid": "wx06d4ac75bc87dec2",
   "compileType": "game",
@@ -9,7 +9,7 @@
   "editorSetting": {},
   "setting": {
     "urlCheck": false,
-    "es6": true,
+    "es6": false,
     "postcss": true,
     "minified": true,
     "newFeature": true,
@@ -24,7 +24,7 @@
     "swc": false,
     "compileWorklet": false,
     "babelSetting": {
-      "ignore": [],
+      "ignore": ["game-bundle.js"],
       "disablePlugins": [],
       "outputPath": ""
     },

@@ -27,7 +27,7 @@ export class IconButton extends PIXI.Container {
     super();
     const size = _opts.size ?? 104;
     const plate = _opts.plate ?? true;
-    if (plate) drawGlass(this._plate, -size / 2, -size / 2, size, size, size / 2);
+    if (plate) drawGlass(this._plate, -size / 2, -size / 2, size, size, size / 2, 0.72);
     this._icon = new PIXI.Sprite(gameTexture(_opts.icon));
     this._icon.anchor.set(0.5);
     const iconSize = plate ? size * 0.5 : size * 0.62;

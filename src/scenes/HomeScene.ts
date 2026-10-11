@@ -1,6 +1,6 @@
 /**
- * 主界面：顶部身价 / 钱 / 每秒收益和主线任务条，中间是当前造型的女主立绘（点她赚钱），
- * 背景随造型切换，两侧广告加速，底部五个面板入口。布局按 750 设计宽。
+ * 主界面：顶部身价 / 钱 / 每秒收益，中间是当前造型的女主立绘（点她赚钱），
+ * 背景随造型切换，两侧广告加速，主线任务卡片在右下，底部五个面板入口。布局按 750 设计宽。
  */
 import * as PIXI from 'pixi.js';
 import { ICONS, outfitFigurePath, outfitScenePath } from '@/data/art';
@@ -38,7 +38,8 @@ const OFFLINE_MIN_SEC = 60;
 const NAV_H = 120;
 const HUD_H = 168;
 const GOAL_BAR_INSET = 56;
-const QUEST_H = 64;
+const QUEST_W = 292;
+const QUEST_H = 152;
 
 export class HomeScene implements Scene {
   readonly name = 'home';
@@ -93,13 +94,13 @@ export class HomeScene implements Scene {
     this._boostBtn = new IconButton({ icon: ICONS.live, label: '直播带货', sub: '收益×2', size: 96, onTap: () => this._liveBoost() });
     this._rushBtn = new IconButton({ icon: ICONS.gift, label: '接急单', sub: '', size: 96, onTap: () => this._rushOrder() });
 
-    this._questBtn = new Button({ width: 120, height: 48, label: '领取', variant: 'gold', fontSize: 24, onTap: () => this._claimQuest() });
+    this._questBtn = new Button({ width: 220, height: 46, label: '领取', variant: 'gold', fontSize: 24, onTap: () => this._claimQuest() });
     this._buildQuest();
     this._buildNav();
 
     this.container.addChild(
       this._bg, this._bgSprite, this._hudCard, this._netWorthLabel, this._netWorth, this._money, this._income,
-      this._goalLabel, this._goalBar, this._quest, this._tapArea, this._floatLayer,
+      this._goalLabel, this._goalBar, this._tapArea, this._floatLayer, this._quest,
       this._skillBtn, this._boostBtn, this._rushBtn, this._nav,
     );
 
@@ -167,10 +168,12 @@ export class HomeScene implements Scene {
     this._goalBar.position.set(GOAL_BAR_INSET, hudY + 146);
 
     const hudBottom = hudY + HUD_H;
-    this._quest.position.set(24, hudBottom + 12);
     const navTop = bottom - NAV_H - 16;
     const skillY = navTop - 62;
-    this._layoutFigure(hudBottom + 12 + QUEST_H + 12, skillY - 52);
+    // 贴在点按提示上方、靠右，避开顶部信息条和正中的手艺按钮
+    const tapPillTop = skillY - 116;
+    this._quest.position.set(W - 20 - QUEST_W, tapPillTop - 12 - QUEST_H);
+    this._layoutFigure(hudBottom + 8, skillY - 52);
     const sideY = hudBottom + (skillY - hudBottom) * 0.42;
     this._boostBtn.position.set(80, sideY);
     this._rushBtn.position.set(W - 80, sideY);
@@ -247,32 +250,35 @@ export class HomeScene implements Scene {
   }
 
   private _buildQuest(): void {
-    const w = Game.logicWidth - 48;
-    drawGlass(this._questBg, 0, 0, w, QUEST_H, QUEST_H / 2, 0.55);
-    const tagBg = new PIXI.Graphics().beginFill(COLORS.champagne).drawRoundedRect(12, 14, 64, QUEST_H - 28, (QUEST_H - 28) / 2).endFill();
+    drawGlass(this._questBg, 0, 0, QUEST_W, QUEST_H, 28, 0.72);
+    const tagBg = new PIXI.Graphics().beginFill(COLORS.champagne).drawRoundedRect(16, 14, 72, 32, 16).endFill();
     this._questTag.anchor.set(0.5);
-    this._questTag.position.set(44, QUEST_H / 2);
+    this._questTag.position.set(52, 30);
     this._questTitle.anchor.set(0, 0.5);
-    this._questTitle.position.set(92, QUEST_H / 2);
-    this._questInfo.anchor.set(1, 0.5);
-    this._questInfo.position.set(w - 24, QUEST_H / 2);
-    this._questBtn.position.set(w - 72, QUEST_H / 2);
+    this._questTitle.position.set(16, 68);
+    this._questInfo.anchor.set(0, 0.5);
+    this._questInfo.position.set(16, 116);
+    this._questBtn.position.set(QUEST_W / 2, 116);
     this._quest.addChild(this._questBg, tagBg, this._questTag, this._questTitle, this._questInfo, this._questBtn);
     this._quest.eventMode = 'static';
-    this._quest.hitArea = new PIXI.Rectangle(0, 0, w, QUEST_H);
+    this._quest.hitArea = new PIXI.Rectangle(0, 0, QUEST_W, QUEST_H);
+  }
+
+  private _fitLine(text: PIXI.Text, maxW: number): void {
+    text.scale.set(1);
+    if (text.width > maxW) text.scale.set(maxW / text.width);
   }
 
   private _refreshQuest(): void {
     const q = GameState.quest;
     this._quest.visible = !!q;
     if (!q) return;
-    const progress = q.done ? '' : `（${formatMoney(q.current)}/${formatMoney(q.target)}）`;
-    this._questTitle.text = `${q.quest.title}${progress}`;
+    this._questTitle.text = q.quest.title;
+    this._fitLine(this._questTitle, QUEST_W - 32);
     this._questBtn.visible = q.done;
     this._questInfo.visible = !q.done;
-    this._questInfo.text = `奖励 ¥${formatMoney(q.reward)}`;
-    const maxW = Game.logicWidth - 48 - 92 - (q.done ? 150 : this._questInfo.width + 40);
-    this._questTitle.scale.set(Math.min(1, maxW / Math.max(1, this._questTitle.width / this._questTitle.scale.x)));
+    this._questInfo.text = `${formatMoney(q.current)}/${formatMoney(q.target)}  ·  奖励 ¥${formatMoney(q.reward)}`;
+    this._fitLine(this._questInfo, QUEST_W - 32);
   }
 
   private _claimQuest(): void {

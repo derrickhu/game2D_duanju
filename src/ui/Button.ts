@@ -33,7 +33,7 @@ export class Button extends PIXI.Container {
     this._label = makeText(opts.label, size, textColor, true);
     this._label.anchor.set(0.5);
     this._sub = opts.sub !== undefined
-      ? makeText(opts.sub, Math.round(size * 0.72), variant === 'glass' ? COLORS.textOnGlassSoft : textColor)
+      ? makeText(opts.sub, Math.round(size * 0.72), variant === 'glass' ? COLORS.champagneDeep : textColor)
       : null;
     this._sub?.anchor.set(0.5);
     this.addChild(this._bg, this._label);
@@ -75,7 +75,7 @@ export class Button extends PIXI.Container {
     const variant = this._opts.variant ?? 'solid';
     this._bg.clear();
     if (variant === 'glass') {
-      drawGlass(this._bg, -w / 2, -h / 2, w, h, h / 2);
+      drawGlass(this._bg, -w / 2, -h / 2, w, h, h / 2, 0.72);
       this.alpha = this._enabled ? 1 : 0.6;
     } else if (variant === 'gold') {
       const color = this._enabled ? COLORS.champagne : COLORS.disabled;

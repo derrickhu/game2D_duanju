@@ -18,7 +18,7 @@ import { ensureBootSubpackages } from '@/utils/bootSubpackages';
 import { preloadTextures } from '@/utils/assets';
 import { outfitFigurePath, outfitScenePath } from '@/data/art';
 
-const BOOT_HOLD_MS = 480;
+const BOOT_HOLD_MS = 1800;
 
 CloudSyncManager.prewarm();
 
@@ -101,7 +101,7 @@ async function main(): Promise<void> {
 
   // 首帧之后再挂分享菜单，太早调用真机会静默失败
   globalThis.setTimeout(() => {
-    Platform.bindShareMenu(() => '被退婚那天，我开始身价暴涨');
+    Platform.bindShareMenu(() => '假千金逆袭');
   }, 0);
 
   analytics.trackSessionStart({ entry: 'main_boot', cloud_sync_status: startupSync.status });

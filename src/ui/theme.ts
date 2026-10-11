@@ -8,8 +8,8 @@ export const COLORS = {
   cardMuted: 0xF4ECE8,
   rose: 0xE07A8B,
   roseDeep: 0xC2566B,
-  gold: 0xD9A35B,
-  goldLight: 0xF6D9A6,
+  gold: 0xF0B429,
+  goldLight: 0xFFE08A,
   ink: 0x3A2A2E,
   inkSoft: 0x8C7479,
   disabled: 0xD8CCCF,
@@ -17,8 +17,8 @@ export const COLORS = {
   white: 0xFFFFFF,
   /** 主界面和产业地图：烟灰磨砂玻璃 + 香槟金描边，压在写实背景上不抢人物 */
   glass: 0x1C1417,
-  champagne: 0xECCE96,
-  champagneDeep: 0xC9A266,
+  champagne: 0xFFD15C,
+  champagneDeep: 0xE6A83A,
   textOnGlass: 0xF7F0EA,
   textOnGlassSoft: 0xCFC3BC,
 } as const;
@@ -29,7 +29,7 @@ export const FONT_NUM = 'Didot, Georgia, Times New Roman, serif';
 export const GLASS_ALPHA = 0.5;
 
 export function drawGlass(g: PIXI.Graphics, x: number, y: number, w: number, h: number, r: number, alpha = GLASS_ALPHA): PIXI.Graphics {
-  g.lineStyle(2, COLORS.champagne, 0.55, 0);
+  g.lineStyle(2.5, COLORS.champagne, 0.95, 0);
   g.beginFill(COLORS.glass, alpha).drawRoundedRect(x, y, w, h, r).endFill();
   g.lineStyle(0);
   return g;

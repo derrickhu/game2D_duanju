@@ -101,7 +101,8 @@ export default defineConfig({
   },
   plugins: [pixiUnsafeEvalPlugin(), assemblePlatformsPlugin()],
   build: {
-    // 微信上传校验不认 ES2020 的 ?? / ?.
+    // 微信上传校验不认 ES2020 的 ?? / ?.。class 留给基础库原生执行，不要再降到 es5：
+    // 当前 esbuild 降不了 const，而且开发者工具若再编一遍 class 会插入 @swc/runtime。
     target: 'es2017',
     outDir: BUNDLE_DIR,
     assetsInlineLimit: 0,
