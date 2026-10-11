@@ -17,7 +17,7 @@ import { formatMoney } from '@/sim/format';
 import { effectiveBond, isShopUnlocked } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
 import { COLORS, drawGlass, makeNumText, makeText } from '@/ui/theme';
-import { gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
+import { applyFit, fitCover, gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
 
 const PIN_R = 34;
 const CARD_H = 248;
@@ -31,7 +31,7 @@ export class ShopMap extends PIXI.Container {
   private readonly _top = new PIXI.Container();
   private readonly _card = new PIXI.Container();
   private readonly _money = makeText('', 24, COLORS.champagne, true);
-  private _selected: ShopId = 'stall';
+  private _selected: ShopId | null = null;
   private _isOpen = false;
   private _actionBtn: Button | null = null;
 
@@ -39,6 +39,10 @@ export class ShopMap extends PIXI.Container {
     super();
     this.visible = false;
     this._bg.eventMode = 'static';
+    this._map.eventMode = 'static';
+    this._bg.on('pointertap', () => this._dismissCard());
+    this._map.on('pointertap', () => this._dismissCard());
+    this._card.on('pointertap', (e: PIXI.FederatedPointerEvent) => e.stopPropagation());
     this.addChild(this._bg, this._map, this._shade, this._pins, this._top, this._card);
     OverlayManager.container.addChild(this);
   }
@@ -50,7 +54,7 @@ export class ShopMap extends PIXI.Container {
   open(): void {
     this._isOpen = true;
     this.visible = true;
-    this._selected = this._defaultSelection();
+    this._selected = null;
     AudioManager.play('ui_open');
     this._map.texture = gameTexture(CITY_MAP);
     whenTextureReady(CITY_MAP, () => { if (this._isOpen) this.relayout(); });
@@ -88,23 +92,25 @@ export class ShopMap extends PIXI.Container {
   refreshAffordable(): void {
     if (!this._isOpen) return;
     this._refreshMoney();
+    if (!this._selected) return;
     const save = GameState.save;
     const level = save.shops[this._selected] ?? 0;
     this._actionBtn?.setEnabled(save.money >= shopUpgradeCost(this._selected, level));
+  }
+
+  /** 点卡片以外的地方收起卡片，页面本身留着 */
+  private _dismissCard(): void {
+    if (!this._selected) return;
+    this._selected = null;
+    AudioManager.play('ui_close');
+    this.relayout();
   }
 
   relayout(): void {
     const W = Game.logicWidth;
     const H = Game.logicHeight;
     this._bg.clear().beginFill(COLORS.glass).drawRect(0, 0, W, H).endFill();
-    const tex = this._map.texture;
-    if (isTextureReady(tex)) {
-      // 底边对齐信息卡上沿附近，老街两家店才不会压在卡片下；多出来的高度从天空那侧裁
-      const visibleH = this._cardTop() + 60;
-      const scale = Math.max(W / tex.width, visibleH / tex.height);
-      this._map.scale.set(scale);
-      this._map.position.set((W - tex.width * scale) / 2, visibleH - tex.height * scale);
-    }
+    this._layoutMap();
     this._shade.clear();
     const fadeTop = Game.safeTop + TOP_H + 40;
     for (let i = 0; i < 12; i++) {
@@ -118,11 +124,19 @@ export class ShopMap extends PIXI.Container {
     return Game.logicHeight - Game.safeBottom - CARD_H - 20;
   }
 
-  private _defaultSelection(): ShopId {
-    const save = GameState.save;
-    const open = SHOPS.filter((s) => isShopUnlocked(save, s.id));
-    const affordable = open.filter((s) => save.money >= shopUpgradeCost(s.id, save.shops[s.id] ?? 0));
-    return (affordable[affordable.length - 1] ?? open[open.length - 1] ?? SHOPS[0]).id;
+  /** 铺满屏幕。选中的店如果会被卡片挡住，就把地图往上挪，让圆标和店名露在卡片上方 */
+  private _layoutMap(): void {
+    const tex = this._map.texture;
+    if (!isTextureReady(tex)) return;
+    const fit = fitCover(tex.width, tex.height, Game.logicWidth, Game.logicHeight);
+    let y = fit.y;
+    if (this._selected) {
+      const ny = SHOP_MAP_POS[this._selected][1];
+      const labelBottom = y + ny * tex.height * fit.scale + PIN_R + 56;
+      const limit = this._cardTop() - 12;
+      if (labelBottom > limit) y -= labelBottom - limit;
+    }
+    applyFit(this._map, { ...fit, y });
   }
 
   /** 地图原图上的归一化坐标 → 逻辑坐标 */
@@ -143,24 +157,39 @@ export class ShopMap extends PIXI.Container {
 
   private _buildTop(): void {
     const W = Game.logicWidth;
+    const money = this._money;
+    money.parent?.removeChild(money);
     for (const c of this._top.removeChildren()) c.destroy({ children: true });
-    const y = Game.safeTop - 6;
-    const bar = drawGlass(new PIXI.Graphics(), 24, y, W - 48, TOP_H, TOP_H / 2);
+    const y = Game.safeTop + 4;
+    const h = 64;
+
     const back = new PIXI.Container();
+    const backW = 156;
+    back.addChild(drawGlass(new PIXI.Graphics(), 0, 0, backW, h, h / 2));
     const arrow = new PIXI.Graphics();
-    arrow.lineStyle(4, COLORS.champagne, 1).moveTo(10, -16).lineTo(-6, 0).lineTo(10, 16);
-    back.addChild(arrow);
-    back.position.set(72, y + TOP_H / 2);
-    back.hitArea = new PIXI.Rectangle(-40, -40, 100, 80);
+    arrow.lineStyle(4, COLORS.champagne).moveTo(38, h / 2 - 12).lineTo(24, h / 2).lineTo(38, h / 2 + 12);
+    const backLabel = makeText('返回', 26, COLORS.textOnGlass, true);
+    backLabel.anchor.set(0, 0.5);
+    backLabel.position.set(54, h / 2);
+    back.addChild(arrow, backLabel);
+    back.position.set(24, y);
     back.eventMode = 'static';
     back.cursor = 'pointer';
-    back.on('pointertap', () => this.close());
-    const title = makeText('产业', 32, COLORS.textOnGlass, true);
-    title.anchor.set(0.5);
-    title.position.set(W / 2, y + TOP_H / 2);
-    this._money.anchor.set(1, 0.5);
-    this._money.position.set(W - 56, y + TOP_H / 2);
-    this._top.addChild(bar, back, title, this._money);
+    back.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+      e.stopPropagation();
+      this.close();
+    });
+
+    this._refreshMoney();
+    const pillW = Math.max(168, money.width + 36);
+    const pill = new PIXI.Container();
+    pill.addChild(drawGlass(new PIXI.Graphics(), 0, 0, pillW, h, h / 2));
+    money.anchor.set(0.5);
+    money.position.set(pillW / 2, h / 2);
+    pill.addChild(money);
+    pill.position.set(W - 24 - pillW, y);
+
+    this._top.addChild(back, pill);
   }
 
   private _refreshMoney(): void {
@@ -180,7 +209,7 @@ export class ShopMap extends PIXI.Container {
 
   private _pin(shop: ShopDef, unlocked: boolean, level: number): PIXI.Container {
     const W = Game.logicWidth;
-    const selected = shop.id === this._selected;
+    const selected = shop.id === this._selected && this._selected !== null;
     const pin = new PIXI.Container();
     const g = new PIXI.Graphics();
     if (selected) g.beginFill(COLORS.champagne, 0.22).drawCircle(0, 0, PIN_R + 14).endFill();
@@ -218,11 +247,12 @@ export class ShopMap extends PIXI.Container {
     pin.hitArea = new PIXI.Rectangle(-hitHalf, -PIN_R - 10, hitHalf * 2, tagY + 28 + PIN_R + 10);
     pin.eventMode = 'static';
     pin.cursor = 'pointer';
-    pin.on('pointertap', () => {
+    pin.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+      e.stopPropagation();
       if (this._selected === shop.id) return;
       AudioManager.play('ui_click');
       this._selected = shop.id;
-      this.rebuild();
+      this.relayout();
     });
     return pin;
   }
@@ -230,9 +260,17 @@ export class ShopMap extends PIXI.Container {
   private _buildCard(): void {
     for (const c of this._card.removeChildren()) c.destroy({ children: true });
     this._actionBtn = null;
+    if (!this._selected) {
+      this._card.visible = false;
+      this._card.eventMode = 'none';
+      return;
+    }
+    this._card.visible = true;
+    this._card.eventMode = 'static';
+    const selected = this._selected;
     const W = Game.logicWidth;
     const save = GameState.save;
-    const shop = SHOPS.find((s) => s.id === this._selected) ?? SHOPS[0];
+    const shop = SHOPS.find((s) => s.id === selected) ?? SHOPS[0];
     const unlocked = isShopUnlocked(save, shop.id);
     const level = save.shops[shop.id] ?? 0;
     const hero = heroForShop(shop.id);
@@ -242,8 +280,8 @@ export class ShopMap extends PIXI.Container {
     const x = 24;
     const y = this._cardTop();
     const w = W - 48;
-    this._card.addChild(drawGlass(new PIXI.Graphics(), x, y, w, CARD_H, 32, 0.66));
-    this._card.eventMode = 'static';
+    this._card.addChild(drawGlass(new PIXI.Graphics(), x, y, w, CARD_H, 32, 0.92));
+    this._card.hitArea = new PIXI.Rectangle(x, y, w, CARD_H);
 
     const name = makeText(shop.name, 34, COLORS.textOnGlass, true);
     name.position.set(x + 32, y + 28);

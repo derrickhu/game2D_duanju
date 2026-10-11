@@ -1,0 +1,11 @@
+Hyper-realistic full-body character portrait in the style of top Chinese AI short-drama actors: a realistic, beautified digital human that looks like a live-action film still. Flawless porcelain skin with a cool soft glow, glossy eyes with clear catchlights, real hair strands and real fabric texture, soft cinematic studio light, color graded like a high-budget Chinese web drama.
+
+The reference image provides only the rendering style: realism level, skin, lighting, color grading. Create a brand-new person with the features below.
+
+Character: Ji Huai, 28 years old, a chief executive secretary, calm, precise and quietly devoted. Black hair neatly combed back, thin gold-rimmed glasses, narrow gentle eyes, a restrained polite smile. Tall straight build, about 185 cm. Wearing a tailored charcoal-grey three-piece suit, a crisp white shirt and a dark navy silk tie, a slim silver watch, polished black oxford shoes. He holds a black tablet against his chest with his left arm, his right hand lightly adjusting his glasses.
+
+Pose: standing upright and composed, whole body from the top of the hair to the shoes, body turned slightly to the left, face looking at the camera.
+
+Background: a plain soft warm-grey studio backdrop, one even tone across the whole canvas, a soft shadow under his feet.
+
+Composition: vertical 9:16, the full figure centered and filling about 85 percent of the frame height, small margin above the head and below the shoes.

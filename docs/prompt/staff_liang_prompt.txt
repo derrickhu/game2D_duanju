@@ -1,0 +1,11 @@
+Hyper-realistic full-body character portrait in the style of top Chinese AI short-drama actors: a realistic, beautified digital human that looks like a live-action film still. Flawless porcelain skin with a soft warm glow, glossy eyes with clear catchlights, real hair strands and real fabric texture, soft cinematic studio light, color graded like a high-budget Chinese web drama.
+
+The reference image provides only the rendering style: realism level, skin, lighting, color grading. Create a brand-new person with the features below.
+
+Character: Li Ang, 22 years old, a half-Chinese half-European barista, playful and charming. Soft light-brown curly hair falling over his forehead, grey-green eyes, a straight high nose, a lazy confident half smile. Tall lean build, about 186 cm. Wearing a black shirt with the sleeves rolled to the elbow, the top button open, a deep forest-green canvas barista apron, black slim trousers and brown leather boots. He holds a white ceramic latte cup on a saucer in one hand at chest height, the latte art heart visible, the other hand in his pocket.
+
+Pose: standing relaxed, weight on one leg, whole body from the top of the hair to the boots, body turned slightly to the right, face looking at the camera.
+
+Background: a plain soft warm-grey studio backdrop, one even tone across the whole canvas, a soft shadow under his feet.
+
+Composition: vertical 9:16, the full figure centered and filling about 85 percent of the frame height, small margin above the head and below the boots.
