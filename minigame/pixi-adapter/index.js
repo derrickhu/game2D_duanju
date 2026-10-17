@@ -458,6 +458,38 @@ try {
   }
 } catch (e) { /* 只读属性忽略 */ }
 
+// PixiJS 7 把 pointermove 注册在 document 上，不在 window。
+// 开发者工具里 document 可能是原生对象，监听进不去触摸转发；统一收进适配器的 document。
+try {
+  var _fakeDocAdd = document.addEventListener.bind(document);
+  var _wrapDoc = function(docTarget) {
+    if (!docTarget || typeof docTarget.addEventListener !== 'function') return;
+    if (docTarget.addEventListener.__duanjuDocMove) return;
+    var nativeAdd = docTarget.addEventListener.bind(docTarget);
+    var wrapped = function(type, handler, options) {
+      if (type === 'pointermove' || type === 'mousemove') {
+        _fakeDocAdd(type, handler, options);
+        return;
+      }
+      return nativeAdd(type, handler, options);
+    };
+    wrapped.__duanjuDocMove = true;
+    try {
+      _origDefineProperty.call(Object, docTarget, 'addEventListener', {
+        value: wrapped, configurable: true, writable: true
+      });
+    } catch (e) {
+      try { docTarget.addEventListener = wrapped; } catch (e2) { /* 只读忽略 */ }
+    }
+  };
+  _wrapDoc(_realGlobal.document);
+  if (typeof globalThis !== 'undefined') _wrapDoc(globalThis.document);
+  if (typeof GameGlobal !== 'undefined') _wrapDoc(GameGlobal.document);
+  console.log('[pixi-adapter] document.pointermove 已接到触摸转发');
+} catch (e) {
+  console.warn('[pixi-adapter] 包装 document.addEventListener 失败:', e);
+}
+
 // ======== 注册触摸事件 ========
 registerTouchEvents();
 

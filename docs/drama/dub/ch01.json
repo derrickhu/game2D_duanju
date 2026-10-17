@@ -1,0 +1,33 @@
+{
+  "title": "第1章 · 摆摊第一天",
+  "out": "ch01",
+  "clips": [
+    {"file": "ch01_s01_v2.mp4",
+     "sfx": "busy outdoor night market ambience, crowd chatter, sizzling oil in a pan, footsteps on wet pavement",
+     "lines": [{"at": 1.2, "who": "路人女孩", "text": "天哪，好好吃！快来！", "emotion": "surprised"}]},
+    {"file": "ch01_s02_v2.mp4",
+     "sfx": "a heavy wooden cart crashing over onto stone pavement, pastries scattering, crowd gasping",
+     "lines": [{"at": 0.5, "who": "王姐", "text": "这片地盘交保护费了吗？", "emotion": "angry"},
+               {"at": 4.6, "who": "苏晚", "text": "你们……", "emotion": "fearful"}]},
+    {"file": "ch01_s03_v2.mp4",
+     "sfx": "a woman gasping in pain, hurried footsteps running away on wet pavement, barbecue grill sizzling, wooden cart creaking",
+     "lines": [{"at": 0.8, "who": "王姐", "text": "哎哟！疼疼疼……走走走！", "emotion": "fearful"}]},
+    {"file": "ch01_s04a_v2.mp4",
+     "sfx": "light rain in a narrow alley, water dripping from an air conditioner, faint neon buzz",
+     "lines": [{"at": 0.2, "who": "王姐", "text": "苏小姐，那丫头有人护着……", "emotion": "fearful"}]},
+    {"file": "ch01_s04b_v2.mp4",
+     "sfx": "quiet luxurious bedroom room tone, a soft clink of a glass bottle",
+     "lines": [{"at": 0.6, "who": "苏婉柔", "text": "那就再找人。", "emotion": "disgusted"}]},
+    {"file": "ch01_s04c_v2.mp4",
+     "sfx": "quiet late night street, paper banknotes rustling",
+     "lines": [{"at": 0.3, "who": "旁白", "text": "第一天，我赚了一万。", "emotion": "calm"}]}
+  ],
+  "music": [
+    {"from": 0, "to": 0, "prompt": "cheerful light acoustic guitar and ukulele background music, playful and warm, short drama cue"},
+    {"from": 1, "to": 1, "prompt": "tense dramatic short drama background music, sudden low strings and percussion hits, suspense"},
+    {"from": 2, "to": 2, "prompt": "cool heroic short drama background music, steady deep drum beat and electric bass, confident and stylish"},
+    {"from": 3, "to": 4, "prompt": "sinister villain short drama background music, low pizzicato strings and a dark music box melody, scheming mood"},
+    {"from": 5, "to": 5, "prompt": "warm hopeful gentle piano and soft strings background music, uplifting ending cue"}
+  ],
+  "segments": {"ch01_s01": [0, 0], "ch01_s02": [1, 1], "ch01_s03": [2, 2], "ch01_s04": [3, 5]}
+}

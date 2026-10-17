@@ -1,0 +1,140 @@
+{
+ "title": "第5章 · 千万晚宴",
+ "out": "ch05",
+ "native": 0.7,
+ "clips": [
+  {
+   "file": "ch05_s01_v3.mp4",
+   "native": 0,
+   "sfx": "elegant gala ambience with distant string quartet music, camera flashes popping, heels clicking on the carpet, a murmur of guests, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.3,
+     "who": "接待员",
+     "text": "抱歉，今晚只接待捐赠一千万以上的嘉宾。",
+     "emotion": "calm"
+    },
+    {
+     "at": 5.4,
+     "who": "接待员",
+     "text": "苏总，这边请。",
+     "emotion": "happy"
+    }
+   ]
+  },
+  {
+   "file": "ch05_s02a_v3.mp4",
+   "native": 0,
+   "sfx": "wine splashing onto satin, a sharp collective gasp, snickering whispers, background gala string music, no voices, no speech",
+   "lines": [
+    {
+     "at": 1.5,
+     "who": "苏婉柔",
+     "text": "姐姐，对不起呀。",
+     "emotion": "happy"
+    }
+   ]
+  },
+  {
+   "file": "ch05_s02b_v3.mp4",
+   "native": 0,
+   "sfx": "a hushed ballroom, heels clicking on stage steps, then swelling applause and a triumphant orchestral hit, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.3,
+     "who": "主持人",
+     "text": "今晚最大的捐赠人——",
+     "emotion": "happy"
+    },
+    {
+     "at": 3.2,
+     "who": "主持人",
+     "text": "晚星创始人，苏晚女士。",
+     "emotion": "happy"
+    }
+   ]
+  },
+  {
+   "file": "ch05_s02c_v3.mp4",
+   "native": 0,
+   "sfx": "muffled distant applause from the ballroom, ice clinking in a whiskey glass, low mysterious cello note, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.4,
+     "who": "盛家叔伯",
+     "text": "少爷，您来了。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch05_s03_v3.mp4",
+   "native": 0,
+   "sfx": "fluorescent light buzzing, a sharp gasp, a heavy thud and fabric tumbling on concrete steps, an echoing silence, a shocking low music hit, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.2,
+     "who": "苏婉柔",
+     "text": "盛家是你的，连他也是你的？",
+     "emotion": "angry"
+    },
+    {
+     "at": 3.4,
+     "who": "苏婉柔",
+     "text": "凭什么！",
+     "emotion": "angry"
+    }
+   ]
+  },
+  {
+   "file": "ch05_s04a_v3.mp4",
+   "native": 0,
+   "sfx": "hospital room tone, a heart monitor beeping steadily, fabric rustling, soft gentle piano, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.8,
+     "who": "许知衡",
+     "text": "疼就抓着我。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch05_s04b_v3.mp4",
+   "native": 0,
+   "sfx": "hurried footsteps, a heart monitor beeping faster, paper rustling, a mysterious suspense drone, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.2,
+     "who": "护士",
+     "text": "许医生，她是熊猫血！",
+     "emotion": "fearful"
+    },
+    {
+     "at": 2.7,
+     "who": "许知衡",
+     "text": "这个血型……我只在姓盛的病历上见过。",
+     "emotion": "calm"
+    }
+   ]
+  }
+ ],
+ "segments": {
+  "ch05_s01": [
+   0,
+   0
+  ],
+  "ch05_s02": [
+   1,
+   3
+  ],
+  "ch05_s03": [
+   4,
+   4
+  ],
+  "ch05_s04": [
+   5,
+   6
+  ]
+ }
+}

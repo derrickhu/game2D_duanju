@@ -236,6 +236,7 @@ class CdnAssetServiceClass {
     const cachePath = this._getCachePath(logicalPath);
     this._ensureCacheDir(cachePath);
 
+    let freed = false;
     for (let attempt = 0; attempt <= this._config.downloadRetry; attempt++) {
       try {
         const res = await this._downloadUrl(this._getCdnUrl(logicalPath));
@@ -259,6 +260,11 @@ class CdnAssetServiceClass {
         return true;
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        if (!freed && /storage limit/i.test(msg) && this._evictCachedVideos() > 0) {
+          freed = true;
+          attempt -= 1;
+          continue;
+        }
         if (msg.includes('status=404') || attempt >= this._config.downloadRetry) {
           console.warn(`[CDN] 下载失败 ${logicalPath}: ${msg}`);
           return false;
@@ -267,6 +273,26 @@ class CdnAssetServiceClass {
       }
     }
     return false;
+  }
+
+  /** 微信用户目录大约 200MB。章节视频是大头，空间满了就先清掉它们，给图片和音效腾位置。 */
+  private _evictCachedVideos(): number {
+    const fs = this._getFs();
+    const dir = this._getCachePath('videos');
+    if (!fs || !dir) return 0;
+    let names: string[] = [];
+    try { names = fs.readdirSync(dir) || []; } catch (_) { return 0; }
+    let removed = 0;
+    for (const name of names) {
+      const file = `${dir}/${name}`;
+      try {
+        fs.unlinkSync(file);
+        this._localExistsCache.delete(file);
+        removed += 1;
+      } catch (_) {}
+    }
+    if (removed > 0) console.warn(`[CDN] 本地空间不足，已清掉 ${removed} 个缓存视频`);
+    return removed;
   }
 
   private _requestText(url: string): Promise<string> {

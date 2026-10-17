@@ -78,6 +78,12 @@ function createPointerEvent(type, touch, buttons) {
 function registerTouchEvents() {
   const _listeners = {};
 
+  // 开发者工具里滚轮是原生 wheel，微信触摸接口收不到。先留住原来的监听再转发。
+  var nativeListen = null;
+  try {
+    if (typeof canvas.addEventListener === 'function') nativeListen = canvas.addEventListener.bind(canvas);
+  } catch (e) { nativeListen = null; }
+
   // 给 canvas 挂上 addEventListener / removeEventListener
   canvas.addEventListener = function(type, handler, options) {
     if (!_listeners[type]) _listeners[type] = [];
@@ -89,6 +95,18 @@ function registerTouchEvents() {
     const idx = _listeners[type].indexOf(handler);
     if (idx !== -1) _listeners[type].splice(idx, 1);
   };
+
+  if (nativeListen) {
+    try {
+      nativeListen('wheel', function(e) {
+        var queue = _listeners.wheel;
+        if (!queue) return;
+        queue.slice().forEach(function(handler) {
+          try { handler(e); } catch (err) { console.error('[Wheel]', err); }
+        });
+      }, { passive: true });
+    } catch (e) { /* 真机 canvas 没有原生滚轮 */ }
+  }
 
   // 分发事件到 canvas 上的监听器
   function dispatch(type, rawEvent) {
@@ -118,9 +136,10 @@ function registerTouchEvents() {
         try { handler(pointerEvent); } catch (e) { console.error('[PointerEvent]', pointerType, e); }
       });
     }
+    if (pointerType === 'pointermove') dispatchToDocument(pointerEvent);
   }
 
-  // 分发 window 上的全局事件（PixiJS EventSystem 在 window 上也注册了 pointermove/pointerup）
+  // 分发 window 上的全局事件（PixiJS 的 pointerup 注册在 window 上）
   function dispatchToWindow(type, event) {
     if (typeof GameGlobal !== 'undefined' && GameGlobal.__windowDispatchEvent) {
       try {
@@ -128,6 +147,17 @@ function registerTouchEvents() {
       } catch (e) {
         console.error('[TouchEvent] dispatchToWindow failed:', type, e);
       }
+    }
+  }
+
+  // PixiJS 7 的 pointermove 注册在 document 上，不在 canvas / window。
+  // 只发给后两者时，点击正常，拖动和滚轮都进不了游戏。
+  function dispatchToDocument(event) {
+    var doc = null;
+    try { doc = require('./document'); } catch (e) { doc = null; }
+    if (!doc || typeof doc.dispatchEvent !== 'function') return;
+    try { doc.dispatchEvent(event); } catch (e) {
+      console.error('[TouchEvent] document', event && event.type, e);
     }
   }
 

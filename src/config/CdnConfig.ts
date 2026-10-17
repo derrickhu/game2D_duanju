@@ -24,7 +24,7 @@ export interface CdnConfig {
 
 export const CDN_CONFIG: CdnConfig = {
   enabled: true,
-  appId: 'wx06d4ac75bc87dec2',
+  appId: 'wx0a212a8e12191122',
   cloudEnv: 'rosa-env-d7grf78r5dbd37323',
   cloudBucket: '726f-rosa-env-d7grf78r5dbd37323-1414200063',
   baseUrl: 'https://726f-rosa-env-d7grf78r5dbd37323-1414200063.tcb.qcloud.la',

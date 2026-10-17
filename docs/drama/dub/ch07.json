@@ -1,0 +1,142 @@
+{
+ "title": "第7章 · 恭迎大小姐",
+ "out": "ch07",
+ "native": 0.7,
+ "clips": [
+  {
+   "file": "ch07_s01_v3.mp4",
+   "native": 0,
+   "sfx": "creaking old floorboards, paper rustling, a faint breeze through the attic window, a soft mysterious music box melody, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.3,
+     "until": 2.8,
+     "text": "外婆的老房子"
+    },
+    {
+     "at": 3.4,
+     "who": "陆屿",
+     "text": "奶奶，我找到她了。我会接近她，带她回家。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch07_s02a_v3.mp4",
+   "native": 0,
+   "sfx": "quiet old house room tone, distant evening birds, paper trembling, a sad slow piano melody, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.3,
+     "who": "苏晚",
+     "text": "那把伞、那栋楼……全是你算好的？"
+    },
+    {
+     "at": 5.4,
+     "who": "陆屿",
+     "text": "是。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch07_s02b_v3.mp4",
+   "native": 0,
+   "sfx": "footsteps on wooden floorboards fading away, a door creaking, paper crumpling, a lonely sustained cello note, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.4,
+     "who": "陆屿",
+     "text": "只有喜欢你这件事，没算过。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch07_s03a_v3.mp4",
+   "native": 0,
+   "sfx": "echoing grand hall ambience, exaggerated sobbing, paper rustling, an old clock ticking, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.5,
+     "who": "苏婉柔",
+     "text": "我才是盛家的外孙女！",
+     "emotion": "sad"
+    }
+   ]
+  },
+  {
+   "file": "ch07_s03b_v3.mp4",
+   "native": 0,
+   "sfx": "heavy wooden doors swinging open, many footsteps stopping in unison, a rustle of suits as everyone bows, a grand triumphant orchestral swell, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.4,
+     "who": "许知衡",
+     "text": "真报告在这里。",
+     "emotion": "calm"
+    },
+    {
+     "at": 3.8,
+     "who": "艾伦",
+     "text": "恭迎大小姐回家。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch07_s03c_v3.mp4",
+   "native": 0,
+   "sfx": "papers fluttering to the floor, a sharp frightened gasp, distant police sirens beginning to approach, a deep powerful drum hit, no voices, no speech",
+   "lines": [
+    {
+     "at": 1.0,
+     "who": "苏晚",
+     "text": "报警。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch07_s04a_v3.mp4",
+   "native": 0,
+   "sfx": "steady rain against the window, a distant roll of thunder, paper trembling, a chilling low suspense drone, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.3,
+     "who": "外婆",
+     "text": "当年那场车祸，不是意外。",
+     "emotion": "calm"
+    },
+    {
+     "at": 4.1,
+     "who": "外婆",
+     "text": "凶手，是你叫了二十二年的爸爸。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch07_s04b_v3.mp4",
+   "lines": []
+  }
+ ],
+ "segments": {
+  "ch07_s01": [
+   0,
+   0
+  ],
+  "ch07_s02": [
+   1,
+   2
+  ],
+  "ch07_s03": [
+   3,
+   5
+  ],
+  "ch07_s04": [
+   6,
+   7
+  ]
+ }
+}

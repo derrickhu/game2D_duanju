@@ -1,7 +1,7 @@
 /** 改存档的玩家操作。全部同步、纯数据，UI 层负责发事件和存盘。 */
 import { BALANCE, MAX_BOND } from '../data/balance.ts';
 import type { StaffId } from '../data/staff.ts';
-import { CHAPTERS, heroForShop, type HeroId } from '../data/story.ts';
+import { CHAPTERS, HEROES, heroForShop, type HeroId } from '../data/story.ts';
 import type { ShopId } from '../data/world.ts';
 import {
   bondUpgradeCost, incomePerSec, baseIncomePerSec, maxAffordableLevels,
@@ -161,6 +161,23 @@ export function markWatched(save: GameSave, videoId: string): boolean {
 
 export function unlockByAd(save: GameSave, videoId: string): void {
   if (!save.adUnlocked.includes(videoId)) save.adUnlocked.push(videoId);
+}
+
+/** 开发用：现金和身价一起涨，大约变成现在的 10 倍，至少加 1 万 */
+export function gmAddMoney(save: GameSave): number {
+  const amount = Math.max(1e4, save.netWorth * 9);
+  earn(save, amount);
+  return amount;
+}
+
+/** 开发用：身价拉到终章，门店男主羁绊拉满，广告视频直接可看。不标记已看，也不加现金。 */
+export function gmUnlockAllVideos(save: GameSave): void {
+  const target = CHAPTERS[CHAPTERS.length - 1].unlockNetWorth;
+  if (save.netWorth < target) save.netWorth = target;
+  for (const hero of HEROES) {
+    if (hero.shop) save.bonds[hero.id] = Math.max(save.bonds[hero.id] ?? 0, MAX_BOND);
+    if (!save.adUnlocked.includes(hero.extraVideo)) save.adUnlocked.push(hero.extraVideo);
+  }
 }
 
 /** 本章所有视频都看过了 */

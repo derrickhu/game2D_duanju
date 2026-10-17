@@ -1,0 +1,145 @@
+{
+ "title": "第3章 · 黑卡砸场",
+ "out": "ch03",
+ "native": 0.7,
+ "clips": [
+  {
+   "file": "ch03_s01_v3.mp4",
+   "lines": [
+    {
+     "at": 0.5,
+     "who": "苏婉柔",
+     "text": "天哪，里面有头发！",
+     "emotion": "surprised"
+    },
+    {
+     "at": 3.4,
+     "who": "苏婉柔",
+     "text": "家人们，这就是假千金开的黑店！",
+     "emotion": "angry"
+    }
+   ]
+  },
+  {
+   "file": "ch03_s02_v3.mp4",
+   "lines": [
+    {
+     "at": 0.3,
+     "who": "傅景辞",
+     "text": "这家店我买了。",
+     "emotion": "disgusted"
+    },
+    {
+     "at": 2.6,
+     "who": "傅景辞",
+     "text": "晚晚，回来求我。",
+     "emotion": "calm"
+    }
+   ],
+   "native": 0,
+   "sfx": "a sharp slap of a card on glass, a tense low bass hit, quiet café room tone, no voices, no speech"
+  },
+  {
+   "file": "ch03_s03a_v3.mp4",
+   "lines": [
+    {
+     "at": 0.8,
+     "who": "苏晚",
+     "text": "监控在这里。",
+     "emotion": "calm"
+    },
+    {
+     "at": 4.2,
+     "until": 7.0,
+     "text": "白莲翻车了！"
+    }
+   ]
+  },
+  {
+   "file": "ch03_s03b_v3.mp4",
+   "lines": [
+    {
+     "at": 0.5,
+     "until": 4.8,
+     "text": "道歉！道歉！"
+    }
+   ]
+  },
+  {
+   "file": "ch03_s04a_v3.mp4",
+   "lines": [
+    {
+     "at": 0.4,
+     "who": "苏晚",
+     "text": "本店不卖。",
+     "emotion": "calm"
+    },
+    {
+     "at": 2.4,
+     "who": "苏晚",
+     "text": "插队，按十倍收费。",
+     "emotion": "happy"
+    },
+    {
+     "at": 5.0,
+     "who": "苏晚",
+     "text": "慢走不送。",
+     "emotion": "calm"
+    }
+   ],
+   "native": 0,
+   "sfx": "a card sliding on glass, a crisp triumphant music hit, a shop door bell jingling as someone leaves, no voices, no speech"
+  },
+  {
+   "file": "ch03_s04b_v3.mp4",
+   "lines": [
+    {
+     "at": 0.3,
+     "until": 3.0,
+     "text": "苏氏食品 · 新品「星星酥」"
+    },
+    {
+     "at": 3.6,
+     "who": "苏晚",
+     "text": "这是……外婆的星星酥？",
+     "emotion": "surprised"
+    }
+   ]
+  },
+  {
+   "file": "ch03_s04c_v3.mp4",
+   "lines": [
+    {
+     "at": 0.6,
+     "who": "苏晚",
+     "text": "外婆的方子，缺了三页。",
+     "emotion": "calm"
+    },
+    {
+     "at": 3.9,
+     "who": "苏晚",
+     "text": "原来，在苏家手里。",
+     "emotion": "calm"
+    }
+   ]
+  }
+ ],
+ "segments": {
+  "ch03_s01": [
+   0,
+   0
+  ],
+  "ch03_s02": [
+   1,
+   1
+  ],
+  "ch03_s03": [
+   2,
+   3
+  ],
+  "ch03_s04": [
+   4,
+   6
+  ]
+ }
+}

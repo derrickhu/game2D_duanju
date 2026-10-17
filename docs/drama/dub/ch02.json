@@ -1,0 +1,118 @@
+{
+ "title": "第2章 · 全款拿下",
+ "out": "ch02",
+ "native": 0.7,
+ "clips": [
+  {
+   "file": "ch02_s01_v3.mp4",
+   "lines": [
+    {
+     "at": 0.4,
+     "who": "周房东",
+     "text": "假千金也想开店？",
+     "emotion": "disgusted"
+    },
+    {
+     "at": 3.2,
+     "who": "周房东",
+     "text": "房租翻十倍，爱租不租。",
+     "emotion": "angry"
+    }
+   ],
+   "native": 0,
+   "sfx": "quiet afternoon street ambience, leaves rustling, distant traffic, the brass keys on his belt jingling, a slurp of tea, no voices, no speech"
+  },
+  {
+   "file": "ch02_s02_v3.mp4",
+   "lines": [
+    {
+     "at": 0.2,
+     "who": "苏晚",
+     "text": "你只是二房东。",
+     "emotion": "happy"
+    },
+    {
+     "at": 2.2,
+     "who": "苏晚",
+     "text": "业主刚把整层租给我了。",
+     "emotion": "happy"
+    },
+    {
+     "at": 5.0,
+     "who": "苏晚",
+     "text": "谈下业主的人，是我。",
+     "sub": "谈下业主的人是我。",
+     "emotion": "happy"
+    }
+   ],
+   "native": 0,
+   "sfx": "a dramatic low whoosh hit for the reveal, tea sloshing in glass, keys jingling as he stumbles, quiet street ambience, no voices, no speech"
+  },
+  {
+   "file": "ch02_s03_v3.mp4",
+   "lines": [
+    {
+     "at": 0.3,
+     "until": 2.6,
+     "text": "晚星甜品 · 开业"
+    },
+    {
+     "at": 4.2,
+     "who": "周房东",
+     "text": "苏小姐，没拦住……",
+     "emotion": "fearful"
+    }
+   ]
+  },
+  {
+   "file": "ch02_s04a_v3.mp4",
+   "lines": [
+    {
+     "at": 1.2,
+     "who": "陆屿",
+     "text": "缺人吗？",
+     "emotion": "calm"
+    }
+   ],
+   "native": 0,
+   "sfx": "quiet cozy shop room tone, a cloth wiping a glass counter, apron fabric rustling, a soft clock ticking, no voices, no speech"
+  },
+  {
+   "file": "ch02_s04b_v3.mp4",
+   "lines": [
+    {
+     "at": 0.3,
+     "who": "艾伦",
+     "text": "少爷，整栋楼买下了。",
+     "emotion": "calm"
+    },
+    {
+     "at": 3.2,
+     "who": "陆屿",
+     "text": "别让她知道。",
+     "emotion": "calm"
+    }
+   ],
+   "native": 0,
+   "sfx": "quiet night street ambience, distant traffic hum, leaves rustling, the soft idle of a luxury car engine, paper rustling as the folder changes hands, no voices, no speech"
+  }
+ ],
+ "segments": {
+  "ch02_s01": [
+   0,
+   0
+  ],
+  "ch02_s02": [
+   1,
+   1
+  ],
+  "ch02_s03": [
+   2,
+   2
+  ],
+  "ch02_s04": [
+   3,
+   4
+  ]
+ }
+}

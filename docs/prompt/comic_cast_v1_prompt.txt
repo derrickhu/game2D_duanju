@@ -1,0 +1,5 @@
+游戏内全身立绘漫画化（2026-10-14）。画风锁定陆屿试稿 luyu_comic_v2：均匀黑线、平涂色块、一块硬边阴影、小块腮红、简化五官、约 8.5 头身、正面全身、浅暖灰底。
+
+每张用两张参考：第一张只提供画法（comic_v1/raw 里从 luyu_comic_v2 右半裁出的全身），第二张是当时游戏里的那张立绘，只提供脸和衣服。女主白 T 沿用之前的 suwan_tee，没有重画。圆形头像 portrait_*.jpg 这次没改。
+
+成品在 game_assets/duanju/assets/comic_v1/final/，三维原图在同目录 backup_3d/。

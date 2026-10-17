@@ -6,6 +6,7 @@
  * 浏览器：<video> 盖在画布上，点击跳过。
  *
  * 视频走 CDN 直链（videos/<id>.mp4），不下载到本地缓存。
+ * 本地用户目录大约 200MB，章节视频缓存进去会把图片和音效挤掉。
  * CDN 域名需要在小程序后台加到 downloadFile 合法域名。
  */
 import * as PIXI from 'pixi.js';
@@ -30,7 +31,12 @@ const TOP_BAR = 56;
 const BOTTOM_BAR = 150;
 
 interface NativeVideo {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
   play(): void;
+  stop?(): void;
   destroy(): void;
   onEnded(cb: () => void): void;
   onError(cb: (e: unknown) => void): void;
@@ -108,13 +114,7 @@ class VideoServiceClass {
         if (!player) onFail();
       };
 
-      if (!(Platform.isMinigame && typeof Platform.api?.createVideo === 'function')) {
-        start([url]);
-        return;
-      }
-      void CdnAssetService.resolveOrDownload(videoPath(videoId)).then((local) => {
-        start(videoSources(local, url));
-      }).catch(() => start([url]));
+      start([url]);
     });
   }
 
@@ -160,7 +160,18 @@ class VideoServiceClass {
       video.onPlay(() => onPlay());
       video.onError(() => { setTimeout(onFail, 0); });
       video.play();
-      return video;
+      return {
+        // 在 onEnded 回调里直接 destroy，开发者工具和部分机型会把最后一帧留在屏幕上
+        destroy: () => {
+          try { video.stop?.(); } catch (_) {}
+          try {
+            video.x = -Game.screenWidth * 2;
+            video.width = 1;
+            video.height = 1;
+          } catch (_) {}
+          setTimeout(() => { try { video.destroy(); } catch (_) {} }, 0);
+        },
+      };
     } catch (_) {
       console.warn('[Video] createVideo 失败');
       return null;
@@ -180,15 +191,6 @@ class VideoServiceClass {
     void el.play().catch(() => finish('error'));
     return { destroy: () => el.remove() };
   }
-}
-
-/** 本地缓存、wxfile 路径、在线地址，按顺序试。同一条不重复。 */
-function videoSources(local: string, remote: string): string[] {
-  const list = [local];
-  const alt = CdnAssetService.toInnerAudioSrc(local);
-  if (!list.includes(alt)) list.push(alt);
-  if (!list.includes(remote)) list.push(remote);
-  return list;
 }
 
 export const VideoService = new VideoServiceClass();

@@ -1,6 +1,6 @@
 /**
  * 剧情页：每章一张玻璃卡片，左边大号章节序号，右边分集按钮和“连续观看”。
- * 未解锁的章节显示身价进度；打开时自动滚到最新一章。
+ * 未解锁的章节显示身价进度。打开时滚到第一段还没看的章节，往上滑能看到更早的。
  */
 import * as PIXI from 'pixi.js';
 import { ICONS } from '@/data/art';
@@ -10,7 +10,7 @@ import { Game } from '@/core/Game';
 import { ToastManager } from '@/core/ToastManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
 import { GameState } from '@/managers/GameState';
-import { playStory, playStorySequence } from '@/services/StoryService';
+import { chapterPlaylist, playStory, playStorySequence } from '@/services/StoryService';
 import { formatMoney } from '@/sim/format';
 import { Button } from '@/ui/Button';
 import { PAGE_PAD, Page } from '@/ui/Page';
@@ -45,10 +45,12 @@ export class StorySheet extends Page {
     const save = GameState.save;
     const w = W - PAGE_PAD * 2;
     let latest = 0;
+    let firstFresh = -1;
     let nextLockedShown = false;
     CHAPTERS.forEach((ch, i) => {
       const open = save.netWorth >= ch.unlockNetWorth;
       if (open) latest = i;
+      if (firstFresh < 0 && open && ch.videos.some((v) => !save.watched.includes(v))) firstFresh = i;
       const showProgress = !open && !nextLockedShown;
       if (!open) nextLockedShown = true;
       const card = this._card(ch, w, open, showProgress);
@@ -58,7 +60,8 @@ export class StorySheet extends Page {
     this._scroll.setContentHeight(CHAPTERS.length * (CARD_H + GAP) + 8);
     if (this._jumpOnLayout) {
       this._jumpOnLayout = false;
-      this._scroll.scrollTo(Math.max(0, latest * (CARD_H + GAP) - (CARD_H + GAP)));
+      const focus = firstFresh >= 0 ? firstFresh : latest;
+      this._scroll.scrollTo(Math.max(0, focus * (CARD_H + GAP) - 12));
     }
   }
 
@@ -150,7 +153,7 @@ export class StorySheet extends Page {
         onTap: () => {
           if (this._scroll.dragging) return;
           const from = ch.videos.findIndex((v) => !save.watched.includes(v));
-          void playStorySequence(from > 0 ? ch.videos.slice(from) : ch.videos).then(() => this.rebuild());
+          void playStorySequence(chapterPlaylist(ch, Math.max(0, from))).then(() => this.rebuild());
         },
       });
       all.position.set(right - 78, chipY);

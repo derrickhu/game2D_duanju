@@ -34,6 +34,7 @@ export class ScrollView extends PIXI.Container {
     this.on('globalpointermove', this._move, this);
     this.on('pointerup', this._up, this);
     this.on('pointerupoutside', this._up, this);
+    this.on('wheel', this._wheel, this);
     this.on('added', () => Game.ticker.add(this._tick));
     this.on('removed', () => Game.ticker.remove(this._tick));
   }
@@ -49,6 +50,7 @@ export class ScrollView extends PIXI.Container {
 
   setViewport(w: number, h: number): void {
     this._viewH = h;
+    this.hitArea = new PIXI.Rectangle(0, 0, w, h);
     this._clip.clear().beginFill(0xffffff).drawRect(0, 0, w, h).endFill();
     this._hit.clear().beginFill(0x000000, 0.001).drawRect(0, 0, w, h).endFill();
     this._clampNow();
@@ -91,7 +93,16 @@ export class ScrollView extends PIXI.Container {
   }
 
   private _localY(e: PIXI.FederatedPointerEvent): number {
-    return e.global.y / Game.scale;
+    return e.getLocalPosition(this).y;
+  }
+
+  /** 开发者工具里用滚轮翻列表；正值往下看后面的内容 */
+  private _wheel(e: PIXI.FederatedWheelEvent): void {
+    const dy = Number.isFinite(e.deltaY) ? e.deltaY : 0;
+    if (!dy) return;
+    this._velocity = 0;
+    this._scroll = Math.max(0, Math.min(this._max(), this._scroll + dy));
+    this._apply();
   }
 
   private _down(e: PIXI.FederatedPointerEvent): void {

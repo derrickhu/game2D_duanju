@@ -1,7 +1,7 @@
 /** 由身价和存档推导的解锁状态。只读，不改存档。 */
 import { MAX_BOND } from '../data/balance.ts';
 import { staffById, type StaffId } from '../data/staff.ts';
-import { CHAPTERS, HEROES, VIDEOS, heroById, type ChapterDef, type HeroId } from '../data/story.ts';
+import { CHAPTERS, FINAL_CHAPTER, HEROES, HIDDEN_BOND, VIDEOS, heroById, type ChapterDef, type HeroDef, type HeroId } from '../data/story.ts';
 import { AREAS, OUTFITS, SHOPS, type AreaDef, type OutfitDef, type ShopDef, type ShopId } from '../data/world.ts';
 import type { GameSave } from './save.ts';
 
@@ -56,6 +56,26 @@ export function effectiveBond(save: GameSave, heroId: HeroId): number {
   return heroById(heroId).shop ? save.bonds[heroId] ?? 0 : chapterBondLevel(save, heroId);
 }
 
+/** 暗面第 i 段的门槛是否已到（不看广告） */
+export function isHiddenOpen(save: GameSave, hero: HeroDef, i: number): boolean {
+  if (hero.chapterHidden) return currentChapter(save.netWorth) >= hero.chapterHidden[i];
+  return effectiveBond(save, hero.id) >= HIDDEN_BOND[i];
+}
+
+/** 广告视频的门槛：门店男主相遇后就能看花絮；傅景辞的另一个结局要羁绊满级 */
+function extraGateOpen(save: GameSave, hero: HeroDef): boolean {
+  return effectiveBond(save, hero.id) >= (hero.shop ? 1 : MAX_BOND);
+}
+
+/** 主线第 8 章结尾播放谁的结局：羁绊最高的门店男主，平局按列表顺序（陆屿优先） */
+export function finaleHero(save: GameSave): HeroDef {
+  let best = HEROES[0];
+  for (const hero of HEROES) {
+    if (hero.endingVideo && effectiveBond(save, hero.id) > effectiveBond(save, best.id)) best = hero;
+  }
+  return best;
+}
+
 export function isVideoUnlocked(save: GameSave, videoId: string): boolean {
   const video = VIDEOS.get(videoId);
   if (!video) return false;
@@ -66,19 +86,23 @@ export function isVideoUnlocked(save: GameSave, videoId: string): boolean {
   for (const hero of HEROES) {
     const idx = hero.bondVideos.indexOf(videoId);
     if (idx >= 0) return effectiveBond(save, hero.id) > idx;
-    if (hero.extraVideo === videoId) {
-      return effectiveBond(save, hero.id) >= MAX_BOND && save.adUnlocked.includes(videoId);
+    const h = hero.hiddenVideos.indexOf(videoId);
+    if (h >= 0) return isHiddenOpen(save, hero, h);
+    if (hero.extraVideo === videoId) return extraGateOpen(save, hero) && save.adUnlocked.includes(videoId);
+    if (hero.endingVideo === videoId) {
+      if (currentChapter(save.netWorth) < FINAL_CHAPTER) return false;
+      return effectiveBond(save, hero.id) >= MAX_BOND || finaleHero(save).id === hero.id;
     }
   }
   return false;
 }
 
-/** 番外：羁绊已满但还没看广告解锁 */
+/** 广告视频：门槛已到但还没看广告解锁 */
 export function isVideoAdPending(save: GameSave, videoId: string): boolean {
   const video = VIDEOS.get(videoId);
   if (!video?.adLocked || save.adUnlocked.includes(videoId)) return false;
   const hero = HEROES.find((h) => h.extraVideo === videoId);
-  return !!hero && effectiveBond(save, hero.id) >= MAX_BOND;
+  return !!hero && extraGateOpen(save, hero);
 }
 
 export interface Goal {

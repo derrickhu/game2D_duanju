@@ -1,0 +1,17 @@
+{
+  "title": "序章 · 退婚宴",
+  "out": "ch00",
+  "native": 0.7,
+  "clips": [
+    {"file": "ch00_s01_v3.mp4",
+     "lines": [{"at": 0.3, "until": 3.2, "text": "云城 · 苏家订婚宴"}]},
+    {"file": "ch00_s02_v3.mp4",
+     "lines": [{"at": 4.2, "who": "苏父", "text": "她才是我们的亲生女儿。"}]},
+    {"file": "ch00_s03_v3.mp4",
+     "lines": [{"at": 4.8, "who": "傅景辞", "text": "我要娶的是苏家的女儿。", "emotion": "disgusted"}]},
+    {"file": "ch00_s04_v3.mp4",
+     "lines": [{"at": 1.6, "who": "旁白", "text": "那一晚，所有人都在笑我。", "emotion": "calm"},
+               {"at": 5.4, "who": "旁白", "text": "后来，他们排队等我回头。", "emotion": "calm"}]}
+  ],
+  "segments": {"ch00_s01": [0, 0], "ch00_s02": [1, 1], "ch00_s03": [2, 2], "ch00_s04": [3, 3]}
+}

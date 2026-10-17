@@ -16,15 +16,27 @@ W, H, FPS = 720, 1280, 24
 FONT = "/System/Library/Fonts/STHeiti Medium.ttc"
 
 
+def wrap(text, d, f, max_w):
+    if d.textlength(text, font=f) <= max_w:
+        return [text]
+    mid = len(text) / 2
+    cuts = [i + 1 for i, ch in enumerate(text[:-1]) if ch in "，。！？、；：…—" and abs(i + 1 - mid) <= len(text) / 4]
+    cut = min(cuts, key=lambda i: abs(i - mid)) if cuts else round(mid)
+    return [text[:cut], text[cut:]]
+
+
 def text_png(text, path, size=40, y=0.80, box=False):
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     f = ImageFont.truetype(FONT, size)
-    tw = d.textlength(text, font=f)
-    x, yy = (W - tw) / 2, int(H * y)
     if box:
         d.rectangle([0, 0, W, H], fill=(0, 0, 0, 255))
-    d.text((x, yy), text, font=f, fill=(255, 255, 255, 255), stroke_width=3, stroke_fill=(0, 0, 0, 220))
+    lines = wrap(text, d, f, W - 60)
+    yy = int(H * y) - (len(lines) - 1) * (size + 12)
+    for ln in lines:
+        x = (W - d.textlength(ln, font=f)) / 2
+        d.text((x, yy), ln, font=f, fill=(255, 255, 255, 255), stroke_width=3, stroke_fill=(0, 0, 0, 220))
+        yy += size + 12
     im.save(path)
 
 

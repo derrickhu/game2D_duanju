@@ -17,8 +17,8 @@ import { ToastManager } from '@/core/ToastManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
 import { GameState } from '@/managers/GameState';
 import { TUTORIAL_DONE } from '@/managers/SaveManager';
-import { playStory, playStorySequence } from '@/services/StoryService';
-import { computeOffline, earn, rushOrderCooldownLeft, rushOrderReward, rushOrdersLeftToday } from '@/sim/actions';
+import { chapterPlaylist, playStory, playStorySequence } from '@/services/StoryService';
+import { computeOffline, rushOrderCooldownLeft, rushOrderReward, rushOrdersLeftToday } from '@/sim/actions';
 import { skillUpgradeCost } from '@/sim/economy';
 import { formatDuration, formatMoney } from '@/sim/format';
 import type { ChapterDef } from '@/data/story';
@@ -29,7 +29,7 @@ import { IconButton } from '@/ui/IconButton';
 import { ProgressBar } from '@/ui/ProgressBar';
 import { COLORS, drawGlass, makeNumText, makeText } from '@/ui/theme';
 import { fitCover, applyFit, gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
-import { HeroSheet } from './home/HeroSheet';
+import { HeroPage } from './home/HeroPage';
 import { heroHasNews } from './home/heroInfo';
 import { OutfitSheet } from './home/OutfitSheet';
 import { ShopMap } from './home/ShopMap';
@@ -65,10 +65,10 @@ export class HomeScene implements Scene {
   private readonly _boostBtn: IconButton;
   private readonly _rushBtn: IconButton;
   private readonly _nav = new PIXI.Container();
-  private readonly _gm: Button | null = null;
+  private _gm: PIXI.Container | null = null;
 
   private readonly _shopSheet = new ShopMap();
-  private readonly _heroSheet = new HeroSheet();
+  private readonly _heroPage = new HeroPage();
   private readonly _storySheet = new StorySheet();
   private readonly _outfitSheet = new OutfitSheet();
   private readonly _staffSheet = new StaffSheet();
@@ -106,18 +106,7 @@ export class HomeScene implements Scene {
       this._skillBtn, this._boostBtn, this._rushBtn, this._nav,
     );
 
-    if (Platform.isDevtools) {
-      this._gm = new Button({
-        width: 96, height: 56, label: 'GM', color: COLORS.mask, fontSize: 24,
-        onTap: () => {
-          earn(GameState.save, Math.max(1e4, GameState.save.netWorth * 9));
-          EventBus.emit(EV.moneyChanged);
-          ToastManager.show('GM：身价 ×10');
-        },
-      });
-      this._gm.alpha = 0.6;
-      this.container.addChild(this._gm);
-    }
+    if (Platform.isDevtools || !Platform.isMinigame) this._buildGm();
   }
 
   onEnter(): void {
@@ -129,7 +118,7 @@ export class HomeScene implements Scene {
       EventBus.on(EV.moneyChanged, () => {
         this._shopSheet.refreshAffordable();
         this._staffSheet.refreshAffordable();
-        this._heroSheet.refreshAffordable();
+        this._heroPage.refreshAffordable();
       });
       EventBus.on(EV.saveChanged, () => this._applyOutfit());
       EventBus.on(EV.chapterUnlocked, (ch: ChapterDef) => this._onChapter(ch));
@@ -182,7 +171,50 @@ export class HomeScene implements Scene {
     this._rushBtn.position.set(W - 80, sideY);
     this._skillBtn.position.set(W / 2, skillY);
     this._nav.position.set(0, navTop);
-    this._gm?.position.set(W - 80, hudBottom + 260);
+    this._gm?.position.set(88, hudBottom + 48);
+  }
+
+  /** 开发者工具和浏览器里的调试入口，正式包不显示 */
+  private _buildGm(): void {
+    const panel = new PIXI.Container();
+    const add = new Button({
+      width: 168, height: 52, label: '加钱', color: COLORS.mask, fontSize: 24,
+      onTap: () => {
+        const amount = GameState.gmAddMoney();
+        this._refreshHud();
+        ToastManager.show(`GM：+${formatMoney(amount)}`);
+      },
+    });
+    const unlock = new Button({
+      width: 168, height: 52, label: '解锁视频', color: COLORS.mask, fontSize: 24,
+      onTap: () => {
+        GameState.gmUnlockAllVideos();
+        this._storySheet.rebuild();
+        this._heroPage.rebuild();
+        this._shopSheet.rebuild();
+        this._outfitSheet.rebuild();
+        this._refreshHud();
+        ToastManager.show('GM：全部视频已解锁');
+      },
+    });
+    add.position.set(36, 64);
+    unlock.position.set(36, 124);
+    add.visible = false;
+    unlock.visible = false;
+    add.alpha = 0.85;
+    unlock.alpha = 0.85;
+    const toggle = new Button({
+      width: 96, height: 52, label: 'GM', color: COLORS.mask, fontSize: 24,
+      onTap: () => {
+        const open = !add.visible;
+        add.visible = open;
+        unlock.visible = open;
+      },
+    });
+    toggle.alpha = 0.6;
+    panel.addChild(toggle, add, unlock);
+    this.container.addChild(panel);
+    this._gm = panel;
   }
 
   private _buildTapArea(): void {
@@ -229,7 +261,7 @@ export class HomeScene implements Scene {
     this._nav.addChild(drawGlass(new PIXI.Graphics(), 24, 0, W - 48, NAV_H, NAV_H / 2, 0.58));
     const items: [string, string, () => void][] = [
       [ICONS.shop, '产业', () => this._shopSheet.open()],
-      [ICONS.rose, '男主', () => this._heroSheet.open()],
+      [ICONS.rose, '男主', () => this._heroPage.open()],
       [ICONS.staff, '店员', () => this._staffSheet.open()],
       [ICONS.story, '剧情', () => this._storySheet.open()],
       [ICONS.wardrobe, '衣橱', () => this._outfitSheet.open()],
@@ -441,7 +473,7 @@ export class HomeScene implements Scene {
       content: `「${ch.title}」剧情已更新，现在观看吗？`,
       confirmText: '去看',
       cancelText: '稍后',
-    }).then((ok) => { if (ok) void playStorySequence(ch.videos); });
+    }).then((ok) => { if (ok) void playStorySequence(chapterPlaylist(ch)); });
   }
 
   private _onMeetHero(id: HeroId): void {

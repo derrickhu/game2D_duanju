@@ -1,0 +1,32 @@
+{
+  "title": "序章 · 退婚宴",
+  "out": "ch00",
+  "clips": [
+    {"file": "ch00_s01_v2.mp4",
+     "sfx": "elegant banquet hall ambience, warm applause, champagne glasses clinking, cheerful murmuring guests",
+     "lines": [{"at": 0.3, "until": 3.0, "text": "云城 · 苏家订婚宴"}]},
+    {"file": "ch00_s02_v2.mp4",
+     "sfx": "heavy wooden doors swinging open in a banquet hall, then a crowd gasping and whispering in shock",
+     "lines": [{"at": 2.0, "until": 5.5, "text": "她才是我们的亲生女儿。"}]},
+    {"file": "ch00_s03a_v2.mp4",
+     "sfx": "a crowd gasping in a banquet hall, then a sharp loud face slap, shocked silence",
+     "lines": [{"at": 0.1, "who": "苏婉柔", "text": "妈，我的项链不见了！", "emotion": "fearful"},
+               {"at": 3.1, "who": "苏晚", "text": "不是我……", "emotion": "fearful"}]},
+    {"file": "ch00_s03b_v2.mp4", "video": "ch00_s03b_v2_lip.mp4",
+     "sfx": "quiet murmuring banquet crowd, a soft metallic click of a ring",
+     "lines": [{"at": 2.4, "who": "傅景辞", "text": "离开苏家，你什么都不是。", "emotion": "disgusted"}]},
+    {"file": "ch00_s04a_v2.mp4",
+     "sfx": "heavy rain pouring on a night street, water splashing under footsteps, old wooden cart wheels creaking, distant thunder",
+     "lines": [{"at": 2.5, "who": "旁白", "text": "那一晚，所有人都在笑我。", "emotion": "sad"}]},
+    {"file": "ch00_s04b_v2.mp4",
+     "sfx": "rain drumming on a car roof, a car power window humming closed",
+     "lines": [{"at": 0.3, "who": "旁白", "text": "后来，他们排队等我回头。", "emotion": "calm"}]}
+  ],
+  "music": [
+    {"from": 0, "to": 0, "prompt": "romantic elegant waltz with strings and piano, wedding engagement party background music"},
+    {"from": 1, "to": 2, "prompt": "tense dramatic short drama background music, suspenseful low strings, ticking percussion, rising tension and a sudden hit"},
+    {"from": 3, "to": 3, "prompt": "heartbreaking sad solo piano with soft strings, short drama humiliation scene"},
+    {"from": 4, "to": 5, "prompt": "melancholic emotional strings and piano in the rain, slowly turning hopeful and determined, cinematic short drama ending"}
+  ],
+  "segments": {"ch00_s01": [0, 0], "ch00_s02": [1, 1], "ch00_s03": [2, 3], "ch00_s04": [4, 5]}
+}

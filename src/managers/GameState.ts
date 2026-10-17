@@ -133,6 +133,21 @@ class GameStateClass {
     this.flush();
   }
 
+  /** 开发用：加钱，会正常触发跨章节提示 */
+  gmAddMoney(): number {
+    const amount = this._mutate(() => A.gmAddMoney(this.save));
+    this.flush();
+    return amount;
+  }
+
+  /** 开发用：解锁全部视频。只改存档，不弹章节、换装那些提示。 */
+  gmUnlockAllVideos(): void {
+    A.gmUnlockAllVideos(this.save);
+    EventBus.emit(EV.moneyChanged);
+    EventBus.emit(EV.shopChanged, null);
+    this.flush();
+  }
+
   flush(): void {
     this.save.lastActiveAt = Date.now();
     SaveManager.flush();

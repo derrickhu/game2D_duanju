@@ -181,12 +181,21 @@ const figurePaths = new WeakMap<PIXI.Sprite, string>();
  * 立绘按框等比缩放；贴图没到时先隐藏，到了只改这一张，不用重建整页。
  * onReady 在缩放完成后调用（比如做个淡入）。
  */
-export function showFigure(sprite: PIXI.Sprite, path: string, boxW: number, boxH: number, onReady?: () => void): void {
+export function showFigure(
+  sprite: PIXI.Sprite,
+  path: string,
+  boxW: number,
+  boxH: number,
+  onReady?: () => void,
+  fit: 'contain' | 'height' = 'contain',
+): void {
   const apply = (): void => {
     if (sprite.destroyed) return;
     const tex = sprite.texture;
     if (!isTextureReady(tex)) return;
-    sprite.scale.set(Math.min(boxW / tex.width, boxH / tex.height));
+    const byW = boxW / tex.width;
+    const byH = boxH / tex.height;
+    sprite.scale.set(fit === 'height' ? Math.min(byH, byW) : Math.min(byW, byH));
     sprite.visible = true;
     onReady?.();
   };

@@ -1,8 +1,8 @@
-import { VIDEOS } from '@/data/story';
+import { FINAL_CHAPTER, VIDEOS, type ChapterDef } from '@/data/story';
 import { Platform } from '@/core/PlatformService';
 import { ToastManager } from '@/core/ToastManager';
 import { GameState } from '@/managers/GameState';
-import { isVideoAdPending, isVideoUnlocked } from '@/sim/unlocks';
+import { finaleHero, isVideoAdPending, isVideoUnlocked } from '@/sim/unlocks';
 import { VideoService, type VideoResult } from './VideoService';
 
 /** 播放一段剧情；番外未解锁时先走激励广告。 */
@@ -24,6 +24,14 @@ export async function playStory(videoId: string): Promise<VideoResult> {
   const result = await VideoService.play(videoId, save.watched.includes(videoId));
   if (result !== 'error') GameState.markWatched(videoId);
   return result;
+}
+
+/** 章节连播列表；终章后面接羁绊最高男主的专属结局 */
+export function chapterPlaylist(ch: ChapterDef, from = 0): string[] {
+  const list = ch.videos.slice(from);
+  const ending = finaleHero(GameState.save).endingVideo;
+  if (ch.id === FINAL_CHAPTER && ending) list.push(ending);
+  return list;
 }
 
 /** 连播（序章、章节），遇到缺片就停，避免连续弹提示 */

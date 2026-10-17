@@ -1,0 +1,112 @@
+{
+ "title": "第4章 · 恶人先告状",
+ "out": "ch04",
+ "native": 0.7,
+ "clips": [
+  {
+   "file": "ch04_s01_v3.mp4",
+   "lines": [
+    {
+     "at": 0.4,
+     "until": 3.4,
+     "text": "苏氏食品起诉晚星抄袭"
+    },
+    {
+     "at": 3.6,
+     "until": 6.9,
+     "text": "热搜第一：假千金偷苏家配方"
+    }
+   ]
+  },
+  {
+   "file": "ch04_s02_v3.mp4",
+   "lines": [
+    {
+     "at": 0.4,
+     "who": "沈砚",
+     "text": "胜算三成。",
+     "emotion": "calm"
+    },
+    {
+     "at": 2.0,
+     "who": "苏晚",
+     "text": "那就三成。",
+     "emotion": "calm"
+    },
+    {
+     "at": 5.0,
+     "who": "沈砚",
+     "text": "……这个案子，我接。",
+     "emotion": "calm"
+    }
+   ],
+   "native": 0,
+   "sfx": "quiet office room tone, a clock ticking, pages turning, a soft resonant piano note when he looks up, no voices, no speech"
+  },
+  {
+   "file": "ch04_s03a_v3.mp4",
+   "lines": [
+    {
+     "at": 0.4,
+     "who": "沈砚",
+     "text": "请被告交出原始配方。",
+     "emotion": "calm"
+    },
+    {
+     "at": 4.0,
+     "who": "沈砚",
+     "text": "撕口，严丝合缝。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch04_s03b_v3.mp4",
+   "lines": [
+    {
+     "at": 1.2,
+     "who": "苏晚",
+     "text": "每一页，都有外婆画的星星。",
+     "emotion": "sad"
+    }
+   ]
+  },
+  {
+   "file": "ch04_s04_v3.mp4",
+   "lines": [
+    {
+     "at": 0.5,
+     "who": "苏婉柔",
+     "text": "你以为你赢了？",
+     "emotion": "disgusted"
+    },
+    {
+     "at": 3.2,
+     "who": "苏婉柔",
+     "text": "你连自己是谁都不知道。",
+     "emotion": "calm"
+    }
+   ],
+   "native": 0,
+   "sfx": "cold wind gusting across stone, footsteps on steps, an eerie suspenseful low string note, no voices, no speech"
+  }
+ ],
+ "segments": {
+  "ch04_s01": [
+   0,
+   0
+  ],
+  "ch04_s02": [
+   1,
+   1
+  ],
+  "ch04_s03": [
+   2,
+   3
+  ],
+  "ch04_s04": [
+   4,
+   4
+  ]
+ }
+}

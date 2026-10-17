@@ -101,7 +101,7 @@ async function main(): Promise<void> {
 
   // 首帧之后再挂分享菜单，太早调用真机会静默失败
   globalThis.setTimeout(() => {
-    Platform.bindShareMenu(() => '假千金逆袭');
+    Platform.bindShareMenu(() => '翻盘女王');
   }, 0);
 
   analytics.trackSessionStart({ entry: 'main_boot', cloud_sync_status: startupSync.status });

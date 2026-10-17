@@ -1,0 +1,130 @@
+{
+ "title": "第6章 · 跪求注资",
+ "out": "ch06",
+ "native": 0.7,
+ "clips": [
+  {
+   "file": "ch06_s01_v3.mp4",
+   "native": 0,
+   "sfx": "papers slamming and scattering, a tense ticking clock, a low ominous electronic drone, a market alert beep, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.5,
+     "who": "苏父",
+     "text": "谁能救苏氏？",
+     "emotion": "angry"
+    },
+    {
+     "at": 2.8,
+     "who": "秘书",
+     "text": "现在……只有晚星有这个钱。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch06_s02_v3.mp4",
+   "native": 0,
+   "sfx": "quiet echoing lobby, tea pouring into porcelain, a clock ticking, an elevator chime in the distance, a heavy sigh, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.3,
+     "until": 2.2,
+     "text": "三小时后"
+    },
+    {
+     "at": 2.6,
+     "who": "前台",
+     "text": "苏总还在开会。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch06_s03a_v3.mp4",
+   "native": 0,
+   "sfx": "quiet high-rise room tone, fabric rustling, a muted city hum through the glass, a single low cello note, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.8,
+     "who": "苏晚",
+     "text": "别跪，我受不起，也不想受。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch06_s03b_v3.mp4",
+   "native": 0,
+   "sfx": "paper sliding on polished wood, a gold pen rolling, a confident triumphant music hit, distant wind against high-rise glass, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.2,
+     "who": "苏晚",
+     "text": "签了它，苏家还能留个名字。",
+     "emotion": "calm"
+    },
+    {
+     "at": 3.5,
+     "who": "苏晚",
+     "text": "天凉了，苏氏该换个主人了。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch06_s04a_v3.mp4",
+   "native": 0,
+   "sfx": "heavy rain pouring on pavement, distant thunder rumbling, water splashing, a sad lonely piano melody, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.2,
+     "who": "傅景辞",
+     "text": "晚晚！是婉柔推的你！"
+    },
+    {
+     "at": 3.8,
+     "who": "傅景辞",
+     "text": "我错了……你回头看我一眼，好不好？"
+    }
+   ]
+  },
+  {
+   "file": "ch06_s04b_v3.mp4",
+   "native": 0,
+   "sfx": "a pen scratching on paper, a comedic record-scratch sting, a stifled snort of laughter, quiet office ambience, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.2,
+     "who": "霍霆琛",
+     "text": "女人，你成功引起了我的注意。",
+     "emotion": "calm"
+    },
+    {
+     "at": 3.2,
+     "who": "苏晚",
+     "text": "霍总，这句台词早就过时了。",
+     "emotion": "calm"
+    }
+   ]
+  }
+ ],
+ "segments": {
+  "ch06_s01": [
+   0,
+   0
+  ],
+  "ch06_s02": [
+   1,
+   1
+  ],
+  "ch06_s03": [
+   2,
+   3
+  ],
+  "ch06_s04": [
+   4,
+   5
+  ]
+ }
+}

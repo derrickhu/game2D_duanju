@@ -22,7 +22,7 @@ export class LoadingScene implements Scene {
   readonly container = new PIXI.Container();
   private readonly _bg = new PIXI.Graphics();
   private readonly _photo = new PIXI.Sprite(PIXI.Texture.EMPTY);
-  private readonly _title = makeText('假千金逆袭', 64, COLORS.champagne, true);
+  private readonly _title = makeText('翻盘女王', 64, COLORS.champagne, true);
   private readonly _tip = makeText('正在加载…', 26, COLORS.textOnGlassSoft);
   private readonly _bar = new ProgressBar(460, 18, COLORS.champagne, COLORS.white, 0.28);
   private readonly _notice = new PIXI.Container();
@@ -65,7 +65,7 @@ export class LoadingScene implements Scene {
       applyFit(this._photo, fitCover(this._photo.texture.width, this._photo.texture.height, W, H));
       this._tip.style.fill = COLORS.champagne;
     }
-    this._title.position.set(W / 2, H * 0.38);
+    this._title.position.set(W / 2, Math.max(Game.safeTop + 64, H * 0.18));
     const noticeTop = H - Game.safeBottom - NOTICE_H;
     this._noticeBg.clear()
       .beginFill(0x0c0809, 0.82)

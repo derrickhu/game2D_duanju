@@ -1,0 +1,101 @@
+{
+ "title": "第8章 · 全城首富",
+ "out": "ch08",
+ "native": 0.7,
+ "clips": [
+  {
+   "file": "ch08_s01_v3.mp4",
+   "native": 0,
+   "sfx": "large hall ambience, rapid camera shutter clicks and flash pops, a hushed murmuring crowd, an elegant swelling orchestral theme, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.3,
+     "until": 2.8,
+     "text": "晚星集团 · 发布会"
+    },
+    {
+     "at": 3.0,
+     "who": "记者",
+     "text": "请问苏总，会改姓盛吗？",
+     "emotion": "calm"
+    },
+    {
+     "at": 6.2,
+     "who": "苏晚",
+     "text": "名字是外婆起的，我不改。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch08_s02a_v3.mp4",
+   "native": 0,
+   "sfx": "crackling old audio recording playing through hall speakers, a wave of shocked gasps and rising whispers, a deep ominous bass drone, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.6,
+     "who": "苏晚",
+     "text": "外婆的录音，和二十二年前的证据。",
+     "emotion": "calm"
+    }
+   ]
+  },
+  {
+   "file": "ch08_s02b_v3.mp4",
+   "lines": []
+  },
+  {
+   "file": "ch08_s03_v3.mp4",
+   "lines": [
+    {
+     "at": 2.0,
+     "until": 7.0,
+     "text": "家人们谁懂啊，白莲当场社死。"
+    }
+   ]
+  },
+  {
+   "file": "ch08_s04_v3.mp4",
+   "native": 0,
+   "sfx": "confetti softly fluttering, a distant roar of applause, a warm triumphant orchestral finale with gentle chimes, no voices, no speech",
+   "lines": [
+    {
+     "at": 0.2,
+     "who": "苏晚",
+     "text": "那一晚，所有人都在笑我。",
+     "emotion": "calm"
+    },
+    {
+     "at": 3.4,
+     "who": "苏晚",
+     "text": "现在，他们排队等我回头。",
+     "emotion": "calm"
+    },
+    {
+     "at": 5.6,
+     "who": "苏晚",
+     "text": "可我不会回头了。",
+     "emotion": "happy"
+    }
+   ]
+  }
+ ],
+ "segments": {
+  "ch08_s01": [
+   0,
+   0
+  ],
+  "ch08_s02": [
+   1,
+   2
+  ],
+  "ch08_s03": [
+   3,
+   3
+  ],
+  "ch08_s04": [
+   4,
+   4
+  ]
+ }
+}

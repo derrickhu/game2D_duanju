@@ -7,8 +7,14 @@
 
 v2 定稿（2026-10-11）。全套造型共用一个记忆点：外婆留下的金色星星发夹，戴在左太阳穴上方，“晚星”品牌名和后期的星星元素都从它来。配色走一条线：序章樱花粉（被别人挑选）→ 夜市豆浆白 → 店里夜空藏青 + 金星（有了自己的品牌）→ 小香风奶茶白 → 晚宴香槟金 → 白西装 + 玫瑰红唇 → 终章星河藏青礼服。
 
-- 立绘：`raw/portrait_suwan_v3.png`
-- 锁脸参考图：`ref/composite/suwan_face_ref.jpg`（所有造型都用它出设定图）
+v10 设定（2026-10-13）：女主和九位男主全部重做为精致短剧三维画风、8.5 头身，游戏内全身立绘和男主头像都按此替换。设定图 `design_v10/`（选用版本见 `design_v10/overview_design_v10.jpg`），全身原图 `design_v10/figure_raw/`，头像从设定图胸像直接裁出。视频仍用 v2 脸，不重拍。下面各角色的面部锁定是 v2 的，出新图以 v10 设定图为准。
+
+多套衣服设定图（同一天，脸用 v10，衣服用下文各造型锁定）：`design_v10/outfits/`，总览 `overview_outfits.jpg`。苏晚补了 P / A / B / C / C2 / E，D 白西装就是 `design_v10_suwan.jpg`。陆屿补了 A 和 B 加黑围裙。江叙白补了咖啡馆和校园，脸保持冷亚麻金短发。顾野补了拳馆。沈砚补了驼金三件套。许知衡补了夜班。周以宁补了躲狗仔。霍霆琛补了丝绒晚宴，红酒色头发保持。傅景辞补了同一套西装被雨淋湿。秦朔只有赛车一套，即现有设定图。重拍视频时用这些图锁脸和锁衣服。
+
+礼服审核（2026-10-14）：P / C2 / E 三套改成高领、遮住胸口，旧低领版移到 `outfits/rejected/`，下面 P / C2 / E 的旧锁定短语里的抹胸、露肩领口作废，以新设定图为准。E 现在是不透明缎面立领加长袖，游戏内 `suwan_gown.png` 已按它重做。Loading 封面上的礼服仍是旧的露肩款。
+
+- 立绘：`raw/suwan_icon_v8_full.jpg`
+- 锁脸参考图：`ref/composite/suwan_face_ref.jpg`（v2 视频用；新立绘不要再用这张）
 - 单视图：`turnaround/views/suwan_<造型>_{face,front,34,side,back}.png`
 - 面部锁定（每套都贴）：`large clear doe eyes with double eyelids, small V-shaped face, porcelain-fair skin, soft natural pink lips, glossy straight black hair, a small gold star-shaped hairpin, the warm yellow of a new gold coin, clipped above her left temple`
 
@@ -58,6 +64,10 @@ v2 重新设计（2026-10-11）。v1 的灰卫衣在视频中景里剪影是一�
 - 锁定短语：`hair loosely swept back with a soft center part, two thin strands falling beside his eyes; loose shirt of deep navy linen, the color of fountain-pen ink, top two buttons open, sleeves neatly rolled to the forearms; high-waisted pleated charcoal wool trousers with a thin black leather belt, shirt tucked in; polished black leather loafers`
 - 在甜品店帮工的镜头可以加一条纯黑帆布半身围裙。
 
+### 真人线造型（2026-10-17）
+
+真人专属剧情用的五套造型（烟火痞帅、店里帮工、打烊后、隐藏继承人、求婚夜）和它们对应的剧集，登记在 `hero_live/陆屿.md`，以那里为准。
+
 ## 其余男主（v2 定稿，2026-10-11）
 
 原则：除了“中景认得出”，整个阵容也要互相区分。每人一个专属色、一个独有的记忆点，不和别人撞。概念图提示词 `docs/prompt/<id>_concept_{a,b}_prompt.txt`，设定图提示词 `docs/prompt/turnaround_<id>_{a,b}_prompt.txt`。
@@ -68,16 +78,20 @@ v2 重新设计（2026-10-11）。v1 的灰卫衣在视频中景里剪影是一�
 - B 造型的设定图是用 `ref/composite/<id>_b_ref.jpg`（左：A 设定图的头部特写；右：B 概念图的服装）锁脸出的，后续再加新造型照此办理。
 - 沈砚、周以宁的 v1（`turnaround_{shenyan,zhouyining}_v1.png`、`views/{shenyan,zhouyining}_*.png`）已废弃，文件保留。
 
+显示名（2026-10-14）：秦野改为秦朔，避开和顾野同一个「野」；傅景深改为傅景辞，避开和霍霆琛的「深 / 琛」。店员白屿改为白临，避开陆屿的「屿」。内部 id（qinye、fujingshen、baiyu）和视频文件名不变。
+
+店员第二轮改名（同日）：白临→安澜（江叙白的「白」）、祁夜→祁曜（顾野同音）、苏木→程朗（女主同姓）、温言→温禾（沈砚同音）、闻笙→迟笙（温/闻同音）、纪棠→裴棠（季/纪同音）、萧陌→凌陌（小满近音）、宋知意→宋书意（许知衡的「知」）。id 不变。
+
 | 男主 | 专属色 | 记忆点 | 造型 |
 |---|---|---|---|
 | 江叙白 | 奶白 + 橄榄绿 / 松绿 | 奶茶色卷发、圆银框眼镜、虎牙 | A 咖啡馆、B 校园 |
 | 顾野 | 红包红 | 蜂蜜色皮肤、寸头剃线、眉疤、酒窝 | 仅拳馆（原 A 阳光橙不用） |
 | 沈砚 | 烤杏仁驼 + 金 / 黑白 | 金丝眼镜、背头一缕落发 | A 驼金、B 黑白 |
-| 秦野 | 黑 + 消防车红 | 银发、右耳三枚耳骨夹 | 仅赛车（原 B 做旧皮衣不用） |
+| 秦朔 | 黑 + 消防车红 | 银发、右耳三枚耳骨夹 | 仅赛车（原 B 做旧皮衣不用） |
 | 许知衡 | 白 + 天蓝 / 孔雀绿 | 红绳手链；A 低马尾、B 小黄鸭手术帽 | A 门诊、B 夜班 |
 | 周以宁 | 银亮片 + 樱桃红 / 香芋紫 | 长刘海、左耳十字耳坠 | A 舞台、B 躲狗仔 |
 | 霍霆琛 | 老玉墨绿 / 红酒红 | 下巴细疤、背头落发、金尾戒 | A 墨绿总裁、B 丝绒晚宴 |
-| 傅景深 | 新银币浅灰 + 孔雀蓝 | 桃花眼、榛子色背头、订婚戒 | A 继承人；B 火葬场期 = 同一套西装淋湿，出关键帧时在 A 上改状态 |
+| 傅景辞 | 新银币浅灰 + 孔雀蓝 | 桃花眼、榛子色背头、订婚戒 | A 继承人；B 火葬场期 = 同一套西装淋湿，出关键帧时在 A 上改状态 |
 
 ### 江叙白
 
@@ -96,7 +110,7 @@ v2 重新设计（2026-10-11）。v1 的灰卫衣在视频中景里剪影是一�
 - A 驼金（`turnaround_shenyan_a_v2.png`）：`a fine gold eyeglass chain hanging from the temples of his glasses along his jaw; a long double-breasted overcoat the warm brown of a toasted almond, worn open; a charcoal three-piece suit with a fitted waistcoat; a crisp white shirt; a deep navy silk tie, the color of fountain-pen ink; black leather oxford shoes`
 - B 黑白（`turnaround_shenyan_b_v2.png`）：`a long black wool overcoat worn draped over his shoulders like a cape, sleeves hanging empty; a fitted white turtleneck sweater, bright as fresh snow; black tailored trousers; black leather Chelsea boots; a single black leather glove on his left hand only`
 
-### 秦野
+### 秦朔
 
 - 面部锁定：`fox-like upturned eyes, sharp V-shaped jaw, short messy silver hair, the bright silver of a new steel spoon, with darker roots, three small silver ear cuffs climbing the rim of his right ear`
 - 赛车（`turnaround_qinye_a_v2.png`）：`a vintage racing jacket in black and fire-truck red with white stripes down the sleeves and plain colored geometric patches; a plain white T-shirt; black slim jeans; black leather riding boots; black fingerless leather riding gloves`
@@ -119,7 +133,7 @@ v2 重新设计（2026-10-11）。v1 的灰卫衣在视频中景里剪影是一�
 - A 墨绿总裁（`turnaround_huotingchen_a_v2.png`）：`a three-piece suit in deep green, the dark green of an old jade bracelet, with a fitted waistcoat; a black shirt with the top button open, no tie; gold cufflinks; black polished oxford shoes`
 - B 丝绒晚宴（`turnaround_huotingchen_b_v3.png`）：`a velvet dinner jacket the deep red of fine red wine with black satin lapels; a white dress shirt with the top button open; a loosened black silk bow tie hanging untied around the collar; black tailored trousers with a satin side stripe; black patent leather shoes`
 
-### 傅景深
+### 傅景辞
 
 - 面部锁定：`delicate pretty face, peach-blossom eyes with a slight upward tilt, thin lips, hair the light ash brown of a hazelnut shell, slicked back neatly`
 - A 继承人（`turnaround_fujingshen_a_v2.png`）：`a slim light grey three-piece suit, the pale grey of a new silver coin; a white shirt; a pale blue silk tie; a lapel pin with a deep blue sapphire, the blue of a peacock's neck; a platinum engagement ring on his left hand; light brown leather loafers`
@@ -165,7 +179,7 @@ v2 重新设计（2026-10-11）。v1 的灰卫衣在视频中景里剪影是一�
 | 晚星大厦顶楼 | penthouse | 10 亿点击背景、第 7 章 |
 | 会议室 | boardroom | 第 6 章收购 |
 | 晚星大厦大堂 | lobby | 第 6 章苏父苏母等三小时 |
-| 雨夜大厦门外 | tower_rain | 第 6 章傅景深雨中等待 |
+| 雨夜大厦门外 | tower_rain | 第 6 章傅景辞雨中等待 |
 | 外婆老房子 | grandma_house | 第 7 章 |
 | 发布会舞台 | launch_stage | 第 8 章；1000 亿点击背景 |
 
@@ -181,13 +195,13 @@ v2 重新设计（2026-10-11）。v1 的灰卫衣在视频中景里剪影是一�
 
 | 道具 | id | 用在 | 锁定要点 |
 |---|---|---|---|
-| 沈家纹章 | shen_crest | 第 7 章 | 旧铜币色圆章；纹样 = 新月环抱五角星 + 两枝梅花；褪色红绳 |
+| 沈家纹章 | shen_crest | 第 7 章 | 旧铜币色圆章；纹样 = 正中一颗五角星 + 一圈金色梅花枝环绕（不用新月，像旗帜 / 宗教符号）；褪色红绳 |
 | 陆屿的纹章古董表 | crest_watch | 第 1–8 章（伏笔）、第 7 章揭晓 | 旧铜表壳、黑珐琅表盘中央是同一纹章、旧深棕皮表带 |
 | 外婆的手写方子 | recipe_book | 序章、第 4 章 | 褪色靛蓝布面、红棉绳、米黄纸页蓝墨水手写、夹一朵干桂花、角落小星星 |
 | 订婚钻戒 | engagement_ring | 序章、第 6 章结局 | 圆钻六爪铂金戒托、半圈碎钻戒臂 |
 | 外婆的旧推车 | old_cart | 序章、第 1 章 | 深棕旧木车身、铁圈辐条轮、红布缠把手、木框玻璃柜、奶油红条纹篷、铜铃、前板刻星 |
 
-纹章文字锁定：`a slim crescent moon curving around a five-pointed star, framed by two small plum blossom branches`。
+纹章文字锁定：`a single raised five-pointed star in the center, encircled by a closed ring wreath of gold plum blossom branches`。
 
 ---
 
