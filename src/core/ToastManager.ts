@@ -12,12 +12,6 @@ const MAX = 3;
 
 export type ToastKind = 'success' | 'none' | 'error';
 
-function fillOf(kind: ToastKind): number {
-  if (kind === 'success') return 0xF2C14D;
-  if (kind === 'error') return 0xF0B4A0;
-  return 0xFFF8F0;
-}
-
 class ToastManagerClass {
   private _layer: PIXI.Container | null = null;
   private _items: PIXI.Container[] = [];
@@ -94,7 +88,7 @@ class ToastManagerClass {
       TweenManager.cancelTarget(item);
       TweenManager.to({
         target: item,
-        props: { y: item.y - GAP, alpha: Math.min(item.alpha, 0.62) },
+        props: { y: item.y - GAP, alpha: Math.min(item.alpha, 0.72) },
         duration: 0.16,
         ease: Ease.easeOutQuad,
         onComplete: () => this._hold(item, 0.7),
@@ -105,28 +99,32 @@ class ToastManagerClass {
   private _make(text: string, kind: ToastKind): PIXI.Container {
     const root = new PIXI.Container();
     root.eventMode = 'none';
+    const textFill = kind === 'success' ? 0x2E8B52 : kind === 'error' ? 0xC84D46 : 0x584231;
+    const borderCol = kind === 'success' ? 0x80CE66 : kind === 'error' ? 0xE4766E : 0xE5C17A;
     const label = new PIXI.Text(text, {
       fontFamily: FONT,
-      fontSize: 26,
+      fontSize: 22,
       fontWeight: '700',
-      fill: fillOf(kind),
-      stroke: 0x2A2018,
-      strokeThickness: 6,
-      lineJoin: 'round',
+      fill: textFill,
       align: 'center',
       wordWrap: true,
-      wordWrapWidth: Math.max(280, Game.logicWidth - 96),
+      wordWrapWidth: Math.max(260, Game.logicWidth - 140),
       breakWords: true,
-      dropShadow: true,
-      dropShadowColor: '#1A1410',
-      dropShadowAlpha: 0.4,
-      dropShadowDistance: 2,
-      dropShadowAngle: Math.PI / 2,
-      dropShadowBlur: 2,
     });
+    label.resolution = 2.5;
     label.anchor.set(0.5);
-    label.eventMode = 'none';
-    root.addChild(label);
+    const pw = Math.min(Game.logicWidth - 64, label.width + 60);
+    const ph = Math.max(52, label.height + 26);
+    const pill = new PIXI.Graphics();
+    pill.beginFill(0x6E4F28, 0.16).drawRoundedRect(-pw / 2, -ph / 2 + 5, pw, ph, ph / 2).endFill();
+    pill.beginFill(0xE5C79B, 0.96).drawRoundedRect(-pw / 2, -ph / 2 + 2.5, pw, ph, ph / 2).endFill();
+    pill.lineStyle(1.8, borderCol, 0.98)
+      .beginFill(0xFFFDF9, 0.98)
+      .drawRoundedRect(-pw / 2, -ph / 2, pw, ph, ph / 2)
+      .endFill();
+    pill.lineStyle(1, 0xFFFFFF, 0.85)
+      .drawRoundedRect(-pw / 2 + 3, -ph / 2 + 2.5, pw - 6, ph - 5, Math.max(10, ph / 2 - 3));
+    root.addChild(pill, label);
     return root;
   }
 
@@ -136,7 +134,7 @@ class ToastManagerClass {
 
   private _baseY(): number {
     const top = Number.isFinite(Game.safeTop) ? Game.safeTop : 96;
-    return Math.max(top + 156, Game.logicHeight * 0.3);
+    return Math.max(top + 148, Game.logicHeight * 0.28);
   }
 
   private _ensure(): void {

@@ -15,6 +15,9 @@ function ensureUnsafeEvalPatch(): void {
 }
 
 ensureUnsafeEvalPatch();
+// 强制所有 PIXI.Text 以 2.5x 视网膜超采样光栅化，彻底消除 750 逻辑舞台缩放导致的文字发虚毛边
+(PIXI.Text as any).defaultAutoResolution = false;
+(PIXI.Text as any).defaultResolution = 2.5;
 
 class GameClass {
   app!: PIXI.Application;
@@ -47,6 +50,9 @@ class GameClass {
   init(canvas: any): void {
     if (this._initialized) return;
     ensureUnsafeEvalPatch();
+// 强制所有 PIXI.Text 以 2.5x 视网膜超采样光栅化，彻底消除 750 逻辑舞台缩放导致的文字发虚毛边
+(PIXI.Text as any).defaultAutoResolution = false;
+(PIXI.Text as any).defaultResolution = 2.5;
 
     this._readViewport();
     this._canvas = canvas;
@@ -188,9 +194,12 @@ class GameClass {
     try { sysInfo = api?.getSystemInfoSync?.() ?? null; } catch (_) {}
     try { capsule = api?.getMenuButtonBoundingClientRect?.() ?? null; } catch (_) {}
 
+    const browserDpr = typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
+      ? Math.min(3, Math.max(2, window.devicePixelRatio))
+      : 2;
     this.screenWidth = finite(sysInfo?.screenWidth, this.screenWidth);
     this.screenHeight = finite(sysInfo?.screenHeight, this.screenHeight);
-    this.dpr = finite(sysInfo?.pixelRatio, this.dpr);
+    this.dpr = finite(sysInfo?.pixelRatio, browserDpr);
     this.contentScale = this.screenWidth / this.designWidth;
     if (!Number.isFinite(this.contentScale) || this.contentScale <= 0) {
       this.contentScale = 1;

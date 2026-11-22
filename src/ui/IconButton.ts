@@ -1,56 +1,65 @@
 import * as PIXI from 'pixi.js';
+import { UI_SLICES } from '@/data/art';
 import { AudioManager } from '@/core/AudioManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
-import { gameTexture, whenTextureReady } from '@/utils/assets';
-import { COLORS, drawGlass, makeText } from './theme';
+import { drawEditorialIcon, type EditorialIconId } from './EditorialIcons';
+import { COLORS, makeStickerSprite, makeText } from './theme';
 
 export interface IconButtonOptions {
-  icon: string;
+  icon?: string;
+  offIcon?: string;
+  iconId?: EditorialIconId;
+  glyph?: string;
+  accentColor?: number;
   label: string;
   sub?: string;
-  /** 圆钮直径；不画底时只用来算点击区域 */
+  badgeCount?: number;
   size?: number;
-  /** false：只有图标和文字，放在已有的玻璃底栏上 */
   plate?: boolean;
+  active?: boolean;
   onTap: () => void;
 }
 
-/** 金色线条图标 + 下方文字。原点在图标中心。 */
+/**
+ * v7 破框贴纸白边图标按钮：
+ * - 侧栏模式（plate=true）：奶白金边圆珠底座 + 破框糖果珐琅贴纸图标 + 单行 16px 清晰描边标题 + 右上红点数字角标（彻底取消拥挤的底部双层小胶囊！）；
+ * - 底栏导航模式（plate=false）：选中态发光金盘 + 全彩贴纸图标 / 未选态瓷白亮银贴纸图标 + 19px 清晰描边标题。
+ */
 export class IconButton extends PIXI.Container {
-  private readonly _plate = new PIXI.Graphics();
-  private readonly _icon: PIXI.Sprite;
+  private readonly _haloLayer = new PIXI.Container();
+  private readonly _plateLayer = new PIXI.Container();
+  private readonly _iconLayer = new PIXI.Container();
+  private readonly _badgeLayer = new PIXI.Container();
   private readonly _label: PIXI.Text;
-  private readonly _sub: PIXI.Text | null;
+  private readonly _size: number;
+  private readonly _hasPlate: boolean;
+  private _active: boolean;
   private _enabled = true;
+  private _badgeCount = 0;
 
   constructor(private readonly _opts: IconButtonOptions) {
     super();
-    const size = _opts.size ?? 104;
+    const size = _opts.size ?? 58;
     const plate = _opts.plate ?? true;
-    if (plate) drawGlass(this._plate, -size / 2, -size / 2, size, size, size / 2, 0.72);
-    this._icon = new PIXI.Sprite(gameTexture(_opts.icon));
-    this._icon.anchor.set(0.5);
-    const iconSize = plate ? size * 0.5 : size * 0.62;
-    const fit = (): void => {
-      const tex = this._icon.texture;
-      if (tex.width > 1) this._icon.scale.set(iconSize / tex.width);
-    };
-    fit();
-    whenTextureReady(_opts.icon, fit);
+    this._size = size;
+    this._hasPlate = plate;
+    this._active = _opts.active ?? false;
+    this._badgeCount = _opts.badgeCount ?? 0;
 
-    this._label = makeText(_opts.label, plate ? 22 : 24, COLORS.textOnGlass, true);
+    this.addChild(this._haloLayer, this._plateLayer, this._iconLayer, this._badgeLayer);
+
+    this._label = makeText(_opts.label, plate ? 16 : 19, COLORS.white, true);
     this._label.anchor.set(0.5, 0);
-    this._label.y = plate ? size / 2 + 6 : size * 0.36;
-    this._sub = _opts.sub !== undefined ? makeText(_opts.sub, 18, COLORS.champagne) : null;
-    if (this._sub) {
-      this._sub.anchor.set(0.5, 0);
-      this._sub.y = this._label.y + 28;
-    }
-    this.addChild(this._plate, this._icon, this._label);
-    if (this._sub) this.addChild(this._sub);
+    this._label.style.stroke = 0x523924;
+    this._label.style.strokeThickness = plate ? 4.2 : 4.8;
+    this._label.style.lineJoin = 'round';
+    this.addChild(this._label);
 
-    const hitH = plate ? size + 64 : size;
-    this.hitArea = new PIXI.Rectangle(-size / 2 - 8, -size / 2, size + 16, hitH);
+    this._rebuildVisuals();
+
+    const hitW = Math.max(size + 32, 94);
+    const hitH = size + 46;
+    this.hitArea = new PIXI.Rectangle(-hitW / 2, -size / 2 - 20, hitW, hitH);
     this.eventMode = 'static';
     this.cursor = 'pointer';
     this.on('pointerdown', () => {
@@ -58,25 +67,106 @@ export class IconButton extends PIXI.Container {
       this.scale.set(0.92);
     });
     const release = (): void => {
-      TweenManager.to({ target: this.scale, props: { x: 1, y: 1 }, duration: 0.18, ease: Ease.easeOutBack });
+      TweenManager.to({ target: this.scale, props: { x: 1, y: 1 }, duration: 0.16, ease: Ease.easeOutBack });
     };
     this.on('pointerup', release);
     this.on('pointerupoutside', release);
-    this.on('pointertap', () => {
+    this.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+      e.stopPropagation();
       AudioManager.play(this._enabled ? 'ui_click' : 'ui_deny');
       this._opts.onTap();
     });
   }
 
-  setLabel(label: string, sub?: string): void {
-    this._label.text = label;
-    if (this._sub && sub !== undefined) this._sub.text = sub;
+  setActive(active: boolean): void {
+    if (this._active === active) return;
+    this._active = active;
+    this._rebuildVisuals();
   }
 
-  /** 不可用时变暗，但仍响应点击，由调用方提示原因 */
+  setBadgeCount(count: number): void {
+    const c = Math.max(0, Math.floor(count));
+    if (this._badgeCount === c) return;
+    this._badgeCount = c;
+    this._rebuildBadge();
+  }
+
+  private _rebuildBadge(): void {
+    for (const c of this._badgeLayer.removeChildren()) c.destroy({ children: true });
+    if (this._badgeCount <= 0) return;
+
+    const str = this._badgeCount > 99 ? '99+' : String(this._badgeCount);
+    const txt = makeText(str, 12, 0xFFFFFF, true);
+    txt.anchor.set(0.5);
+    const bw = Math.max(22, txt.width + 12);
+    const bh = 22;
+    const bx = this._size * 0.36;
+    const by = -this._size * 0.36;
+
+    const g = new PIXI.Graphics()
+      .lineStyle(2, 0xFFFFFF, 1)
+      .beginFill(0xF0554D, 1)
+      .drawRoundedRect(bx - bw / 2, by - bh / 2, bw, bh, bh / 2)
+      .endFill();
+    txt.position.set(bx, by - 0.5);
+    this._badgeLayer.addChild(g, txt);
+  }
+
+  private _rebuildVisuals(): void {
+    for (const c of this._haloLayer.removeChildren()) c.destroy();
+    for (const c of this._plateLayer.removeChildren()) c.destroy();
+    for (const c of this._iconLayer.removeChildren()) c.destroy();
+
+    const size = this._size;
+    if (this._hasPlate) {
+      const pearl = makeStickerSprite(UI_SLICES.badgeSidePearl, size + 16, size + 16, true);
+      this._plateLayer.addChild(pearl);
+
+      if (this._opts.icon) {
+        const ic = makeStickerSprite(this._opts.icon, size + 6, size + 6, true);
+        ic.y = -3;
+        this._iconLayer.addChild(ic);
+      } else if (this._opts.iconId) {
+        const g = new PIXI.Graphics();
+        drawEditorialIcon(g, this._opts.iconId, size * 0.52, COLORS.ink, this._opts.accentColor ?? COLORS.rose);
+        this._iconLayer.addChild(g);
+      } else if (this._opts.glyph) {
+        const gl = makeText(this._opts.glyph, Math.round(size * 0.44), COLORS.ink, true);
+        gl.anchor.set(0.5);
+        this._iconLayer.addChild(gl);
+      }
+      this._label.style.fill = 0xFFFDF8;
+      this._label.y = size / 2 - 3;
+    } else {
+      if (this._active) {
+        const halo = makeStickerSprite(UI_SLICES.navActiveHalo, 118, 118, true);
+        halo.y = -18;
+        this._haloLayer.addChild(halo);
+      }
+      const chosenIcon = this._active
+        ? this._opts.icon
+        : (this._opts.offIcon ?? this._opts.icon);
+
+      if (chosenIcon) {
+        const iconSz = this._active ? 88 : 78;
+        const ic = makeStickerSprite(chosenIcon, iconSz, iconSz, true);
+        ic.y = this._active ? -22 : -15;
+        this._iconLayer.addChild(ic);
+      }
+      this._label.style.fill = this._active ? 0xFFE89E : 0xFFFDF8;
+      this._label.y = 17;
+    }
+
+    this._iconLayer.alpha = this._enabled ? 1 : 0.55;
+    this._rebuildBadge();
+  }
+
+  setLabel(label: string, _sub?: string): void {
+    this._label.text = label;
+  }
+
   setEnabled(enabled: boolean): void {
     this._enabled = enabled;
-    this._icon.alpha = enabled ? 1 : 0.45;
-    if (this._sub) this._sub.alpha = enabled ? 1 : 0.6;
+    this._iconLayer.alpha = enabled ? 1 : 0.55;
   }
 }

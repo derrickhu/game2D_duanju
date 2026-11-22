@@ -40,6 +40,11 @@ class CdnAssetServiceClass {
   isCdnPath(path: string): boolean {
     const normalized = this._normalize(path);
     if (!this.enabled || this.isBundledPath(normalized)) return false;
+    // 浏览器预览直接走本地 minigame/ 目录；微信开发者工具若本地包内已有文件也优先走本地，避免被云端旧图覆盖
+    if (!normalized.startsWith('videos/')) {
+      if (!Platform.isMinigame) return false;
+      if (Platform.isDevtools && this._localFileExists(normalized)) return false;
+    }
     return this._matchesCdnPrefix(normalized);
   }
 

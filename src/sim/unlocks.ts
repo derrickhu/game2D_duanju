@@ -1,5 +1,6 @@
-/** 由身价和存档推导的解锁状态。只读，不改存档。 */
+/** 由身价和存档推导的解锁状态（含微聊、朋友圈、商战、赛季转生）。只读，不改存档。 */
 import { MAX_BOND } from '../data/balance.ts';
+import { CHAT_THREADS, MOMENT_POSTS, type ChatThreadDef, type MomentPostDef } from '../data/phoneMessages.ts';
 import { staffById, type StaffId } from '../data/staff.ts';
 import { CHAPTERS, FINAL_CHAPTER, HEROES, HIDDEN_BOND, VIDEOS, heroById, type ChapterDef, type HeroDef, type HeroId } from '../data/story.ts';
 import { AREAS, OUTFITS, SHOPS, type AreaDef, type OutfitDef, type ShopDef, type ShopId } from '../data/world.ts';
@@ -62,7 +63,7 @@ export function isHiddenOpen(save: GameSave, hero: HeroDef, i: number): boolean 
   return effectiveBond(save, hero.id) >= HIDDEN_BOND[i];
 }
 
-/** 广告视频的门槛：门店男主相遇后就能看花絮；傅景辞的另一个结局要羁绊满级 */
+/** 广告番外的门槛：门店男主相遇后就能看花絮；傅景辞的另一个结局要羁绊满级 */
 function extraGateOpen(save: GameSave, hero: HeroDef): boolean {
   return effectiveBond(save, hero.id) >= (hero.shop ? 1 : MAX_BOND);
 }
@@ -97,7 +98,7 @@ export function isVideoUnlocked(save: GameSave, videoId: string): boolean {
   return false;
 }
 
-/** 广告视频：门槛已到但还没看广告解锁 */
+/** 广告番外：门槛已到但还没看广告解锁 */
 export function isVideoAdPending(save: GameSave, videoId: string): boolean {
   const video = VIDEOS.get(videoId);
   if (!video?.adLocked || save.adUnlocked.includes(videoId)) return false;
@@ -105,10 +106,53 @@ export function isVideoAdPending(save: GameSave, videoId: string): boolean {
   return !!hero && extraGateOpen(save, hero);
 }
 
+/** 微聊会话是否已解锁 */
+export function isChatUnlocked(save: GameSave, chat: ChatThreadDef): boolean {
+  if (chat.minChapter !== undefined && currentChapter(save.netWorth) < chat.minChapter) return false;
+  if (chat.minBond !== undefined && effectiveBond(save, chat.heroId) < chat.minBond) return false;
+  return true;
+}
+
+export function unlockedChats(save: GameSave): ChatThreadDef[] {
+  return CHAT_THREADS.filter((c) => isChatUnlocked(save, c));
+}
+
+export function unreadChatCount(save: GameSave): number {
+  return unlockedChats(save).filter((c) => save.repliedChats[c.id] === undefined).length;
+}
+
+export function unlockedMoments(save: GameSave): MomentPostDef[] {
+  const ch = currentChapter(save.netWorth);
+  return MOMENT_POSTS.filter((m) => {
+    if (ch < m.minChapter) return false;
+    if (m.heroId && m.minBond !== undefined && effectiveBond(save, m.heroId) < m.minBond) return false;
+    return true;
+  });
+}
+
+export function unlikedMomentCount(save: GameSave): number {
+  return unlockedMoments(save).filter((m) => !save.likedMoments.includes(m.id)).length;
+}
+
+/** 是否有已解锁但还未打商战对决的章节 */
+export function pendingBattleChapter(save: GameSave): ChapterDef | null {
+  for (const ch of CHAPTERS) {
+    if (ch.id <= 0 || !ch.rival) continue;
+    if (save.netWorth >= ch.unlockNetWorth && !save.clearedBattles.includes(ch.id)) return ch;
+  }
+  return null;
+}
+
+/** 是否可开启下一商业赛季（终章身价达标且终章剧情已看或商战已通） */
+export function canPrestigeSeason(save: GameSave): boolean {
+  return save.netWorth >= CHAPTERS[CHAPTERS.length - 1].unlockNetWorth;
+}
+
 export interface Goal {
   label: string;
   target: number;
   progress: number;
+  chapterId: number;
 }
 
 /** 主界面“下一章”进度条 */
@@ -119,6 +163,7 @@ export function nextGoal(save: GameSave): Goal | null {
     label: `第 ${next.id} 章 · ${next.title}`,
     target: next.unlockNetWorth,
     progress: Math.min(1, save.netWorth / next.unlockNetWorth),
+    chapterId: next.id,
   };
 }
 

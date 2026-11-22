@@ -1,11 +1,13 @@
 /**
- * 店员页：按城区分页，每区最多 4 位，两列卡片墙不滚动。
- * 卡片上是全身立绘、星级、等级收益和录用 / 升级按钮；★3、★5 解锁小视频。
+ * 店员页（v7 高定双金线雕花卡 + 珠光顶栏货币胶囊 + 零 Emoji 精修版）：
+ * - 顶栏统一采用珠光暖白双货币胶囊 (`buildLightCurrencyPill`)，告别单薄文字块；
+ * - 城区切换采用丝缎胶囊，团建面板与店员卡全部升级为 @2x 双金线柔光雕花牌 (`v7_card_couture_plaque`)；
+ * - ★3 解锁「日常拍立得」，★5 解锁「专属私藏」，字号加大、彻底移除廉价系统 Emoji！
  */
 import * as PIXI from 'pixi.js';
-import { staffFigurePath } from '@/data/art';
+import { ICONS, UI_SLICES, staffFigurePath } from '@/data/art';
 import { MAX_STAR, STAFF_BALANCE } from '@/data/balance';
-import { STAFF, STAFF_VIDEOS_READY, staffVideoId, type StaffDef, type StaffId } from '@/data/staff';
+import { STAFF, type StaffDef, type StaffId } from '@/data/staff';
 import { AREAS, SHOPS, shopById, type AreaId } from '@/data/world';
 import { AudioManager } from '@/core/AudioManager';
 import { Game } from '@/core/Game';
@@ -13,22 +15,36 @@ import { OverlayManager } from '@/core/OverlayManager';
 import { ToastManager } from '@/core/ToastManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
 import { GameState } from '@/managers/GameState';
-import { VideoService } from '@/services/VideoService';
-import { areaStaffMultiplier, staffIncome, staffInArea, staffStar, staffUpgradeCost } from '@/sim/economy';
+import {
+  areaStaffMultiplier, resolveStaffBuyCount, staffIncomeIn,
+  staffInArea, staffStar, staffUpgradeCost, staffUpgradeCostN,
+} from '@/sim/economy';
 import { formatMoney } from '@/sim/format';
 import { isStaffAvailable } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
-import { COLORS, drawGlass, drawStars, makeNumText, makeText } from '@/ui/theme';
-import { gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
+import { BuyModeBar } from '@/ui/BuyModeBar';
+import { buildLightCurrencyPill, makeBackButton, PAGE_PAD } from '@/ui/Page';
+import {
+  COLORS,
+  createNineSlice2x,
+  drawLuxuryPageBg,
+  drawStars,
+  makeCouturePlaque,
+  makeNumText,
+  makeStickerSprite,
+  makeText,
+} from '@/ui/theme';
+import { applyGray, gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
 import { HirePopup } from './HirePopup';
+import { StaffPolaroidModal } from './StaffPolaroidModal';
 
-const TOP_H = 64;
-const TAB_H = 60;
-const TEAM_H = 76;
+const TOP_H = 58;
+const TAB_H = 48;
+const TEAM_H = 84;
 const GAP = 16;
-const PAD = 24;
-const INFO_H = 176;
-const VIDEO_STARS = [3, 5] as const;
+const PAD = PAGE_PAD;
+const INFO_H = 180;
+const CARD_STARS = [3, 5] as const;
 
 function shopsOf(area: AreaId): Set<string> {
   return new Set(SHOPS.filter((s) => s.area === area).map((s) => s.id));
@@ -39,19 +55,21 @@ function staffOf(area: AreaId): StaffDef[] {
   return STAFF.filter((s) => shops.has(s.shop));
 }
 
-/** 有人能录用 / 升级时，底栏入口亮红点 */
+/** 有人能新录用时，底栏入口亮红点 */
 export function staffHasAffordable(): boolean {
   const save = GameState.save;
   return STAFF.some((s) => isStaffAvailable(save, s.id) && (save.staff[s.id] ?? 0) === 0 && save.money >= staffUpgradeCost(s.id, 0));
 }
 
 export class StaffSheet extends PIXI.Container {
-  private readonly _bg = new PIXI.Graphics();
+  private readonly _bgLayer = new PIXI.Container();
   private readonly _top = new PIXI.Container();
   private readonly _tabs = new PIXI.Container();
   private readonly _team = new PIXI.Container();
   private readonly _grid = new PIXI.Container();
-  private readonly _money = makeText('', 24, COLORS.champagne, true);
+  private readonly _moneyWrap = new PIXI.Container();
+  private readonly _roseTxt = makeNumText('0', 20, COLORS.ink);
+  private readonly _moneyTxt = makeNumText('0', 20, COLORS.ink);
   private readonly _popup = new HirePopup();
   private readonly _buttons = new Map<StaffId, Button>();
   private _area: AreaId = 'oldstreet';
@@ -60,8 +78,8 @@ export class StaffSheet extends PIXI.Container {
   constructor() {
     super();
     this.visible = false;
-    this._bg.eventMode = 'static';
-    this.addChild(this._bg, this._top, this._tabs, this._team, this._grid);
+    this._bgLayer.eventMode = 'static';
+    this.addChild(this._bgLayer, this._top, this._tabs, this._team, this._grid);
     OverlayManager.container.addChild(this);
   }
 
@@ -72,13 +90,14 @@ export class StaffSheet extends PIXI.Container {
   open(): void {
     this._isOpen = true;
     this.visible = true;
+    OverlayManager.bringToFront();
     this._area = this._defaultArea();
     AudioManager.play('ui_open');
     AudioManager.playBgm('romance');
     this.relayout();
     TweenManager.cancelTarget(this);
     this.alpha = 0;
-    TweenManager.to({ target: this, props: { alpha: 1 }, duration: 0.22, ease: Ease.easeOutQuad });
+    TweenManager.to({ target: this, props: { alpha: 1 }, duration: 0.2, ease: Ease.easeOutQuad });
   }
 
   close(silent = false): void {
@@ -94,7 +113,7 @@ export class StaffSheet extends PIXI.Container {
     TweenManager.to({
       target: this,
       props: { alpha: 0 },
-      duration: 0.18,
+      duration: 0.16,
       ease: Ease.easeInQuad,
       onComplete: () => { this.visible = false; this.alpha = 1; },
     });
@@ -112,22 +131,20 @@ export class StaffSheet extends PIXI.Container {
     if (!this._isOpen) return;
     this._refreshMoney();
     const save = GameState.save;
-    for (const [id, btn] of this._buttons) btn.setEnabled(save.money >= staffUpgradeCost(id, save.staff[id] ?? 0));
+    for (const [id, btn] of this._buttons) {
+      const lv = save.staff[id] ?? 0;
+      const count = resolveStaffBuyCount(save, id, save.buyMode);
+      btn.setEnabled(save.money >= staffUpgradeCostN(id, lv, count));
+    }
   }
 
   relayout(): void {
-    const W = Game.logicWidth;
-    const H = Game.logicHeight;
-    this._bg.clear().beginFill(COLORS.glass).drawRect(0, 0, W, H).endFill();
-    for (let i = 0; i < 16; i++) {
-      this._bg.beginFill(0x3a262b, 0.05).drawCircle(W / 2, H * 0.42, W * (1.1 - i * 0.06)).endFill();
-    }
+    drawLuxuryPageBg(this._bgLayer, Game.logicWidth, Game.logicHeight, false);
     this._buildTop();
     this.rebuild();
     if (this._popup.isOpen) this._popup.relayout();
   }
 
-  /** 优先停在有人可录用的城区，否则停在最新开放的城区 */
   private _defaultArea(): AreaId {
     const save = GameState.save;
     const open = AREAS.filter((a) => staffOf(a.id).some((s) => isStaffAvailable(save, s.id)));
@@ -135,71 +152,91 @@ export class StaffSheet extends PIXI.Container {
     return (pending ?? open[open.length - 1] ?? AREAS[0]).id;
   }
 
+  private get _headerTopY(): number {
+    return Game.safeTop > 24 ? Game.safeTop + 42 : Math.max(16, Game.safeTop + 10);
+  }
+
   private _buildTop(): void {
-    const W = Game.logicWidth;
-    const money = this._money;
-    money.parent?.removeChild(money);
+    this._roseTxt.parent?.removeChild(this._roseTxt);
+    this._moneyTxt.parent?.removeChild(this._moneyTxt);
+    for (const c of this._moneyWrap.removeChildren()) c.destroy({ children: true });
+    this._moneyWrap.parent?.removeChild(this._moneyWrap);
     for (const c of this._top.removeChildren()) c.destroy({ children: true });
-    const y = Game.safeTop + 4;
-    const h = TOP_H;
+    const y = this._headerTopY;
 
-    const back = new PIXI.Container();
-    const backW = 156;
-    back.addChild(drawGlass(new PIXI.Graphics(), 0, 0, backW, h, h / 2));
-    const arrow = new PIXI.Graphics();
-    arrow.lineStyle(4, COLORS.champagne).moveTo(38, h / 2 - 12).lineTo(24, h / 2).lineTo(38, h / 2 + 12);
-    const backLabel = makeText('返回', 26, COLORS.textOnGlass, true);
-    backLabel.anchor.set(0, 0.5);
-    backLabel.position.set(54, h / 2);
-    back.addChild(arrow, backLabel);
+    const back = makeBackButton(() => this.close(), '返回');
     back.position.set(PAD, y);
-    back.eventMode = 'static';
-    back.cursor = 'pointer';
-    back.on('pointertap', () => this.close());
 
-    const title = makeText('店员', 34, COLORS.textOnGlass, true);
-    title.style.letterSpacing = 6;
+    const title = makeText('精英店员', 31, COLORS.ink, true);
+    title.style.letterSpacing = 2;
+    title.style.dropShadow = true;
+    title.style.dropShadowColor = 0xFFFFFF;
+    title.style.dropShadowAlpha = 0.92;
+    title.style.dropShadowBlur = 0;
+    title.style.dropShadowDistance = 1.5;
+    title.style.dropShadowAngle = Math.PI / 2;
     title.anchor.set(0.5);
-    title.position.set(W / 2, y + h / 2);
+    title.position.set(264, y + TOP_H / 2);
 
+    const rosePill = buildLightCurrencyPill(ICONS.currencyRose, this._roseTxt, 128);
+    const cashPill = buildLightCurrencyPill(ICONS.coins, this._moneyTxt, 156);
+    rosePill.position.set(0, 0);
+    cashPill.position.set(136, 0);
+    this._moneyWrap.addChild(rosePill, cashPill);
+    this._moneyWrap.position.set(Game.logicWidth - PAD - 292, y + (TOP_H - 44) / 2);
+
+    const sep = new PIXI.Graphics()
+      .lineStyle(1.4, 0xEAD7B9, 0.9)
+      .moveTo(PAD, y + TOP_H + 8)
+      .lineTo(Game.logicWidth - PAD, y + TOP_H + 8);
+
+    this._top.addChild(back, title, this._moneyWrap, sep);
     this._refreshMoney();
-    const pillW = Math.max(168, money.width + 36);
-    const pill = new PIXI.Container();
-    pill.addChild(drawGlass(new PIXI.Graphics(), 0, 0, pillW, h, h / 2));
-    money.anchor.set(0.5);
-    money.position.set(pillW / 2, h / 2);
-    pill.addChild(money);
-    pill.position.set(W - PAD - pillW, y);
-
-    this._top.addChild(back, title, pill);
   }
 
   private _refreshMoney(): void {
-    this._money.text = `¥ ${formatMoney(GameState.save.money)}`;
+    const save = GameState.save;
+    this._roseTxt.text = String(save.roses);
+    this._moneyTxt.text = formatMoney(save.money);
+    this._roseTxt.scale.set(1);
+    this._moneyTxt.scale.set(1);
+    if (this._moneyTxt.width > 74) this._moneyTxt.scale.set(74 / this._moneyTxt.width);
   }
 
   private _buildTabs(): void {
     for (const c of this._tabs.removeChildren()) c.destroy({ children: true });
     const W = Game.logicWidth;
     const save = GameState.save;
-    const y = Game.safeTop + 4 + TOP_H + 20;
-    const w = (W - PAD * 2 - 8 * (AREAS.length - 1)) / AREAS.length;
+    const y = this._headerTopY + TOP_H + 16;
+    const w = (W - PAD * 2 - 10 * (AREAS.length - 1)) / AREAS.length;
     AREAS.forEach((area, i) => {
       const staff = staffOf(area.id);
       const open = staff.some((s) => isStaffAvailable(save, s.id));
       const selected = area.id === this._area;
       const tab = new PIXI.Container();
-      const g = new PIXI.Graphics();
-      if (selected) g.beginFill(COLORS.champagne).drawRoundedRect(0, 0, w, TAB_H, TAB_H / 2).endFill();
-      else drawGlass(g, 0, 0, w, TAB_H, TAB_H / 2, open ? 0.6 : 0.35);
-      const label = makeText(area.name, 22, selected ? COLORS.glass : open ? COLORS.textOnGlass : COLORS.textOnGlassSoft, true);
+
+      const spec = selected
+        ? { path: UI_SLICES.btnSmCoral, pad2x: 20, left2x: 88, top2x: 68, right2x: 88, bottom2x: 68 }
+        : open
+          ? { path: UI_SLICES.btnMdCream, pad2x: 12, left2x: 102, top2x: 70, right2x: 102, bottom2x: 70 }
+          : { path: UI_SLICES.btnMdDisabled, pad2x: 12, left2x: 102, top2x: 70, right2x: 102, bottom2x: 70 };
+      tab.addChild(createNineSlice2x(spec, w, TAB_H, false));
+
+      const label = makeText(area.name, 19, selected ? COLORS.white : open ? COLORS.ink : COLORS.inkMuted, true);
+      if (selected) {
+        label.style.stroke = 0x8C322B;
+        label.style.strokeThickness = 3.2;
+        label.style.lineJoin = 'round';
+      }
       label.anchor.set(0.5);
-      label.position.set(w / 2, TAB_H / 2);
-      if (!open && !selected) label.alpha = 0.6;
-      tab.addChild(g, label);
+      label.position.set(w / 2, TAB_H / 2 - 0.5);
+      tab.addChild(label);
+
       const pending = staff.some((s) => isStaffAvailable(save, s.id) && !(save.staff[s.id] ?? 0) && save.money >= staffUpgradeCost(s.id, 0));
-      if (pending && !selected) tab.addChild(new PIXI.Graphics().beginFill(COLORS.rose).drawCircle(w - 10, 8, 7).endFill());
-      tab.position.set(PAD + i * (w + 8), y);
+      if (pending && !selected) {
+        tab.addChild(new PIXI.Graphics().lineStyle(2, 0xFFFFFF).beginFill(0xF0554D).drawCircle(w - 12, 10, 6).endFill());
+      }
+      tab.position.set(PAD + i * (w + 10), y);
       tab.eventMode = 'static';
       tab.cursor = 'pointer';
       tab.on('pointertap', () => {
@@ -216,43 +253,50 @@ export class StaffSheet extends PIXI.Container {
     for (const c of this._team.removeChildren()) c.destroy({ children: true });
     const W = Game.logicWidth;
     const save = GameState.save;
-    const y = Game.safeTop + 4 + TOP_H + 20 + TAB_H + 16;
+    const y = this._headerTopY + TOP_H + 16 + TAB_H + 14;
     const ids = staffInArea(this._area);
     const hired = ids.filter((id) => (save.staff[id] ?? 0) > 0).length;
     const maxed = ids.filter((id) => staffStar(save.staff[id] ?? 0) >= MAX_STAR).length;
     const mult = areaStaffMultiplier(save, this._area);
     const areaName = AREAS.find((a) => a.id === this._area)?.name ?? '';
 
-    this._team.addChild(drawGlass(new PIXI.Graphics(), PAD, y, W - PAD * 2, TEAM_H, 24, 0.55));
-    const head = makeText(`${areaName} 团建`, 24, COLORS.textOnGlass, true);
-    head.position.set(PAD + 24, y + 12);
+    const plaque = makeCouturePlaque(W - PAD * 2, TEAM_H, mult > 1, false);
+    plaque.position.set(PAD, y);
+    this._team.addChild(plaque);
+
+    const ico = makeStickerSprite(ICONS.staff, 52, 52, true);
+    ico.position.set(PAD + 40, y + TEAM_H / 2);
+    this._team.addChild(ico);
+
+    const head = makeText(`${areaName}团建  ×${mult.toFixed(mult % 1 ? 1 : 0)}`, 23, COLORS.ink, true);
+    head.position.set(PAD + 76, y + 14);
     this._team.addChild(head);
 
     const next = hired < ids.length
-      ? `录满 ${hired}/${ids.length} → 本区门店收益 ×${STAFF_BALANCE.areaHiredMult}`
+      ? `录满 ${hired}/${ids.length} → 本区收益 ×${STAFF_BALANCE.areaHiredMult}`
       : maxed < ids.length
-        ? `全员 ★${MAX_STAR} ${maxed}/${ids.length} → 再 ×${STAFF_BALANCE.areaMaxStarMult}`
-        : '团建满级';
-    const tip = makeText(next, 20, COLORS.textOnGlassSoft);
-    tip.position.set(PAD + 24, y + 44);
+        ? `全员 ★${MAX_STAR} (${maxed}/${ids.length}) → 再 ×${STAFF_BALANCE.areaMaxStarMult}`
+        : '✦ 本区团建已登顶满级！';
+    const tip = makeText(next, 17, COLORS.inkSoft, true);
+    tip.position.set(PAD + 76, y + 48);
+    if (tip.width > W - PAD * 2 - 310) tip.scale.set((W - PAD * 2 - 310) / tip.width);
     this._team.addChild(tip);
 
-    const multText = makeNumText(`×${mult}`, 40, mult > 1 ? COLORS.champagne : COLORS.textOnGlassSoft);
-    multText.anchor.set(1, 0.5);
-    multText.position.set(W - PAD - 24, y + TEAM_H / 2);
-    this._team.addChild(multText);
+    const buyBar = new BuyModeBar(206, 40, () => this.rebuild());
+    buyBar.position.set(W - PAD - 224, y + (TEAM_H - 40) / 2);
+    this._team.addChild(buyBar);
   }
 
   private _buildGrid(): void {
     for (const c of this._grid.removeChildren()) c.destroy({ children: true });
     this._buttons.clear();
     const W = Game.logicWidth;
-    const top = Game.safeTop + 4 + TOP_H + 20 + TAB_H + 16 + TEAM_H + 20;
-    const bottom = Game.logicHeight - Game.safeBottom - 20;
+    const top = this._headerTopY + TOP_H + 16 + TAB_H + 14 + TEAM_H + 16;
+    const bottom = Game.logicHeight - Game.safeBottom - 16;
     const list = staffOf(this._area);
     const rows = Math.ceil(list.length / 2);
     const cw = (W - PAD * 2 - GAP) / 2;
-    const ch = Math.min(620, (bottom - top - GAP * (rows - 1)) / Math.max(rows, 2));
+    const ch = Math.min(600, (bottom - top - GAP * (rows - 1)) / Math.max(rows, 2));
     list.forEach((s, i) => {
       const card = this._card(s, cw, ch);
       card.position.set(PAD + (i % 2) * (cw + GAP), top + Math.floor(i / 2) * (ch + GAP));
@@ -268,115 +312,145 @@ export class StaffSheet extends PIXI.Container {
     const star = staffStar(level);
     const card = new PIXI.Container();
 
-    const bg = new PIXI.Graphics();
-    drawGlass(bg, 0, 0, w, h, 28, hired ? 0.62 : 0.5);
+    card.addChild(makeCouturePlaque(w, h, available && !hired, false));
+
     const figH = h - INFO_H;
-    for (let i = 8; i > 0; i--) bg.beginFill(COLORS.champagne, hired ? 0.03 : 0.015).drawEllipse(w / 2, figH * 0.55, (w * 0.5 * i) / 8, (figH * 0.5 * i) / 8).endFill();
-    card.addChild(bg);
+    const stageBg = new PIXI.Graphics()
+      .lineStyle(1.2, 0xEAD6B8, 0.85)
+      .beginFill(hired ? 0xFFF7EE : available ? 0xFFF3EB : 0xEFE7DC, 0.88)
+      .drawRoundedRect(12, 12, w - 24, figH - 12, 20)
+      .endFill();
+    card.addChild(stageBg);
 
     const path = staffFigurePath(s.id);
     const tex = gameTexture(path);
     if (isTextureReady(tex)) {
       const fig = new PIXI.Sprite(tex);
       fig.anchor.set(0.5, 1);
-      fig.scale.set(Math.min((figH - 20) / tex.height, (w - 24) / tex.width));
+      fig.scale.set(Math.min((figH - 18) / tex.height, (w - 28) / tex.width));
       fig.position.set(w / 2, figH);
       if (!available) {
-        fig.tint = 0x000000;
-        fig.alpha = 0.55;
+        applyGray(fig);
+        fig.alpha = 0.48;
       } else if (!hired) {
-        fig.alpha = 0.85;
+        fig.alpha = 0.9;
       }
-      const mask = new PIXI.Graphics().beginFill(0xffffff).drawRoundedRect(2, 2, w - 4, figH, 26).endFill();
+      const mask = new PIXI.Graphics().beginFill(0xffffff).drawRoundedRect(12, 12, w - 24, figH - 12, 20).endFill();
       fig.mask = mask;
       card.addChild(mask, fig);
     } else {
       whenTextureReady(path, () => { if (this._isOpen) this._buildGrid(); });
     }
-    card.addChild(new PIXI.Graphics().beginFill(COLORS.glass, 0.35).drawRect(2, figH - 1, w - 4, 1).endFill());
 
-    const stars = drawStars(new PIXI.Graphics(), star, MAX_STAR, 11, 5);
-    stars.position.set(22, 26);
+    const stars = drawStars(new PIXI.Graphics(), star, MAX_STAR, 10.5, 5);
+    stars.position.set(26, 28);
     card.addChild(stars);
 
-    if (hired) this._videoChips(card, s, star, w);
+    if (hired) this._polaroidChips(card, s, star, w);
 
     const shop = shopById(s.shop);
-    const y0 = figH + 14;
-    const name = makeText(available ? s.name : '？？？', 30, COLORS.textOnGlass, true);
+    const y0 = figH + 10;
+    const name = makeText(available ? s.name : '？？？', 27, COLORS.ink, true);
     name.position.set(20, y0);
     card.addChild(name);
-    const title = makeText(s.title, 20, COLORS.textOnGlassSoft);
-    title.position.set(name.x + name.width + 10, y0 + 9);
+
+    const title = makeText(s.title, 18, COLORS.inkSoft, true);
+    title.position.set(name.x + name.width + 8, y0 + 7);
+    if (title.x + title.width > w - 88) title.scale.set(Math.max(0.75, (w - 88 - title.x) / title.width));
     card.addChild(title);
+
     if (hired) {
-      const lv = makeNumText(`Lv.${level}`, 26);
+      const lv = makeNumText(`Lv.${level}`, 23, COLORS.roseDeep);
       lv.anchor.set(1, 0);
-      lv.position.set(w - 20, y0 + 2);
+      lv.position.set(w - 20, y0 + 3);
       card.addChild(lv);
     }
 
     if (!available) {
-      const lock = makeText(`${shop.name}开业后可招聘`, 22, COLORS.textOnGlassSoft);
-      lock.position.set(20, y0 + 56);
-      card.addChild(lock);
+      const lockIco = makeStickerSprite(ICONS.lock, 30, 30, true);
+      lockIco.position.set(34, y0 + 66);
+      const lock = makeText(`${shop.name}开业后招聘`, 19, COLORS.inkSoft, true);
+      lock.position.set(54, y0 + 53);
+      if (lock.width > w - 72) lock.scale.set((w - 72) / lock.width);
+      card.addChild(lockIco, lock);
       return card;
     }
 
-    const now = staffIncome(s.id, level);
-    const after = staffIncome(s.id, level + 1);
-    const detail = hired ? `每秒 +${formatMoney(now)} → +${formatMoney(after)}` : `录用后每秒 +${formatMoney(after)}`;
-    const detailText = makeText(detail, 21, COLORS.champagne);
-    detailText.position.set(20, y0 + 48);
+    const count = resolveStaffBuyCount(save, s.id, save.buyMode);
+    const nowInc = staffIncomeIn(save, s.id, level);
+    const afterInc = staffIncomeIn(save, s.id, level + count);
+    const detail = hired ? `+¥${formatMoney(nowInc)} → +¥${formatMoney(afterInc)}/s` : `录用每秒 +¥${formatMoney(afterInc)}`;
+    const detailText = makeText(detail, 19, COLORS.goldDeep, true);
+    if (detailText.width > w - 40) detailText.scale.set((w - 40) / detailText.width);
+    detailText.position.set(20, y0 + 46);
     card.addChild(detailText);
 
-    const cost = staffUpgradeCost(s.id, level);
+    const cost = staffUpgradeCostN(s.id, level, count);
+    const btnLabel = !hired ? '录用 玫瑰+1' : count > 1 ? `升+${count}级` : '升级';
     const btn = new Button({
-      width: w - 40, height: 64, variant: 'gold', fontSize: 26,
-      label: `${hired ? '升级' : '录用'}  ¥ ${formatMoney(cost)}`,
+      width: w - 36,
+      height: 60,
+      variant: !hired ? 'rose' : 'gold',
+      fontSize: 21,
+      label: `${btnLabel}  ¥${formatMoney(cost)}`,
       onTap: () => this._upgrade(s.id),
     });
-    btn.position.set(w / 2, h - 50);
+    btn.position.set(w / 2, h - 46);
     btn.setEnabled(save.money >= cost);
     card.addChild(btn);
     this._buttons.set(s.id, btn);
     return card;
   }
 
-  private _videoChips(card: PIXI.Container, s: StaffDef, star: number, w: number): void {
-    VIDEO_STARS.forEach((need, i) => {
-      if (star < need) return;
-      const vid = staffVideoId(s.id, (i + 1) as 1 | 2);
-      const ready = STAFF_VIDEOS_READY.has(vid);
+  /** ★3 解锁日常拍立得，★5 解锁专属私藏卡面 */
+  private _polaroidChips(card: PIXI.Container, s: StaffDef, star: number, w: number): void {
+    CARD_STARS.forEach((need, i) => {
+      const slot = (i + 1) as 1 | 2;
+      const open = star >= need;
+      const seen = GameState.save.watched.includes(`staff_${s.id}_${slot}`);
       const chip = new PIXI.Container();
-      const label = makeText(ready ? `▶ ${i === 0 ? '日常' : '专属'}` : '视频制作中', 18, ready ? COLORS.glass : COLORS.textOnGlassSoft, true);
+      const textStr = open ? (slot === 1 ? '✦ 日常' : '♥ 私藏') : `★${need}卡面`;
+      const label = makeText(textStr, 15, open ? (slot === 1 ? COLORS.ink : COLORS.white) : COLORS.inkSoft, true);
       label.anchor.set(0.5);
       const cw = label.width + 24;
-      const g = new PIXI.Graphics();
-      if (ready) g.beginFill(COLORS.champagne).drawRoundedRect(-cw / 2, -17, cw, 34, 17).endFill();
-      else drawGlass(g, -cw / 2, -17, cw, 34, 17, 0.7);
-      chip.addChild(g, label);
-      chip.position.set(w - 20 - cw / 2, 28 + i * 42);
+
+      if (open) {
+        const spec = slot === 1
+          ? { path: UI_SLICES.btnSmGold, pad2x: 12, left2x: 92, top2x: 70, right2x: 92, bottom2x: 70 }
+          : { path: UI_SLICES.btnSmCoral, pad2x: 12, left2x: 88, top2x: 68, right2x: 88, bottom2x: 68 };
+        chip.addChild(createNineSlice2x(spec, cw, 30, true));
+      } else {
+        const g = new PIXI.Graphics()
+          .lineStyle(1.3, COLORS.borderGold)
+          .beginFill(0xFFFDF8, 0.94)
+          .drawRoundedRect(-cw / 2, -15, cw, 30, 15)
+          .endFill();
+        chip.addChild(g);
+      }
+
+      chip.addChild(label);
+      if (open && !seen) {
+        chip.addChild(new PIXI.Graphics().lineStyle(1.5, 0xFFFFFF).beginFill(0xF0554D).drawCircle(cw / 2 - 4, -12, 5.5).endFill());
+      }
+      chip.position.set(w - 18 - cw / 2, 28 + i * 38);
       chip.eventMode = 'static';
       chip.cursor = 'pointer';
       chip.on('pointertap', () => {
-        if (!ready) {
-          ToastManager.show(`${s.name}的小视频正在拍摄，敬请期待`);
+        if (!open) {
+          ToastManager.show(`${s.name}升至 ★${need}（Lv.${need === 3 ? 25 : 100}）解锁拍立得卡面`);
           return;
         }
-        AudioManager.play('ui_click');
-        void VideoService.play(vid, GameState.save.watched.includes(vid)).then((r) => {
-          if (r !== 'error') GameState.markWatched(vid);
-        });
+        StaffPolaroidModal.show(s.id, slot);
+        this.rebuild();
       });
       card.addChild(chip);
     });
   }
 
   private _upgrade(id: StaffId): void {
-    const r = GameState.upgradeStaff(id);
+    const r = GameState.upgradeStaff(id, GameState.save.buyMode);
     if (!r) {
-      ToastManager.show('钱还不够');
+      ToastManager.show('现金还不够');
       return;
     }
     this.rebuild();

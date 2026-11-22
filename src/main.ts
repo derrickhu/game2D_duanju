@@ -16,7 +16,7 @@ import { HomeScene } from '@/scenes/HomeScene';
 import { LoadingScene } from '@/scenes/LoadingScene';
 import { ensureBootSubpackages } from '@/utils/bootSubpackages';
 import { preloadTextures } from '@/utils/assets';
-import { outfitFigurePath, outfitScenePath } from '@/data/art';
+import { BOOT_UI_TEXTURES, outfitFigurePath, outfitScenePath } from '@/data/art';
 
 const BOOT_HOLD_MS = 1800;
 
@@ -86,9 +86,16 @@ async function main(): Promise<void> {
   void AudioManager.preloadSfx();
   await bootPacks;
   const outfit = GameState.save.outfit;
-  await preloadTextures([outfitScenePath(outfit), outfitFigurePath(outfit)], (done, total) => {
-    loading.setProgress(0.6 + done / total * 0.4);
-  });
+  await preloadTextures(
+    [
+      outfitScenePath(outfit),
+      outfitFigurePath(outfit),
+      ...BOOT_UI_TEXTURES,
+    ],
+    (done, total) => {
+      loading.setProgress(0.6 + done / total * 0.4);
+    },
+  );
   loading.setProgress(1);
 
   await new Promise<void>((resolve) => {

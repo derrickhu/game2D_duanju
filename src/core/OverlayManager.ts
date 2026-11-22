@@ -11,13 +11,21 @@ class OverlayManagerClass {
     Game.onViewportChange(() => this.relayoutVisiblePanels());
   }
 
+  private _ensureAttached(): void {
+    if (!this._container || !Game.stage) return;
+    if (this._container.parent !== Game.stage) {
+      Game.stage.sortableChildren = true;
+      Game.stage.addChild(this._container);
+    }
+  }
+
   get container(): PIXI.Container {
     if (!this._container) {
       this._container = new PIXI.Container();
       this._container.sortableChildren = true;
       this._container.zIndex = 10000;
-      Game.stage.addChild(this._container);
     }
+    this._ensureAttached();
     return this._container;
   }
 
@@ -26,10 +34,16 @@ class OverlayManagerClass {
   }
 
   bringToFront(): void {
-    if (this._container && this._container.parent) {
-      const parent = this._container.parent;
-      parent.removeChild(this._container);
-      parent.addChild(this._container);
+    if (this._container && Game.stage) {
+      Game.stage.sortableChildren = true;
+      if (this._container.parent && this._container.parent !== Game.stage) {
+        this._container.parent.removeChild(this._container);
+      }
+      if (this._container.parent === Game.stage) {
+        Game.stage.removeChild(this._container);
+      }
+      this._container.zIndex = 10000;
+      Game.stage.addChild(this._container);
     }
     this._afterBringToFront?.();
     ToastManager.ensureTop();
@@ -67,6 +81,7 @@ class OverlayManagerClass {
   }
 
   relayoutVisiblePanels(): void {
+    this._ensureAttached();
     if (!this._container) return;
     for (const child of this._container.children) {
       if (!child.visible || typeof (child as any).relayout !== 'function') continue;

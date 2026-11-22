@@ -1,19 +1,20 @@
 /**
  * 玩法状态门面：UI 只通过这里改存档。
- * 负责每帧结算挂机收益、跨门槛发解锁事件、定时存盘。
+ * 负责每帧结算挂机收益（含江叙白自动接单）、跨门槛发解锁事件、爆单状态与定时存盘。
  */
 import { BALANCE } from '@/data/balance';
 import type { StaffId } from '@/data/staff';
 import type { HeroId } from '@/data/story';
+import type { StreetEventDef } from '@/data/streetEvents';
 import type { OutfitId, ShopId } from '@/data/world';
 import { EV } from '@/config/events';
 import { EventBus } from '@/core/EventBus';
 import { Game } from '@/core/Game';
 import { SaveManager } from '@/managers/SaveManager';
 import * as A from '@/sim/actions';
-import { incomePerSec } from '@/sim/economy';
+import { computeSynergies, incomePerSec, isFeverActive, type EmpireSynergies } from '@/sim/economy';
 import { claimQuest, currentQuest, type QuestProgress } from '@/sim/quests';
-import type { GameSave } from '@/sim/save';
+import type { BuyMode, GameSave } from '@/sim/save';
 import { crossedThresholds } from '@/sim/unlocks';
 
 const AUTOSAVE_MS = 10_000;
@@ -32,8 +33,20 @@ class GameStateClass {
     return incomePerSec(this.save, Date.now());
   }
 
+  get synergies(): EmpireSynergies {
+    return computeSynergies(this.save);
+  }
+
   get comboActive(): boolean {
     return Date.now() < this._comboUntil;
+  }
+
+  get feverActive(): boolean {
+    return isFeverActive(this.save, Date.now());
+  }
+
+  get feverLeftSec(): number {
+    return Math.max(0, (this.save.feverUntil - Date.now()) / 1000);
   }
 
   start(): void {
@@ -43,17 +56,31 @@ class GameStateClass {
     Game.ticker.add(() => this._update(Game.ticker.deltaMS / 1000));
   }
 
-  tap(): number {
+  tap(): A.InteractiveTapResult {
     const now = Date.now();
     this._tapTimes = this._tapTimes.filter((t) => now - t < 1000);
     this._tapTimes.push(now);
     if (this._tapTimes.length >= BALANCE.comboTapsPerSec) {
       this._comboUntil = now + BALANCE.comboDurationSec * 1000;
     }
-    return this._mutate(() => A.tap(this.save, now, this.comboActive));
+    const r = this._mutate(() => A.tapInteractive(this.save, now, this.comboActive));
+    if (r.feverTriggered) EventBus.emit(EV.feverChanged, true);
+    return r;
   }
 
-  buyShop(id: ShopId, count: number | 'max'): A.BuyShopResult | null {
+  serveOrder(): { amount: number; feverTriggered: boolean } {
+    const r = this._mutate(() => A.serveCustomerOrder(this.save, Date.now()));
+    if (r.feverTriggered) EventBus.emit(EV.feverChanged, true);
+    return r;
+  }
+
+  setBuyMode(mode: BuyMode): void {
+    if (this.save.buyMode === mode) return;
+    this.save.buyMode = mode;
+    EventBus.emit(EV.saveChanged);
+  }
+
+  buyShop(id: ShopId, count: number | 'max' | BuyMode = this.save.buyMode): A.BuyShopResult | null {
     const r = this._mutate(() => A.buyShop(this.save, id, count));
     if (r) {
       EventBus.emit(EV.shopChanged, id);
@@ -62,8 +89,8 @@ class GameStateClass {
     return r;
   }
 
-  upgradeStaff(id: StaffId): A.StaffUpgradeResult | null {
-    const r = this._mutate(() => A.upgradeStaff(this.save, id));
+  upgradeStaff(id: StaffId, mode: number | BuyMode = this.save.buyMode): A.StaffUpgradeResult | null {
+    const r = this._mutate(() => A.upgradeStaff(this.save, id, mode));
     if (r) EventBus.emit(EV.staffChanged, id, r);
     return r;
   }
@@ -72,23 +99,76 @@ class GameStateClass {
     return currentQuest(this.save);
   }
 
-  /** 领当前任务奖励；没完成返回 0 */
-  claimQuest(): number {
-    const got = this._mutate(() => claimQuest(this.save));
-    if (got > 0) {
+  /** 领当前任务奖励（现金 + 玫瑰）；没完成返回 0 */
+  claimQuest(): { cash: number; roses: number } {
+    const p = currentQuest(this.save);
+    if (!p || !p.done) return { cash: 0, roses: 0 };
+    const roses = p.roses;
+    const cash = this._mutate(() => claimQuest(this.save));
+    if (cash > 0) {
       EventBus.emit(EV.questChanged);
       this.flush();
     }
-    return got;
+    return { cash, roses: cash > 0 ? roses : 0 };
   }
 
-  upgradeSkill(): boolean {
-    return this._mutate(() => A.upgradeSkill(this.save));
+  upgradeSkill(mode: number | BuyMode = this.save.buyMode): boolean {
+    return this._mutate(() => A.upgradeSkill(this.save, mode));
   }
 
   investBond(heroId: HeroId): boolean {
     const ok = this._mutate(() => A.investBond(this.save, heroId));
     if (ok) EventBus.emit(EV.heroChanged, heroId, false);
+    return ok;
+  }
+
+  resolveStreetEvent(event: StreetEventDef, optionIdx: 0 | 1): { cash: number; roses: number; feverTriggered: boolean } {
+    const r = this._mutate(() => A.resolveStreetEvent(this.save, event, optionIdx, Date.now()));
+    if (r.feverTriggered) EventBus.emit(EV.feverChanged, true);
+    this.flush();
+    return r;
+  }
+
+  clearChapterBattle(chapterId: number): number {
+    const roses = this._mutate(() => A.clearChapterBattle(this.save, chapterId));
+    if (roses > 0) this.flush();
+    return roses;
+  }
+
+  claimChapterClimax(chapterId: number, choice: 'A' | 'B'): number {
+    const roses = this._mutate(() => A.claimChapterClimax(this.save, chapterId, choice));
+    if (roses > 0) this.flush();
+    return roses;
+  }
+
+  replyChat(threadId: string, optionIdx: 0 | 1): number {
+    const roses = this._mutate(() => A.replyChat(this.save, threadId, optionIdx));
+    if (roses > 0) {
+      EventBus.emit(EV.chatChanged);
+      this.flush();
+    }
+    return roses;
+  }
+
+  likeMoment(postId: string): number {
+    const roses = this._mutate(() => A.likeMoment(this.save, postId));
+    if (roses > 0) {
+      EventBus.emit(EV.chatChanged);
+      this.flush();
+    }
+    return roses;
+  }
+
+  prestigeSeason(): boolean {
+    const ok = A.prestigeSeason(this.save, Date.now());
+    if (ok) {
+      EventBus.emit(EV.seasonChanged, this.save.season);
+      EventBus.emit(EV.saveChanged);
+      EventBus.emit(EV.moneyChanged);
+      EventBus.emit(EV.rosesChanged);
+      EventBus.emit(EV.shopChanged, null);
+      this.flush();
+    }
     return ok;
   }
 
@@ -140,10 +220,11 @@ class GameStateClass {
     return amount;
   }
 
-  /** 开发用：解锁全部视频。只改存档，不弹章节、换装那些提示。 */
+  /** 开发用：解锁全部视频与CG。只改存档，不弹章节、换装那些提示。 */
   gmUnlockAllVideos(): void {
     A.gmUnlockAllVideos(this.save);
     EventBus.emit(EV.moneyChanged);
+    EventBus.emit(EV.rosesChanged);
     EventBus.emit(EV.shopChanged, null);
     this.flush();
   }
@@ -155,7 +236,6 @@ class GameStateClass {
   }
 
   private _update(dtSec: number): void {
-    // 切后台回来 deltaMS 可能很大，那段由离线收益结算
     const dt = Math.min(dtSec, 1);
     this._mutate(() => A.tick(this.save, dt, Date.now()));
     if (Date.now() - this._lastSaveAt > AUTOSAVE_MS) this.flush();
@@ -164,8 +244,10 @@ class GameStateClass {
   private _mutate<T>(fn: () => T): T {
     const before = this.save.netWorth;
     const moneyBefore = this.save.money;
+    const rosesBefore = this.save.roses;
     const result = fn();
     if (this.save.money !== moneyBefore) EventBus.emit(EV.moneyChanged);
+    if (this.save.roses !== rosesBefore) EventBus.emit(EV.rosesChanged);
     if (this.save.netWorth > before) this._emitCrossed(before, this.save.netWorth);
     return result;
   }
