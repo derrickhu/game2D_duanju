@@ -10,7 +10,7 @@
   4. 页脚: 申请人名称
   5. 文档结构:
      - 第一章 引言
-     - 第二章 游戏完整游玩流程（从启动到通关一步步操作说明 + 15 处真机图位）
+     - 第二章 游戏完整游玩流程（从启动到通关一步步操作说明 + 17 处真机图位）
      - 第三章 软件总体架构设计（分层架构、目录映射、事件总线、主循环与分级资源管线）
      - 第四章 各核心玩法与工程模块详细设计（11 个子系统，含完整数值表、状态机与真实源码片段）
      - 第五章 数据结构设计（存档 Schema、配置接口与运行时状态定义）
@@ -70,87 +70,96 @@ PICS_DIR = SCRIPT_DIR / 'pics'
 IMAGE_EXTS = {'.jpg', '.jpeg', '.png'}
 
 
-def _pic(stem):
-    """按主文件名找真机截图，支持 jpg/png 及带前缀的文件名。"""
-    fallback = PICS_DIR / f'{stem}.jpg'
+def _pic(*stems):
+    """按候选主文件名依次查找真机截图（支持 01.jpg 或 01_loading.jpg 等格式）。"""
+    fallback = PICS_DIR / f'{stems[0]}.jpg'
     if not PICS_DIR.exists():
         return fallback
-    exact = []
-    prefixed = []
-    for path in PICS_DIR.iterdir():
-        if not path.is_file() or path.suffix.lower() not in IMAGE_EXTS:
-            continue
-        if path.stem == stem:
-            exact.append(path)
-        elif path.stem.endswith('_' + stem):
-            prefixed.append(path)
-    if exact:
-        return sorted(exact)[0]
-    if prefixed:
-        return sorted(prefixed)[0]
+    for stem in stems:
+        exact = []
+        prefixed = []
+        for path in PICS_DIR.iterdir():
+            if not path.is_file() or path.suffix.lower() not in IMAGE_EXTS:
+                continue
+            if path.stem == stem:
+                exact.append(path)
+            elif path.stem.endswith('_' + stem) or path.stem.startswith(stem + '_'):
+                prefixed.append(path)
+        if exact:
+            return sorted(exact)[0]
+        if prefixed:
+            return sorted(prefixed)[0]
     return fallback
 
 
 SCREENSHOTS = {
     'loading': (
-        _pic('01_loading'),
+        _pic('01', '01_loading'),
         '图1  启动加载界面 - 韩版漫画封面、加载进度与健康游戏忠告',
     ),
     'home': (
-        _pic('02_home_stall'),
+        _pic('02', '02_home_stall'),
         '图2  首页经营界面 - 一体化珠光状态顶舱、韩漫明亮经营舞台、点单气泡与双层底栏操控台',
     ),
     'buffs': (
-        _pic('03_empire_buffs'),
+        _pic('03', '03_empire_buffs'),
         '图3  商业帝国增益总览弹窗 - 赛季倍率、门店光环、店员干劲与衣橱加成',
     ),
     'event': (
-        _pic('04_street_event'),
+        _pic('04', '04_street_event'),
         '图4  街头奇遇事件弹窗 - 随机商业事件与二选一经营决策',
     ),
     'shop_map': (
-        _pic('05_shop_map'),
+        _pic('05', '05_shop_map'),
         '图5  名下产业主界面（商业版图） - 韩漫 2D 落日江湾大地图与 10 座独立地标建筑',
     ),
     'shop_list': (
-        _pic('06_shop_list'),
+        _pic('06', '06_shop_list'),
         '图6  名下产业次视图（店铺列表） - 十家产业门头横幅卡片与极速升级列表',
     ),
     'hero_seen': (
-        _pic('07_hero_seen'),
+        _pic('07', '07_hero_seen'),
         '图7  心动伙伴界面 - 纯色高级背景、全身合伙人立绘、高定档案与 2x3 人物剧情卡片矩阵',
     ),
     'hero_hidden': (
-        _pic('08_hero_hidden'),
+        _pic('08', '08_hero_hidden'),
         '图8  心动伙伴界面 - 「她看不见的」丝绒酒红纯色暗夜主题与暗面传记卡片',
     ),
     'cg_theater': (
-        _pic('09_cg_theater'),
+        _pic('09', '09_cg_theater'),
         '图9  韩版漫画人物剧情卡片阅读界面 - 插画分镜、章节铭牌与角色台词',
     ),
     'staff_grid': (
-        _pic('10_staff_grid'),
+        _pic('10', '10_staff_grid'),
         '图10  精英店员界面 - 六大城区团建加成、店员星级晋升与人物卡片入口',
     ),
+    'staff_hire': (
+        _pic('16', '16_staff_hire'),
+        '图11  恭喜录用新成员弹窗 - 新入职店员全身立绘、专属台词与产出加成',
+    ),
     'staff_polaroid': (
-        _pic('11_staff_polaroid'),
-        '图11  店员专属拍立得人物卡片弹窗 - 实体相纸卡面与角色寄语',
+        _pic('11', '11_staff_polaroid'),
+        '图12  店员专属拍立得人物卡片弹窗 - 实体相纸卡面与角色寄语',
     ),
     'story_tickets': (
-        _pic('12_story_tickets'),
-        '图12  逆袭剧场界面 - 主线章节票根卡片、分篇胶囊与跨城扩张入口',
+        _pic('12', '12_story_tickets'),
+        '图13  逆袭剧场界面 - 主线章节票根卡片、分篇胶囊与跨城扩张入口',
     ),
     'battle': (
-        _pic('13_business_battle'),
-        '图13  章节商业身价交锋弹窗 - 双方身价对比、碾压进度条与获胜玫瑰印章',
+        _pic('13', '13_business_battle'),
+        '图14  章节商业身价交锋弹窗 - 双方身价对比、碾压进度条与当场逆袭按钮',
     ),
     'phone': (
-        _pic('14_phone_chat'),
-        '图14  晚星手机界面 - 合伙人私聊消息互动与同城商圈动态',
+        _pic('14', '14_phone_chat'),
+        '图15  晚星手机单机预设私聊界面 - 固定剧本对白展示（无文本输入框、无 UGC 自由发言）',
     ),
     'wardrobe': (
-        _pic('15_wardrobe'),
-        '图15  千金衣橱界面 - 五套韩版漫画高定造型图鉴与试衣橱窗',
+        _pic('15', '15_wardrobe'),
+        '图16  千金衣橱界面 - 五套韩版漫画高定造型图鉴与明亮试衣橱窗',
+    ),
+    'offline': (
+        _pic('17', '17_offline_report'),
+        '图17  离线营收报告弹窗 - 离线时长统计与旗下产业挂机收益结算',
     ),
 }
 
@@ -401,7 +410,7 @@ def write_document(pdf: DocPDF):
         '    2.5 阶段五：邂逅九位商业合伙人、培养羁绊与解锁人物剧情卡片',
         '    2.6 阶段六：招募二十位城区店员、激活团建倍率与收集拍立得卡',
         '    2.7 阶段七：身价跨越章节门槛、商业身价交锋与阅读分篇剧情',
-        '    2.8 阶段八：晚星手机私信朋友圈互动与千金衣橱高定换装',
+        '    2.8 阶段八：晚星手机单机预设选答互动（无自由输入）与千金衣橱换装',
         '    2.9 阶段九：离线挂机结算与千亿首富通关后的跨城新赛季',
         '三、软件总体架构设计',
         '    3.1 总体分层架构与数据单向流',
@@ -418,7 +427,7 @@ def write_document(pdf: DocPDF):
         '    4.6 韩版漫画人物卡片画卷阅读器与分镜脚本状态机设计（src/scenes/home/CGTheater.ts）',
         '    4.7 二十位精英店员、A/B 双槽成长、城区团建与拍立得卡设计（src/scenes/home/StaffSheet.ts）',
         '    4.8 逆袭剧场九章票根、商业身价交锋与章末高光抉择设计（BusinessBattleModal.ts）',
-        '    4.9 晚星手机私聊分支状态机与商圈动态交互设计（src/scenes/home/PhoneSheet.ts）',
+        '    4.9 晚星手机单机预设选答状态机与非 UGC 安全边界设计（src/scenes/home/PhoneSheet.ts）',
         '    4.10 千金衣橱五套高定造型、九阶女王头衔与跨城转生设计（src/scenes/home/OutfitSheet.ts）',
         '    4.11 56 条引导任务与无限动态目标生成器、奇遇、急单与离线结算设计（src/sim/quests.ts）',
         '    4.12 @2x 九宫格自适应缩放与 2.5x 视网膜 UI 组件库设计（src/ui/theme.ts）',
@@ -563,12 +572,13 @@ def write_document(pdf: DocPDF):
     pdf.write_h2('2.6 阶段六：招募二十位城区店员、激活团建倍率与收集拍立得卡')
     pdf.write_body(
         '每家产业门店开业后，还会同步开放隶属该门店的 A、B 两位精英店员岗位（10 家门店共 20 位店员，分布在六大城区）。'
-        '玩家点击底部第三栏「店员」进入精英店员页（StaffSheet），切换顶部城区页签，消耗现金录用店员（首次录用立得 1 朵玫瑰）。同一城区的全部店员录满后，该城区所有门店收益立即乘以 2 倍团建加成！'
+        '玩家点击底部第三栏「店员」进入精英店员页（StaffSheet），切换顶部城区页签，消耗现金录用店员。首次录用新店员时立即奖励 1 朵心动玫瑰，并弹出「恭喜录用新成员」庆典弹窗（HirePopup），完整展示该店员的全身立绘、所属门店职位、入职专属台词与每秒产出加成。同一城区的全部店员录满后，该城区所有门店收益立即乘以 2 倍团建加成！'
     )
     pdf.write_image(*img('staff_grid'), max_h=96)
+    pdf.write_image(*img('staff_hire'), max_h=96)
     pdf.write_body(
         '持续升级店员跨越 Lv.10 / 25 / 50 / 100 时，店员从 1 星逐步晋升至最高 5 星（每升一星自身产出翻倍并奖励 2 朵玫瑰；全区店员满 5 星时城区团建倍率再乘 2 倍）。'
-        '当店员达到 3 星（Lv.25）和 5 星（Lv.100）时，卡片右上角分别解锁「* 日常」与「* 私藏」卡签；点击即可弹出店员专属拍立得人物典藏卡（StaffPolaroidModal），查看韩版漫画工作瞬间/下班私藏插画与手写寄语。'
+        '当店员达到 3 星（Lv.25）和 5 星（Lv.100）时，卡片右上角分别解锁「*3卡面」与「*5卡面」入口；点击即可弹出店员专属拍立得人物典藏卡（StaffPolaroidModal），查看韩版漫画工作瞬间/下班私藏插画与手写寄语。'
     )
     pdf.write_image(*img('staff_polaroid'), max_h=96)
 
@@ -585,9 +595,10 @@ def write_document(pdf: DocPDF):
     )
     pdf.write_image(*img('battle'), max_h=96)
 
-    pdf.write_h2('2.8 阶段八：晚星手机私信朋友圈互动与千金衣橱高定换装')
+    pdf.write_h2('2.8 阶段八：晚星手机单机预设选答互动（无自由输入）与千金衣橱换装')
     pdf.write_body(
-        '当满足特定章节与合伙人羁绊条件时，首页右侧「微聊」图标亮起红底未读条数。玩家点开晚星手机（PhoneSheet），可在「私聊消息」中点开合伙人私信并二选一发送回复赢取玫瑰，也可在「商圈动态」中浏览名媛圈与合伙人互怼动态并点赞领玫瑰。'
+        '当满足特定章节与合伙人羁绊条件时，首页右侧「微聊」胶囊亮起未读提示。玩家点开晚星手机（PhoneSheet），可在「私聊消息」中查看合伙人发来的预设剧情消息，并在系统提供的两个固定预设回复选项中二选一点选应答以推进剧本并赢取玫瑰；也可在「商圈动态」中浏览本地预设的 NPC 商圈动态并点选点赞领玫瑰。'
+        '需要特别说明的是: 晚星手机为纯单机静态剧本交互模块，界面内不提供任何文本输入框、语音/图片上传入口或玩家间联网通信功能，玩家无法自由编辑或输入任何自定义内容（如图 15 所示，对话完成后底部仅展示「返回消息列表」按钮，无任何文字输入栏），从产品机制上彻底杜绝用户生成内容（UGC）及相关内容审核风险。'
     )
     pdf.write_image(*img('phone'), max_h=96)
     pdf.write_body(
@@ -597,8 +608,9 @@ def write_document(pdf: DocPDF):
 
     pdf.write_h2('2.9 阶段九：离线挂机结算与千亿首富通关后的跨城新赛季')
     pdf.write_body(
-        '玩家中途退出小游戏超过 60 秒后重返，系统自动按离线时长（基础上限 2 小时，每推进一章 +45 分钟，最高 12 小时）与离线转化率计算挂机收益，弹出「离线营收报告」供玩家一键入账或翻倍领取。'
+        '玩家中途退出小游戏超过 60 秒后重返，系统自动按离线时长（基础上限 2 小时，每推进一章 +45 分钟，最高 12 小时）与离线转化率计算旗下产业挂机入账金额，弹出「离线营收报告」弹窗供玩家一键收下入账。'
     )
+    pdf.write_image(*img('offline'), max_h=96)
     pdf.write_body(
         '当玩家身价达到 1000 亿（1e11）通关第 8 章「全城首富」后，逆袭剧场底部的「跨城商业扩张」卡片正式解锁。点击「上市扩城」确认后，save.season 加 1，完整保留全部合伙人羁绊、玫瑰、手机互动与已收集卡片图鉴，重置现金与门店开启海城新赛季，并永久享有 2.2^(season-1) 的全局赛季收益乘区与 15 朵玫瑰奖励。'
     )
@@ -1028,11 +1040,14 @@ def write_document(pdf: DocPDF):
     ], 'src/sim/actions.ts - 章节商业交锋结算与章末二选一高光领奖')
 
     # --- 4.9 ---
-    pdf.write_h2('4.9 晚星手机私聊分支状态机与商圈动态交互设计（src/scenes/home/PhoneSheet.ts）')
+    pdf.write_h2('4.9 晚星手机单机预设选答状态机与非 UGC 安全边界设计（src/scenes/home/PhoneSheet.ts）')
     pdf.write_body(
-        '晚星手机模块的数据源位于 src/data/phoneMessages.ts，包含 CHAT_THREADS（合伙人私聊会话）与 MOMENT_POSTS（商圈朋友圈动态）两张静态表。'
+        '晚星手机模块的数据源完全固化于客户端静态只读配置表 src/data/phoneMessages.ts，包含 CHAT_THREADS（合伙人预设私聊剧本）与 MOMENT_POSTS（预设商圈 NPC 动态）两张本地常量表。'
         '每条私聊会话配置双条件门禁: minChapter（最低主线章节）与 minBond（对应合伙人最低羁绊等级），由 isChatUnlocked(save, chat) 纯函数实时判定是否开放。'
-        '未读会话在列表中置顶并以樱粉雕花牌高亮显示；点入会话详情后，玩家从两项回复中选择分支 idx (0 | 1)，A.replyChat 将选项持久化并发放玫瑰；朋友圈点赞由 A.likeMoment 完成幂等校验与发奖:'
+        '未读会话在列表中置顶并以樱粉雕花牌高亮显示；点入会话详情后，玩家仅能从系统渲染的两枚固定预设选项按钮中点选分支 idx (0 | 1)，A.replyChat 将所选分支下标持久化并发放玫瑰；商圈动态点赞由 A.likeMoment 完成幂等校验与发奖。'
+    )
+    pdf.write_body(
+        '非 UGC 内容安全边界设计: PhoneSheet 全程不挂载任何键盘输入控件（无 HTML input/textarea、无 wx.showKeyboard 调用），也不存在任何网络发送接口或玩家间数据互通。存档字段 save.repliedChats 的值类型严格限定为枚举数字下标 0 | 1（Record<string, number>），save.likedMoments 仅记录静态配置的动态 ID 字符串，不支持玩家自由输入回复、发布动态或撰写自定义评论，从底层数据结构与交互实现上确保零 UGC 内容生成与零内容审核风险:'
     )
     pdf.write_code_block([
         'export function replyChat(save: GameSave, threadId: string, optionIdx: 0 | 1): number {',
@@ -1052,7 +1067,7 @@ def write_document(pdf: DocPDF):
         '  addRoses(save, 1);',
         '  return 1;',
         '}',
-    ], 'src/sim/actions.ts - 私聊分支选择持久化与商圈动态点赞结算')
+    ], 'src/sim/actions.ts - 预设选项下标（0 | 1）持久化与预设动态点赞结算')
 
     # --- 4.10 ---
     pdf.write_h2('4.10 千金衣橱五套高定造型、九阶女王头衔与跨城转生设计（OutfitSheet.ts）')
@@ -1264,7 +1279,7 @@ def write_document(pdf: DocPDF):
             ['resolveStreetEvent', '(save, event, idx, now)', '结算街头奇遇所选方案的现金、玫瑰与爆单热度'],
             ['clearChapterBattle', '(save, chapterId)', '校验章节身价门槛后标记商战通关并发放宿敌玫瑰奖励'],
             ['claimChapterClimax', '(save, chapterId, choice)', '记录章末高光二选一抉择并发放对应玫瑰奖励'],
-            ['replyChat / likeMoment', '(save, id, ...)', '记录晚星手机私信回复或朋友圈点赞并发放心动玫瑰'],
+            ['replyChat / likeMoment', '(save, id, ...)', '记录晚星手机固定预设选项下标（0 | 1）或预设商圈动态点赞并发放玫瑰'],
             ['prestigeSeason', '(save, now)', '千亿通关后开启跨城新赛季，season + 1，重置门店并赠 15 朵玫瑰'],
         ],
         [42, 42, CONTENT_W - 84],
@@ -1377,7 +1392,7 @@ def main():
     if pdf.missing_images:
         print(f'  待补截图:     {len(pdf.missing_images)} 张（PDF 中已预留标准占位框）')
     else:
-        print('  截图检查:     已找到全部 15 张真机截图，无占位框')
+        print(f'  截图检查:     已找到并嵌入全部 {len(SCREENSHOTS)} 张真机截图，无占位框')
     print('=' * 60)
 
 
