@@ -12,7 +12,13 @@ import {
   buyShop, claimRushOrder, clearChapterBattle, computeOffline, investBond,
   likeMoment, prestigeSeason, replyChat, resolveStreetEvent, serveCustomerOrder,
   startLiveBoost, tap, tapInteractive, tick, upgradeSkill, upgradeStaff,
+  assignShopManager, claimStaffDispatch, craftRecipe, equipShopRecipe,
+  settleStock, spendInsiderToken, startStaffDispatch, tradeStock, winAreaCrownBattle,
 } from '../src/sim/actions.ts';
+import { CHAPTER_BATTLES } from '../src/data/battleCards.ts';
+import { buildBattleHand, evaluateSuitRelation, resolveCardClash } from '../src/sim/battle.ts';
+import { shopIncomeIn } from '../src/sim/economy.ts';
+import { currentStockPrice } from '../src/sim/stockSim.ts';
 import { claimQuest, currentQuest } from '../src/sim/quests.ts';
 import {
   bondBlockReason, crossedThresholds, currentChapter, effectiveBond,
@@ -216,6 +222,99 @@ test('主线任务含玫瑰奖励且 56 条后无缝衔接无限帝国任务', (
   assert.equal(s.questIndex, 1);
   s.questIndex = 999;
   assert.ok(currentQuest(s) !== null);
+});
+
+test('招牌爆品研发室：命中传世配方 SS 月宫金桂星星酥 + 挂载门店秒伤提升', () => {
+  const s = createSave(NOW);
+  s.money = 1e6;
+  buyShop(s, 'stall', 5);
+  const incBefore = shopIncomeIn(s, 'stall');
+  const crafted = craftRecipe(s, 'puff', 'osmanthus', 'starbox');
+  assert.ok(crafted);
+  assert.equal(crafted.isNew, true);
+  assert.equal(crafted.recipe.grade, 'SS');
+  assert.equal(crafted.recipe.name, '月宫金桂星星酥');
+  assert.equal(crafted.rosesGained, 5);
+  assert.ok(equipShopRecipe(s, 'stall', crafted.recipe.comboKey));
+  const incAfter = shopIncomeIn(s, 'stall');
+  assert.ok(incAfter > incBefore * 1.65);
+});
+
+test('店员四大专长驻店共振 + 商业外勤组队派遣与结算', () => {
+  const s = createSave(NOW);
+  s.netWorth = 1e4;
+  s.money = 1e7;
+  buyShop(s, 'dessert', 5);
+  upgradeStaff(s, 'wenyan', 10); // 温禾 Lv10 = ★2，craft 专长契合甜品店
+  const beforeMgr = shopIncomeIn(s, 'dessert');
+  assert.ok(assignShopManager(s, 'dessert', 'wenyan'));
+  const afterMgr = shopIncomeIn(s, 'dessert');
+  assert.ok(afterMgr > beforeMgr * 1.35);
+
+  assert.ok(startStaffDispatch(s, 0, 'dp_osmanthus_pick', ['wenyan'], NOW));
+  assert.equal(claimStaffDispatch(s, 0, NOW + 10_000), null); // 未到期不可领
+  const got = claimStaffDispatch(s, 0, NOW + 80_000, 0.01);
+  assert.ok(got);
+  assert.equal(got.greatSuccess, true);
+  assert.ok(got.cash > 0 && got.roses >= 3 && got.inspiration >= 3);
+});
+
+test('晚星风投：借券做空苏氏食品暴利 + 亏损绝不倒扣历史身价', () => {
+  const s = createSave(NOW);
+  s.money = 10_000;
+  s.netWorth = 10_000;
+  const openPrice = currentStockPrice(s, 'sushi');
+  const opened = tradeStock(s, 'sushi', 'short', 0.5); // 5000 做空苏氏
+  assert.equal(opened.ok, true);
+  assert.equal(s.money, 5_000);
+
+  // 苏氏股价腰斩暴跌 -> 做空狂赚
+  s.stockPrices.sushi = [openPrice, openPrice * 0.5];
+  const closedWin = settleStock(s, 'sushi');
+  assert.equal(closedWin.ok, true);
+  assert.equal(closedWin.wasShortSushi, true);
+  assert.ok(closedWin.pnl > 2_000);
+  assert.ok(s.netWorth > 12_000);
+
+  // 反向测试：若做多遇到下跌，只亏本金，绝不倒扣历史最高 netWorth
+  const peakNetWorth = s.netWorth;
+  tradeStock(s, 'oldst', 'long', 0.5);
+  s.stockPrices.oldst = [24, 15];
+  const closedLoss = settleStock(s, 'oldst');
+  assert.ok(closedLoss.pnl < 0);
+  assert.equal(s.netWorth, peakNetWorth);
+
+  assert.equal(spendInsiderToken(s, NOW), true);
+});
+
+test('3回合商战三系克制倍率、商圈冠名加成与三选一检定/豪赌奇遇', () => {
+  assert.equal(evaluateSuitRelation('rep', 'cap'), 'counter');
+  assert.equal(evaluateSuitRelation('cap', 'leg'), 'counter');
+  assert.equal(evaluateSuitRelation('leg', 'rep'), 'counter');
+
+  const s = createSave(NOW);
+  s.netWorth = 1e4;
+  s.money = 5e4;
+  buyShop(s, 'stall', 5);
+  const enc = CHAPTER_BATTLES.get(1)!;
+  const hand = buildBattleHand(s, enc);
+  assert.equal(hand.length, 3);
+  const legCard = hand.find((c) => c.suit === 'leg')!;
+  const clashCounter = resolveCardClash(legCard, enc.moves[0], enc.recommendedPower); // leg beats rep
+  assert.equal(clashCounter.relation, 'counter');
+  assert.ok(clashCounter.damagePct >= 45);
+
+  const beforeCrown = shopIncomeIn(s, 'stall');
+  const crown = winAreaCrownBattle(s, 'oldstreet');
+  assert.equal(crown?.newTier, 1);
+  assert.ok(shopIncomeIn(s, 'stall') > beforeCrown * 1.19);
+
+  // 突发事件：方案二实力检定 & 方案三资本豪赌
+  const checkRes = resolveStreetEvent(s, STREET_EVENTS[0], 1, NOW, 0.01);
+  assert.equal(checkRes.won, true);
+  const gambleWin = resolveStreetEvent(s, STREET_EVENTS[0], 2, NOW, 0.01);
+  assert.equal(gambleWin.won, true);
+  assert.equal(gambleWin.feverTriggered, true);
 });
 
 console.log(`\n${passed} passed`);

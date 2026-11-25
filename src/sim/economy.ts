@@ -3,6 +3,8 @@ import { BALANCE, BOND_LEVELS, MAX_BOND, MAX_STAR, STAFF_BALANCE } from '../data
 import { STAFF, staffById, type StaffId } from '../data/staff.ts';
 import { heroById, heroForShop, type HeroId } from '../data/story.ts';
 import { AREAS, SHOPS, shopById, type AreaId, type ShopDef, type ShopId } from '../data/world.ts';
+import { shopManagerMultiplier } from './dispatchSim.ts';
+import { computeRecipeBuffs } from './recipeSim.ts';
 import type { BuyMode, GameSave } from './save.ts';
 import { effectiveBond, unlockedOutfits } from './unlocks.ts';
 
@@ -51,20 +53,21 @@ export function computeSynergies(save: GameSave): EmpireSynergies {
   const outfitBonus = outfitCount * BALANCE.outfitEmpireBonus;
   const fameBonus = fu * 0.05;
   const seasonMult = BALANCE.seasonBaseMult ** Math.max(0, (save.season ?? 1) - 1);
+  const recBuffs = computeRecipeBuffs(save);
 
   const tapMult = (1 + (syn.get('stall') ?? 0)) * (allStaffHired(save) ? STAFF_BALANCE.allHiredTapMult : 1);
   const tapShare = BALANCE.tapIncomeShare + (syn.get('gym') ?? 0);
   const allShopMult = 1 + (syn.get('dessert') ?? 0);
   const staffMult = (1 + (syn.get('cafe') ?? 0)) * (1 + guye * 0.18);
-  const costDiscount = Math.min(0.45, (syn.get('law') ?? 0) + shenyan * 0.03);
+  const costDiscount = Math.min(0.55, (syn.get('law') ?? 0) + shenyan * 0.03 + recBuffs.costCutBonus);
   const rushMult = (1 + (syn.get('garage') ?? 0)) * (1 + qinye * 0.22);
   const offlineRate = Math.min(0.95, BALANCE.offlineRate + (syn.get('clinic') ?? 0) + xu * 0.04);
   const offlineExtraSec = xu * 1800;
   const feverBonus = (syn.get('agency') ?? 0) + zhou * 0.25;
   const areaBonus = syn.get('hotel') ?? 0;
-  const critChance = Math.min(0.5, luyu * 0.07);
+  const critChance = Math.min(0.65, luyu * 0.07 + recBuffs.tapCritBonus);
   const autoTapPerSec = jiang * 0.35;
-  const empireMult = (1 + (syn.get('group') ?? 0)) * (1 + huo * 0.12) * (1 + outfitBonus + fameBonus) * seasonMult;
+  const empireMult = (1 + (syn.get('group') ?? 0)) * (1 + huo * 0.12) * (1 + outfitBonus + fameBonus + recBuffs.collectionEmpireBonus) * seasonMult;
 
   return {
     tapMult, tapShare, allShopMult, staffMult, costDiscount, rushMult,
@@ -227,12 +230,31 @@ export function allStaffHired(save: GameSave): boolean {
   return STAFF.every((s) => (save.staff[s.id] ?? 0) > 0);
 }
 
-/** 门店在当前存档里的实际每秒收益：含羁绊、团建、甜品店光环与帝国总乘区 */
+/** 商圈冠名竞标永久加成：每夺冠 1 阶，该城区所有产业产出 +20%（最高 3 阶 +60%） */
+export function areaCrownMultiplier(save: GameSave, area: AreaId): number {
+  const tier = Math.min(3, Math.max(0, save.areaCrownLevels?.[area] ?? 0));
+  return 1 + tier * 0.20;
+}
+
+/** 门店挂载镇店招牌爆品独立乘区 */
+export function shopRecipeMultiplier(save: GameSave, id: ShopId): number {
+  const bonus = computeRecipeBuffs(save).shopIncomeBonus[id] ?? 0;
+  return 1 + bonus;
+}
+
+/** 门店在当前存档里的实际每秒收益：含羁绊、团建、商圈冠名、驻店店长、镇店爆品、甜品店光环与帝国总乘区 */
 export function shopIncomeIn(save: GameSave, id: ShopId, level = save.shops[id] ?? 0): number {
   const syn = computeSynergies(save);
   const hero = heroForShop(id);
+  const area = shopById(id).area;
   const raw = shopIncome(id, level, hero ? save.bonds[hero.id] ?? 0 : 0);
-  return raw * areaStaffMultiplier(save, shopById(id).area) * syn.allShopMult * syn.empireMult;
+  return raw
+    * areaStaffMultiplier(save, area)
+    * areaCrownMultiplier(save, area)
+    * shopManagerMultiplier(save, id)
+    * shopRecipeMultiplier(save, id)
+    * syn.allShopMult
+    * syn.empireMult;
 }
 
 export function staffIncomePerSec(save: GameSave): number {
@@ -245,13 +267,15 @@ export function staffIncomePerSec(save: GameSave): number {
 /** 不含直播与爆单临时加成的每秒收益 */
 export function baseIncomePerSec(save: GameSave): number {
   const syn = computeSynergies(save);
+  const recShop = computeRecipeBuffs(save).shopIncomeBonus;
   let shopsTotal = 0;
   for (const area of AREAS) {
-    const mult = areaStaffMultiplier(save, area.id);
+    const mult = areaStaffMultiplier(save, area.id) * areaCrownMultiplier(save, area.id);
     for (const shop of SHOPS) {
       if (shop.area !== area.id) continue;
       const hero = heroForShop(shop.id);
-      shopsTotal += shopIncome(shop.id, save.shops[shop.id] ?? 0, hero ? save.bonds[hero.id] ?? 0 : 0) * mult;
+      const localMult = shopManagerMultiplier(save, shop.id) * (1 + (recShop[shop.id] ?? 0));
+      shopsTotal += shopIncome(shop.id, save.shops[shop.id] ?? 0, hero ? save.bonds[hero.id] ?? 0 : 0) * mult * localMult;
     }
   }
   const combinedShops = shopsTotal * syn.allShopMult * syn.empireMult;

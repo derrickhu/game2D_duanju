@@ -7,8 +7,9 @@
 import * as PIXI from 'pixi.js';
 import { ICONS, UI_SLICES, staffFigurePath } from '@/data/art';
 import { MAX_STAR, STAFF_BALANCE } from '@/data/balance';
-import { STAFF, type StaffDef, type StaffId } from '@/data/staff';
+import { SPECIALTY_META, STAFF, type StaffDef, type StaffId } from '@/data/staff';
 import { AREAS, SHOPS, shopById, type AreaId } from '@/data/world';
+import { assignedShopOfStaff, isStaffOnDispatch } from '@/sim/dispatchSim';
 import { AudioManager } from '@/core/AudioManager';
 import { Game } from '@/core/Game';
 import { OverlayManager } from '@/core/OverlayManager';
@@ -72,11 +73,13 @@ export class StaffSheet extends PIXI.Container {
   private readonly _moneyTxt = makeNumText('0', 20, COLORS.ink);
   private readonly _popup = new HirePopup();
   private readonly _buttons = new Map<StaffId, Button>();
+  private readonly _onOpenDispatch?: () => void;
   private _area: AreaId = 'oldstreet';
   private _isOpen = false;
 
-  constructor() {
+  constructor(onOpenDispatch?: () => void) {
     super();
+    this._onOpenDispatch = onOpenDispatch;
     this.visible = false;
     this._bgLayer.eventMode = 'static';
     this.addChild(this._bgLayer, this._top, this._tabs, this._team, this._grid);
@@ -345,6 +348,36 @@ export class StaffSheet extends PIXI.Container {
     const stars = drawStars(new PIXI.Graphics(), star, MAX_STAR, 10.5, 5);
     stars.position.set(26, 28);
     card.addChild(stars);
+
+    // 店员四大专长徽章 + 驻店/外勤状态角标
+    if (available) {
+      const spMeta = SPECIALTY_META[s.specialty];
+      const spPill = new PIXI.Graphics()
+        .beginFill(spMeta.bg, 0.96)
+        .lineStyle(1.4, spMeta.color, 0.92)
+        .drawRoundedRect(20, 48, 84, 26, 13)
+        .endFill();
+      const spTxt = makeText(spMeta.label, 15, spMeta.color, true);
+      spTxt.anchor.set(0.5);
+      spTxt.position.set(62, 61);
+      card.addChild(spPill, spTxt);
+
+      if (hired) {
+        const mgrShop = assignedShopOfStaff(save, s.id);
+        const onDisp = isStaffOnDispatch(save, s.id);
+        const stateStr = onDisp ? '外勤中' : mgrShop ? `驻:${shopById(mgrShop).name}` : '';
+        if (stateStr) {
+          const stBg = new PIXI.Graphics()
+            .beginFill(0xFFF9EC, 0.95)
+            .lineStyle(1.3, 0xDFB870)
+            .drawRoundedRect(20, 80, Math.min(132, stateStr.length * 16 + 22), 24, 12)
+            .endFill();
+          const stTxt = makeText(stateStr, 15, COLORS.goldDeep, true);
+          stTxt.position.set(30, 82);
+          card.addChild(stBg, stTxt);
+        }
+      }
+    }
 
     if (hired) this._polaroidChips(card, s, star, w);
 

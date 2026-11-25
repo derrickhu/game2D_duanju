@@ -24,7 +24,10 @@ export type EditorialIconId =
   | 'clinic'
   | 'agency'
   | 'hotel'
-  | 'group';
+  | 'group'
+  | 'lab'
+  | 'stock'
+  | 'dispatch';
 
 /** 绘制精致四角星芒（✦） */
 export function drawDiamondStar(
@@ -273,6 +276,40 @@ export function drawEditorialIcon(
       g.beginFill(accent, 0.14).drawRect(u * 0.04, -u * 0.70, u * 0.52, u * 1.42).endFill();
       g.moveTo(-u * 0.76, u * 0.72).lineTo(u * 0.76, u * 0.72);
       drawDiamondStar(g, -u * 0.32, -u * 0.72, u * 0.18, color);
+      break;
+    }
+
+    case 'lab': {
+      // 高定调香/甜品研发圆底星瓶
+      g.moveTo(-u * 0.22, -u * 0.68).lineTo(u * 0.22, -u * 0.68);
+      g.moveTo(-u * 0.14, -u * 0.68).lineTo(-u * 0.14, -u * 0.26);
+      g.moveTo(u * 0.14, -u * 0.68).lineTo(u * 0.14, -u * 0.26);
+      g.beginFill(accent, 0.20).drawCircle(0, u * 0.20, u * 0.54).endFill();
+      g.drawCircle(0, u * 0.20, u * 0.54);
+      drawDiamondStar(g, 0, u * 0.20, u * 0.26, accent);
+      drawDiamondStar(g, u * 0.56, -u * 0.54, u * 0.18, color);
+      break;
+    }
+
+    case 'stock': {
+      // 商海风投 K 线腾飞折线
+      g.beginFill(color, 0.12).drawRoundedRect(-u * 0.74, -u * 0.64, u * 1.48, u * 1.30, 5).endFill();
+      g.lineStyle(sw * 1.15, accent, 0.98);
+      g.moveTo(-u * 0.54, u * 0.34)
+        .lineTo(-u * 0.18, u * 0.02)
+        .lineTo(u * 0.10, u * 0.22)
+        .lineTo(u * 0.52, -u * 0.36);
+      g.moveTo(u * 0.24, -u * 0.36).lineTo(u * 0.52, -u * 0.36).lineTo(u * 0.52, -u * 0.08);
+      drawDiamondStar(g, -u * 0.44, -u * 0.34, u * 0.18, color);
+      break;
+    }
+
+    case 'dispatch': {
+      // 商业外勤公文星章箱
+      g.beginFill(color, 0.14).drawRoundedRect(-u * 0.72, -u * 0.32, u * 1.44, u * 0.98, 5).endFill();
+      g.drawRoundedRect(-u * 0.28, -u * 0.58, u * 0.56, u * 0.26, 3);
+      g.moveTo(-u * 0.72, u * 0.10).lineTo(u * 0.72, u * 0.10);
+      drawDiamondStar(g, 0, u * 0.12, u * 0.24, accent);
       break;
     }
   }

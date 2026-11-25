@@ -2,6 +2,7 @@ export const EV = {
   saveChanged: 'save:changed',
   moneyChanged: 'money:changed',
   rosesChanged: 'roses:changed',
+  inspirationChanged: 'inspiration:changed',
   shopChanged: 'shop:changed',
   heroChanged: 'hero:changed',
   areaUnlocked: 'area:unlocked',
@@ -14,6 +15,10 @@ export const EV = {
   questChanged: 'quest:changed',
   chatChanged: 'chat:changed',
   seasonChanged: 'season:changed',
+  recipeChanged: 'recipe:changed',
+  dispatchChanged: 'dispatch:changed',
+  stockChanged: 'stock:changed',
+  areaCrownChanged: 'areaCrown:changed',
   tutorialStepChanged: 'tutorial:stepChanged',
   tutorialCompleted: 'tutorial:completed',
 } as const;
