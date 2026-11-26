@@ -11,6 +11,7 @@ import {
   SHOP_MAP_SPOTS,
   UI_SLICES,
   heroPortraitPath,
+  recipeIconPath,
   shopBannerPath,
   shopBuildingPath,
 } from '@/data/art';
@@ -311,9 +312,10 @@ export class ShopMap extends PIXI.Container {
     this._mapSprite.height = this._worldH;
     this._mapWorld.hitArea = new PIXI.Rectangle(0, -280, W, this._worldH + 560);
 
-    // 900×2000 全出血韩漫落日江湾画布：上下边界严丝合缝贴合屏幕顶底，零空白露底，且首尾建筑与铭牌完全避开顶栏和底舱
+    // 底舱顶部坐标：滚动下限需预留底舱 + 安全区高度，确保最南端的甜品摊/甜品店及其铭牌也能完全滑出底舱上方不被遮挡
+    const dockTopY = H - Game.safeBottom - DOCK_H - 12;
     this._maxScrollY = 0;
-    this._minScrollY = Math.min(0, H - this._worldH);
+    this._minScrollY = Math.min(0, dockTopY + 18 - this._worldH);
 
     this._scrollY = Math.max(this._minScrollY, Math.min(this._maxScrollY, this._scrollY));
     this._mapWorld.y = this._scrollY;
@@ -554,6 +556,22 @@ export class ShopMap extends PIXI.Container {
         sp.alpha = 0.62;
       }
       bldgWrap.addChild(sp);
+
+      // 已挂载镇店爆品的开业建筑：屋檐右上悬浮白瓷描金镇店招牌小图章
+      const eqMapKey = level > 0 ? save.equippedRecipes?.[shop.id] : undefined;
+      if (eqMapKey && (save.discoveredRecipes?.[eqMapKey] ?? 0) > 0) {
+        const badge = new PIXI.Container();
+        badge.position.set(Math.round(spot.size * 0.34), -Math.round(spot.size * 0.56));
+        const bRing = new PIXI.Graphics()
+          .lineStyle(2.2, COLORS.rose, 1)
+          .beginFill(0xFFFDF8, 0.97)
+          .drawCircle(0, 0, 22)
+          .endFill();
+        const bIco = makeStickerSprite(recipeIconPath(eqMapKey), 36, 36, true);
+        badge.addChild(bRing, bIco);
+        bldgWrap.addChild(badge);
+      }
+
       root.addChild(bldgWrap);
 
       // 3. 干净克制的底座铭牌（白瓷底统一视觉，减少大面积红底色块喧宾夺主）
@@ -809,7 +827,13 @@ export class ShopMap extends PIXI.Container {
         const chipH = 32;
         const chipY = 82;
 
-        const buildSlotChip = (x: number, label: string, active: boolean, onTap?: () => void): void => {
+        const buildSlotChip = (
+          x: number,
+          label: string,
+          active: boolean,
+          onTap?: () => void,
+          iconPath?: string,
+        ): void => {
           const ch = new PIXI.Container();
           ch.position.set(x, chipY);
           ch.addChild(drawCreamCard(new PIXI.Graphics(), 0, 0, chipW, chipH, 16, {
@@ -817,10 +841,17 @@ export class ShopMap extends PIXI.Container {
             borderColor: active ? COLORS.rose : 0xDFB870,
             borderWidth: 1.6,
           }));
+          const padLeft = iconPath ? 30 : 0;
+          if (iconPath) {
+            const ic = makeStickerSprite(iconPath, 26, 26, true);
+            ic.position.set(18, chipH / 2);
+            ch.addChild(ic);
+          }
           const t = makeText(label, 15, active ? COLORS.roseDeep : COLORS.inkSoft, true);
           t.anchor.set(0.5);
-          t.position.set(chipW / 2, chipH / 2);
-          if (t.width > chipW - 16) t.scale.set((chipW - 16) / t.width);
+          t.position.set(padLeft * 0.5 + chipW / 2, chipH / 2);
+          const maxTW = chipW - 16 - padLeft;
+          if (t.width > maxTW) t.scale.set(maxTW / t.width);
           ch.addChild(t);
           if (onTap) {
             ch.eventMode = 'static';
@@ -833,10 +864,16 @@ export class ShopMap extends PIXI.Container {
           card.addChild(ch);
         };
 
-        buildSlotChip(rx, eqRec ? `✦ 镇店:${eqRec.name}` : '+ 挂载镇店爆品', Boolean(eqRec), () => {
-          this.close(true);
-          this._onOpenRecipe?.(shop.id);
-        });
+        buildSlotChip(
+          rx,
+          eqRec ? `镇店:${eqRec.name}` : '+ 挂载镇店爆品',
+          Boolean(eqRec),
+          () => {
+            this.close(true);
+            this._onOpenRecipe?.(shop.id);
+          },
+          eqRec ? recipeIconPath(eqRec.comboKey) : undefined,
+        );
         buildSlotChip(rx + chipW + chipGap, mgrDef ? `✦ 店长:${mgrDef.name}` : '+ 委任驻店店长', Boolean(mgrDef), () => {
           const hasAnyStaff = STAFF.some((s) => (save.staff[s.id] ?? 0) > 0);
           if (!hasAnyStaff) {
@@ -988,18 +1025,39 @@ export class ShopMap extends PIXI.Container {
       card.addChild(ring, hMask, face);
     }
 
+    const eqListKey = level > 0 ? save.equippedRecipes?.[shop.id] : undefined;
+    const eqListLv = eqListKey ? (save.discoveredRecipes?.[eqListKey] ?? 0) : 0;
+    const eqListRec = eqListKey && eqListLv > 0 ? resolveRecipe(eqListKey, eqListLv) : null;
+
     const areaName = AREAS.find((a) => a.id === shop.area)?.name ?? '';
-    const tagStr = level > 0 ? `招牌 · ${shopProductAt(shop, level)}` : `${areaName}`;
+    const tagStr = eqListRec
+      ? `镇店 · ${eqListRec.name}`
+      : level > 0
+        ? `招牌 · ${shopProductAt(shop, level)}`
+        : `${areaName}`;
     const tagTxt = makeText(tagStr, 14, 0xFFFDF8, true);
-    const tagW = Math.min(pw - 20, tagTxt.width + 20);
+    const tagW = Math.min(pw - (eqListRec ? 66 : 20), tagTxt.width + 20);
     const tagBg = new PIXI.Graphics()
-      .beginFill(0x362415, 0.72)
+      .beginFill(eqListRec ? 0x8F2E24 : 0x362415, 0.80)
       .drawRoundedRect(px + 10, py + ph - 32, tagW, 24, 12)
       .endFill();
     tagTxt.anchor.set(0.5);
     tagTxt.position.set(px + 10 + tagW / 2, py + ph - 20);
     if (tagTxt.width > tagW - 14) tagTxt.scale.set((tagW - 14) / tagTxt.width);
     card.addChild(tagBg, tagTxt);
+
+    if (eqListRec) {
+      const rxBadge = px + pw - 28;
+      const ryBadge = py + ph - 28;
+      const rRing = new PIXI.Graphics()
+        .lineStyle(2.2, COLORS.rose, 1)
+        .beginFill(0xFFFDF8, 0.98)
+        .drawCircle(rxBadge, ryBadge, 22)
+        .endFill();
+      const rIco = makeStickerSprite(recipeIconPath(eqListRec.comboKey), 36, 36, true);
+      rIco.position.set(rxBadge, ryBadge);
+      card.addChild(rRing, rIco);
+    }
 
     if (!unlocked) {
       const lockIco = makeStickerSprite(ICONS.lock, 48, 48, true);

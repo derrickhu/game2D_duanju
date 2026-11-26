@@ -10,6 +10,7 @@ import {
   ORDER_BUBBLE_ICONS,
   UI_SLICES,
   outfitFigurePath,
+  recipeIconPath,
 } from '@/data/art';
 import { BALANCE } from '@/data/balance';
 import { CHAPTERS, HEROES, heroById, type ChapterDef, type HeroId } from '@/data/story';
@@ -30,6 +31,7 @@ import { computeOffline, rushOrderCooldownLeft, rushOrdersLeftToday } from '@/si
 import { resolveSkillBuyCount, skillUpgradeCostN } from '@/sim/economy';
 import { getMissionOrFallback, hasCompletedDispatch, recommendDispatchTeam } from '@/sim/dispatchSim';
 import { formatDuration, formatMoney } from '@/sim/format';
+import { resolveRecipe } from '@/sim/recipeSim';
 import type { BuyMode } from '@/sim/save';
 import { hasProfitablePosition } from '@/sim/stockSim';
 import { currentChapter, nextGoal, pendingBattleChapter, unlikedMomentCount, unreadChatCount } from '@/sim/unlocks';
@@ -826,11 +828,26 @@ export class HomeScene implements Scene {
     const freeSlot = [0, 1].find((s) => !usedSlots.has(s));
     if (freeSlot === undefined) return;
 
-    const outfitId = GameState.save.outfit;
+    const save = GameState.save;
+    const outfitId = save.outfit;
     const outfit = OUTFITS.find((o) => o.id === outfitId) ?? OUTFITS[0];
     const pickIdx = Math.floor(Math.random() * 3) as 0 | 1 | 2;
-    const cleanName = outfit.orderItems[pickIdx].replace(/^[^\s]+\s*/, '');
-    const iconPath = ORDER_BUBBLE_ICONS[outfit.id][pickIdx];
+    let cleanName = outfit.orderItems[pickIdx].replace(/^[^\s]+\s*/, '');
+    let iconPath = ORDER_BUBBLE_ICONS[outfit.id][pickIdx];
+
+    // 若玩家已在研发室创制或挂载镇店爆品，主舞台顾客高概率直接点单自研爆品并展示成品美图
+    const equippedKeys = Object.values(save.equippedRecipes ?? {}).filter(
+      (k): k is string => Boolean(k && (save.discoveredRecipes?.[k] ?? 0) > 0),
+    );
+    const activePool = equippedKeys.length > 0
+      ? equippedKeys
+      : Object.keys(save.discoveredRecipes ?? {}).filter((k) => (save.discoveredRecipes[k] ?? 0) > 0);
+    if (activePool.length > 0 && Math.random() < 0.68) {
+      const rKey = activePool[Math.floor(Math.random() * activePool.length)];
+      const rec = resolveRecipe(rKey, save.discoveredRecipes[rKey] ?? 1);
+      cleanName = rec.name;
+      iconPath = recipeIconPath(rec.comboKey);
+    }
 
     const node = new PIXI.Container();
     const skin = makeStickerSprite(UI_SLICES.v8BubbleSpeech, 204, 86, true);

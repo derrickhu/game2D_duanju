@@ -138,12 +138,23 @@ export const SHOPS: readonly ShopDef[] = [
   },
 ];
 
-export type OutfitId = 'tee' | 'shirt' | 'tweed' | 'suit' | 'gown';
+export type OutfitId =
+  | 'tee'
+  | 'shirt'
+  | 'tweed'
+  | 'suit'
+  | 'gown'
+  | 'cheongsam'
+  | 'rose_dress'
+  | 'trench'
+  | 'crimson_gown';
 
 export interface OutfitDef {
   id: OutfitId;
   name: string;
   unlockNetWorth: number;
+  /** true 表示在衣橱中通过看激励视频广告免费解锁（同样享受 +8% 帝国总收益） */
+  unlockByAd?: boolean;
   scene: string;
   counterName: string;
   orderItems: readonly [string, string, string];
@@ -174,6 +185,26 @@ export const OUTFITS: readonly OutfitDef[] = [
     id: 'gown', name: '星河藏青高定礼服', unlockNetWorth: 1e11,
     scene: '首富发布会盛典', counterName: '晚星盛典主礼台',
     orderItems: ['👑 盛氏遗产交接', '💎 跨国敲钟席', '🥂 慈善主宾席'],
+  },
+  {
+    id: 'cheongsam', name: '玉兰珠扣高定旗袍', unlockNetWorth: 0, unlockByAd: true,
+    scene: '苏绣江南茶轩', counterName: '云锦茶席雅间',
+    orderItems: ['🍵 玉兰冷泡茶', '🥮 苏式鲜花饼', '🏮 江南非遗伴手礼'],
+  },
+  {
+    id: 'rose_dress', name: '巴黎樱粉高定套装', unlockNetWorth: 0, unlockByAd: true,
+    scene: '塞纳露台花园', counterName: '法式玫瑰花房',
+    orderItems: ['🌹 玫瑰荔枝冻', '🍓 绯色马卡龙', '🥂 露台香槟席'],
+  },
+  {
+    id: 'trench', name: '驼色羊绒大衣静奢装', unlockNetWorth: 0, unlockByAd: true,
+    scene: '秋日梧桐画廊', counterName: '名流艺术沙龙',
+    orderItems: ['☕ 焦糖玛奇朵', '🎨 联名艺术礼盒', '💼 画廊定制茶歇'],
+  },
+  {
+    id: 'crimson_gown', name: '正红蝴蝶结拖尾礼服', unlockNetWorth: 0, unlockByAd: true,
+    scene: '星光红毯酒会', counterName: '摩天云端宴会厅',
+    orderItems: ['💎 红毯高定邀约', '🥂 庄园年份香槟', '👑 慈善夜压轴拍品'],
   },
 ];
 

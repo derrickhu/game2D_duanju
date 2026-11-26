@@ -305,6 +305,14 @@ class GameStateClass {
     this.flush();
   }
 
+  unlockOutfitByAd(id: OutfitId): void {
+    A.unlockByAd(this.save, `outfit:${id}`);
+    this.save.outfit = id;
+    EventBus.emit(EV.moneyChanged);
+    EventBus.emit(EV.saveChanged);
+    this.flush();
+  }
+
   setOutfit(id: OutfitId): void {
     this.save.outfit = id;
     EventBus.emit(EV.saveChanged);

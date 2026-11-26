@@ -49,7 +49,7 @@ export function computeSynergies(save: GameSave): EmpireSynergies {
   const huo = save.bonds.huotingchen ?? 0;
   const fu = Math.max(0, effectiveBond(save, 'fujingshen') - 1);
 
-  const outfitCount = Math.max(0, unlockedOutfits(save.netWorth).length - 1);
+  const outfitCount = Math.max(0, unlockedOutfits(save).length - 1);
   const outfitBonus = outfitCount * BALANCE.outfitEmpireBonus;
   const fameBonus = fu * 0.05;
   const seasonMult = BALANCE.seasonBaseMult ** Math.max(0, (save.season ?? 1) - 1);

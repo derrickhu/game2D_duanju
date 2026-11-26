@@ -1,7 +1,7 @@
 /**
- * 衣橱页（v9 原设韩漫立绘 + 原设背景 + v8 高对比珠光顶栏与铭牌）：
- * - 恢复 `scene_<id>.jpg` + 原设 `suwan_<id>.png` 站立立绘，与男主画风 100% 统一；
- * - 保留新版珠光货币顶栏、底部双金线舞台铭牌与 5 套高定立绘橱窗缩略卡。
+ * 千金衣橱（`OutfitSheet` · v13 扩充高定 + 广告免费解锁 + 横向滑动缩略图版）：
+ * - 包含 5 套身价里程碑高定 + 4 套广告免费解锁主题高定（均带独立精绘 2D 唯美背景）；
+ * - 每一套解锁均可永久提升帝国总收益 +8%，支持左右滑动舞台与底部横向滑动缩略图带。
  */
 import * as PIXI from 'pixi.js';
 import { ICONS, UI_SLICES, outfitFigurePath, outfitScenePath } from '@/data/art';
@@ -9,11 +9,12 @@ import { BALANCE } from '@/data/balance';
 import { OUTFITS, type OutfitDef, type OutfitId } from '@/data/world';
 import { AudioManager } from '@/core/AudioManager';
 import { Game } from '@/core/Game';
+import { Platform } from '@/core/PlatformService';
 import { ToastManager } from '@/core/ToastManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
 import { GameState } from '@/managers/GameState';
 import { formatMoney } from '@/sim/format';
-import { unlockedOutfits } from '@/sim/unlocks';
+import { isOutfitUnlocked, unlockedOutfits } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
 import { drawDiamondStar } from '@/ui/EditorialIcons';
 import { PAGE_PAD, Page } from '@/ui/Page';
@@ -26,16 +27,22 @@ import {
   makeStickerSprite,
   makeText,
 } from '@/ui/theme';
-import { applyFit, applyGray, fitCover, gameTexture, isTextureReady, showFigure, whenTextureReady } from '@/utils/assets';
+import {
+  applyFit,
+  applyGray,
+  fitCover,
+  gameTexture,
+  isTextureReady,
+  showFigure,
+  watchTextures,
+  whenTextureReady,
+} from '@/utils/assets';
 
-const THUMB_H = 166;
-const THUMB_GAP = 12;
-const BTN_H = 84;
-const SWIPE = 60;
-
-function isOpen(o: OutfitDef): boolean {
-  return GameState.save.netWorth >= o.unlockNetWorth;
-}
+const THUMB_H = 114;
+const THUMB_W = 122;
+const THUMB_GAP = 10;
+const BTN_H = 74;
+const SWIPE = 48;
 
 export class OutfitSheet extends Page {
   private readonly _banner = new PIXI.Container();
@@ -47,12 +54,20 @@ export class OutfitSheet extends Page {
   private readonly _frameMask = new PIXI.Graphics();
   private readonly _label = new PIXI.Container();
   private readonly _thumbs = new PIXI.Container();
+  private readonly _thumbTrack = new PIXI.Container();
+  private readonly _thumbMask = new PIXI.Graphics();
   private readonly _action = new PIXI.Container();
 
   private _selected: OutfitId = 'tee';
   private _box = new PIXI.Rectangle();
   private _pressX: number | null = null;
   private _pressY = 0;
+
+  private _thumbScrollX = 0;
+  private _thumbMinX = 0;
+  private _thumbPressX: number | null = null;
+  private _thumbOriginX = 0;
+  private _thumbMoved = false;
 
   constructor() {
     super('千金衣橱');
@@ -73,15 +88,42 @@ export class OutfitSheet extends Page {
     };
     this._preview.on('pointerup', end);
     this._preview.on('pointerupoutside', end);
+
+    this._thumbTrack.mask = this._thumbMask;
+    this._thumbs.addChild(this._thumbTrack, this._thumbMask);
+    this._bindThumbDrag();
+
     this.body.addChild(this._banner, this._preview, this._thumbs, this._action);
+  }
+
+  private _bindThumbDrag(): void {
+    this._thumbs.eventMode = 'static';
+    this._thumbs.on('pointerdown', (e: PIXI.FederatedPointerEvent) => {
+      this._thumbPressX = e.global.x / Game.scale;
+      this._thumbOriginX = this._thumbScrollX;
+      this._thumbMoved = false;
+      TweenManager.cancelTarget(this._thumbTrack);
+    });
+    this._thumbs.on('globalpointermove', (e: PIXI.FederatedPointerEvent) => {
+      if (this._thumbPressX === null) return;
+      const dx = e.global.x / Game.scale - this._thumbPressX;
+      if (Math.abs(dx) > 8) this._thumbMoved = true;
+      this._thumbScrollX = Math.max(this._thumbMinX, Math.min(0, this._thumbOriginX + dx));
+      this._thumbTrack.x = this._thumbScrollX;
+    });
+    const endThumbDrag = (): void => {
+      this._thumbPressX = null;
+    };
+    this._thumbs.on('pointerup', endThumbDrag);
+    this._thumbs.on('pointerupoutside', endThumbDrag);
   }
 
   protected override onOpen(): void {
     this._selected = GameState.save.outfit;
-    for (const o of OUTFITS) {
-      gameTexture(outfitFigurePath(o.id));
-      gameTexture(outfitScenePath(o.id));
-    }
+    const allPaths = OUTFITS.flatMap((o) => [outfitFigurePath(o.id), outfitScenePath(o.id)]);
+    watchTextures(allPaths, () => {
+      if (this.isOpen) this.rebuild();
+    });
   }
 
   protected layoutBody(top: number, bottom: number): void {
@@ -99,8 +141,8 @@ export class OutfitSheet extends Page {
   private _buildBanner(top: number): void {
     for (const c of this._banner.removeChildren()) c.destroy({ children: true });
     const W = Game.logicWidth;
-    const unlockedCount = unlockedOutfits(GameState.save.netWorth).length;
-    const pct = Math.round((unlockedCount - 1) * BALANCE.outfitEmpireBonus * 100);
+    const unlockedCount = unlockedOutfits(GameState.save).length;
+    const pct = Math.round(Math.max(0, unlockedCount - 1) * BALANCE.outfitEmpireBonus * 100);
     const bw = W - PAGE_PAD * 2;
     const bh = 54;
 
@@ -145,7 +187,7 @@ export class OutfitSheet extends Page {
 
   private _layoutPreview(): void {
     const o = OUTFITS.find((x) => x.id === this._selected) ?? OUTFITS[0];
-    const open = isOpen(o);
+    const open = isOutfitUnlocked(GameState.save, o);
     const { x, y, width: w, height: h } = this._box;
     this._frameMask.clear().beginFill(0xffffff).drawRoundedRect(x, y, w, h, 30).endFill();
 
@@ -171,13 +213,13 @@ export class OutfitSheet extends Page {
     else whenTextureReady(scenePath, fitScene);
 
     this._sceneShade.clear();
-    if (!open) this._sceneShade.beginFill(0x3D2E22, 0.38).drawRoundedRect(x, y, w, h, 30).endFill();
+    if (!open) this._sceneShade.beginFill(0x3D2E22, 0.34).drawRoundedRect(x, y, w, h, 30).endFill();
 
     TweenManager.cancelTarget(this._figure);
     this._figure.position.set(x + w / 2, y + h - 4);
     this._figure.filters = null;
     if (!open) applyGray(this._figure);
-    this._figure.alpha = open ? 1 : 0.56;
+    this._figure.alpha = open ? 1 : 0.62;
     showFigure(this._figure, outfitFigurePath(o.id), w * 0.74, h - 24);
 
     for (const c of this._label.removeChildren()) c.destroy({ children: true });
@@ -198,6 +240,22 @@ export class OutfitSheet extends Page {
       tag.anchor.set(0.5);
       tag.position.set(bx + badgeW / 2, by + badgeH / 2 - 0.5);
       this._label.addChild(badgeSkin, tag);
+    } else if (!open && o.unlockByAd) {
+      const badgeW = 148;
+      const badgeH = 40;
+      const bx = x + w - 18 - badgeW;
+      const by = y + 18;
+      const badgeSkin = createNineSlice2x(
+        { path: UI_SLICES.btnSmGold, pad2x: 16, left2x: 88, top2x: 68, right2x: 88, bottom2x: 68 },
+        badgeW,
+        badgeH,
+        false,
+      );
+      badgeSkin.position.set(bx, by);
+      const tag = makeDisplayText('广告限定款', 17, 0xFFFDF8, 0x8B5516, 2.8);
+      tag.anchor.set(0.5);
+      tag.position.set(bx + badgeW / 2, by + badgeH / 2 - 0.5);
+      this._label.addChild(badgeSkin, tag);
     }
 
     const plateW = w - 44;
@@ -211,8 +269,11 @@ export class OutfitSheet extends Page {
     name.anchor.set(0.5, 0);
     name.position.set(x + w / 2, py + 12);
 
+    const lockSub = o.unlockByAd
+      ? `${o.scene}  ·  看广告解锁（帝国收益 +8%）`
+      : `身价达 ¥${formatMoney(o.unlockNetWorth)} 解锁 · 帝国收益 +8%`;
     const sub = makeText(
-      open ? `${o.scene}  ·  ${o.counterName}` : `身价达 ¥${formatMoney(o.unlockNetWorth)} 解锁 · 帝国收益 +8%`,
+      open ? `${o.scene}  ·  ${o.counterName}` : lockSub,
       18,
       open ? COLORS.roseDeep : COLORS.inkSoft,
       true,
@@ -225,13 +286,27 @@ export class OutfitSheet extends Page {
   }
 
   private _layoutThumbs(top: number): void {
-    for (const c of this._thumbs.removeChildren()) c.destroy({ children: true });
+    for (const c of this._thumbTrack.removeChildren()) c.destroy({ children: true });
     const W = Game.logicWidth;
+    const viewW = W - PAGE_PAD * 2;
     const n = OUTFITS.length;
-    const tw = (W - PAGE_PAD * 2 - THUMB_GAP * (n - 1)) / n;
+    const contentW = n * THUMB_W + (n - 1) * THUMB_GAP;
+
+    this._thumbs.position.set(PAGE_PAD, top);
+    this._thumbs.hitArea = new PIXI.Rectangle(0, 0, viewW, THUMB_H);
+    this._thumbMask.clear().beginFill(0xffffff).drawRect(-4, -4, viewW + 8, THUMB_H + 8).endFill();
+
+    this._thumbMinX = Math.min(0, viewW - contentW);
+
+    // 选中项自动居中进入可视窗口
+    const selIdx = Math.max(0, OUTFITS.findIndex((x) => x.id === this._selected));
+    const selCenter = selIdx * (THUMB_W + THUMB_GAP) + THUMB_W / 2;
+    const idealX = Math.max(this._thumbMinX, Math.min(0, viewW / 2 - selCenter));
+    this._thumbScrollX = idealX;
+    this._thumbTrack.x = idealX;
 
     OUTFITS.forEach((o, i) => {
-      const open = isOpen(o);
+      const open = isOutfitUnlocked(GameState.save, o);
       const selected = o.id === this._selected;
       const wearing = GameState.save.outfit === o.id;
       const t = new PIXI.Container();
@@ -241,45 +316,58 @@ export class OutfitSheet extends Page {
         : selected
           ? { path: UI_SLICES.cardGridReady, pad2x: 20, left2x: 68, top2x: 68, right2x: 68, bottom2x: 68 }
           : { path: UI_SLICES.cardGridUnlocked, pad2x: 16, left2x: 64, top2x: 64, right2x: 64, bottom2x: 64 };
-      t.addChild(createNineSlice2x(spec, tw, THUMB_H, false));
+      t.addChild(createNineSlice2x(spec, THUMB_W, THUMB_H, false));
 
       if (selected) {
         const rim = new PIXI.Graphics()
           .lineStyle(3.0, COLORS.rose, 0.98)
-          .drawRoundedRect(1, 1, tw - 2, THUMB_H - 2, 16);
+          .drawRoundedRect(1, 1, THUMB_W - 2, THUMB_H - 2, 16);
         t.addChild(rim);
       }
 
       const fig = new PIXI.Sprite();
       fig.anchor.set(0.5, 1);
-      fig.position.set(tw / 2, THUMB_H - 8);
+      fig.position.set(THUMB_W / 2, THUMB_H - 8);
       if (!open) {
         applyGray(fig);
-        fig.alpha = 0.52;
+        fig.alpha = 0.56;
       }
-      const mask = new PIXI.Graphics().beginFill(0xffffff).drawRoundedRect(4, 4, tw - 8, THUMB_H - 8, 14).endFill();
+      const mask = new PIXI.Graphics().beginFill(0xffffff).drawRoundedRect(4, 4, THUMB_W - 8, THUMB_H - 8, 14).endFill();
       fig.mask = mask;
       t.addChild(mask, fig);
-      showFigure(fig, outfitFigurePath(o.id), tw - 12, THUMB_H - 18);
+      showFigure(fig, outfitFigurePath(o.id), THUMB_W - 12, THUMB_H - 18);
 
-      if (!open) {
-        const lock = makeStickerSprite(ICONS.lock, 42, 42, true);
-        lock.position.set(tw / 2, THUMB_H / 2);
+      if (!open && o.unlockByAd) {
+        const adTag = new PIXI.Graphics()
+          .lineStyle(1.4, 0xFFF7E0, 1)
+          .beginFill(COLORS.rose, 0.96)
+          .drawRoundedRect(THUMB_W / 2 - 36, THUMB_H - 30, 72, 22, 11)
+          .endFill();
+        const adTxt = makeText('▶ 广告', 12, 0xFFFFFF, true);
+        adTxt.anchor.set(0.5);
+        adTxt.position.set(THUMB_W / 2, THUMB_H - 19);
+        t.addChild(adTag, adTxt);
+      } else if (!open) {
+        const lock = makeStickerSprite(ICONS.lock, 40, 40, true);
+        lock.position.set(THUMB_W / 2, THUMB_H / 2);
         t.addChild(lock);
       }
+
       if (wearing) {
-        t.addChild(new PIXI.Graphics().lineStyle(2, 0xFFFFFF).beginFill(COLORS.rose).drawCircle(tw - 18, 18, 12).endFill());
-        t.addChild(new PIXI.Graphics().lineStyle(2.6, COLORS.white).moveTo(tw - 23, 18).lineTo(tw - 19, 22).lineTo(tw - 12, 14));
+        t.addChild(new PIXI.Graphics().lineStyle(2, 0xFFFFFF).beginFill(COLORS.rose).drawCircle(THUMB_W - 18, 18, 12).endFill());
+        t.addChild(new PIXI.Graphics().lineStyle(2.6, COLORS.white).moveTo(THUMB_W - 23, 18).lineTo(THUMB_W - 19, 22).lineTo(THUMB_W - 12, 14));
       }
-      t.pivot.set(tw / 2, THUMB_H / 2);
-      t.position.set(PAGE_PAD + i * (tw + THUMB_GAP) + tw / 2, top + THUMB_H / 2);
+
+      t.pivot.set(THUMB_W / 2, THUMB_H / 2);
+      t.position.set(i * (THUMB_W + THUMB_GAP) + THUMB_W / 2, THUMB_H / 2);
       t.eventMode = 'static';
       t.cursor = 'pointer';
       t.on('pointertap', () => {
+        if (this._thumbMoved) return;
         const cur = OUTFITS.findIndex((x) => x.id === this._selected);
         this._select(o.id, Math.sign(i - cur));
       });
-      this._thumbs.addChild(t);
+      this._thumbTrack.addChild(t);
     });
   }
 
@@ -287,8 +375,31 @@ export class OutfitSheet extends Page {
     for (const c of this._action.removeChildren()) c.destroy({ children: true });
     const W = Game.logicWidth;
     const o = OUTFITS.find((x) => x.id === this._selected) ?? OUTFITS[0];
+    const open = isOutfitUnlocked(GameState.save, o);
     const w = W - PAGE_PAD * 2;
-    if (!isOpen(o)) {
+
+    if (!open && o.unlockByAd) {
+      const btn = new Button({
+        width: w,
+        height: BTN_H,
+        variant: 'rose',
+        fontSize: 25,
+        label: '▶ 观看激励视频免费解锁（帝国收益 +8%）',
+        onTap: () => {
+          Platform.showRewardedVideo('wardrobeOutfit', () => {
+            GameState.unlockOutfitByAd(o.id);
+            AudioManager.play('level_up');
+            ToastManager.show(`✦ 解锁并换上「${o.name}」（帝国总收益 +8%）`, 'success');
+            this.rebuild();
+          });
+        },
+      });
+      btn.position.set(W / 2, y);
+      this._action.addChild(btn);
+      return;
+    }
+
+    if (!open) {
       const banner = makeRibbonBanner(w, BTN_H - 8, false);
       banner.position.set(PAGE_PAD, y - (BTN_H - 8) / 2);
       const lockIco = makeStickerSprite(ICONS.lock, 36, 36, true);
@@ -300,6 +411,7 @@ export class OutfitSheet extends Page {
       this._action.addChild(banner, lockIco, t);
       return;
     }
+
     const wearing = GameState.save.outfit === o.id;
     const btn = new Button({
       width: w,
