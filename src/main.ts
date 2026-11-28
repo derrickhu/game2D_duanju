@@ -111,7 +111,11 @@ async function main(): Promise<void> {
     Platform.bindShareMenu(() => '翻盘女王');
   }, 0);
 
-  analytics.trackSessionStart({ entry: 'main_boot', cloud_sync_status: startupSync.status });
+  analytics.trackSessionStart({
+    entry: 'main_boot',
+    cloud_sync_status: startupSync.status,
+    with_user_id: !!CloudSyncManager.userId,
+  });
 
   let lastHideAt = 0;
   Platform.onHide(() => {

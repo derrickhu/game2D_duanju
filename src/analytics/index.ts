@@ -23,11 +23,6 @@ export type AnalyticsParams = Record<string, EventParamValue>;
 /** 新手漏斗 step_id，顺序即漏斗顺序；上线后不要改名。 */
 export const TUTORIAL_STEPS = {
   prologue: 'prologue',
-  firstTap: 'first_tap',
-  upgradeSkill: 'upgrade_skill',
-  chapter1: 'chapter_1',
-  openShop: 'open_shop',
-  meetLuyu: 'meet_luyu',
   completed: 'completed',
 } as const;
 
@@ -132,13 +127,13 @@ export const analytics = {
   },
 
   trackQuestComplete(questId: string, questType: string, params: {
-    durationMs: number;
-  } & AnalyticsParams): void {
+    durationMs?: number;
+  } & AnalyticsParams = {}): void {
     const { durationMs, ...extra } = params;
     track(EVENT_NAMES.QUEST_COMPLETE, {
       quest_id: questId,
       quest_type: questType,
-      duration_ms: Math.max(0, Math.floor(durationMs)),
+      ...(durationMs != null ? { duration_ms: Math.max(0, Math.floor(durationMs)) } : {}),
       ...extra,
     });
   },

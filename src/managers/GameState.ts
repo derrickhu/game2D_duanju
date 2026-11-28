@@ -7,6 +7,7 @@ import type { StaffId } from '@/data/staff';
 import type { HeroId } from '@/data/story';
 import type { StreetEventDef } from '@/data/streetEvents';
 import type { OutfitId, ShopId } from '@/data/world';
+import { TUTORIAL_STEPS, analytics } from '@/analytics';
 import { EV } from '@/config/events';
 import { EventBus } from '@/core/EventBus';
 import { Game } from '@/core/Game';
@@ -103,11 +104,19 @@ class GameStateClass {
   claimQuest(): { cash: number; roses: number } {
     const p = currentQuest(this.save);
     if (!p || !p.done) return { cash: 0, roses: 0 };
+    const questIndex = this.save.questIndex;
+    const questType = p.quest.goal.kind;
+    const title = p.quest.title;
     const roses = p.roses;
     const cash = this._mutate(() => claimQuest(this.save));
     if (cash > 0) {
       EventBus.emit(EV.questChanged);
       this.flush();
+      analytics.trackQuestComplete(`q${questIndex}`, questType, { title });
+      const next = currentQuest(this.save);
+      if (next) {
+        analytics.trackQuestStart(`q${this.save.questIndex}`, next.quest.goal.kind, { title: next.quest.title });
+      }
     }
     return { cash, roses: cash > 0 ? roses : 0 };
   }
@@ -208,9 +217,19 @@ class GameStateClass {
   }
 
   setTutorialStep(step: number): void {
+    if (this.save.tutorialStep === step) return;
     this.save.tutorialStep = step;
     EventBus.emit(EV.tutorialStepChanged, step);
     this.flush();
+    if (step === 1) {
+      analytics.trackTutorialStep(TUTORIAL_STEPS.prologue, { stepIndex: 1 });
+      const quest = currentQuest(this.save);
+      if (quest && this.save.questIndex === 0) {
+        analytics.trackQuestStart('q0', quest.quest.goal.kind, { title: quest.quest.title });
+      }
+    } else if (step >= 99) {
+      analytics.trackTutorialStep(TUTORIAL_STEPS.completed, { stepIndex: 2 });
+    }
   }
 
   /** 开发用：加钱，会正常触发跨章节提示 */
