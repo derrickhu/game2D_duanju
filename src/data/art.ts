@@ -22,6 +22,9 @@ export const ICONS = {
   phone: 'subpkg_images/v6_ico_side_phone.png',
   crown: 'subpkg_images/v6_ico_side_buff.png',
   event: 'subpkg_images/v6_ico_side_event.png',
+  sideLab: 'subpkg_images/v12_ico_side_lab.png',
+  sideStock: 'subpkg_images/v12_ico_side_stock.png',
+  sideDispatch: 'subpkg_images/v12_ico_side_dispatch.png',
 
   currencyRose: 'subpkg_images/v6_ico_currency_rose.png',
   coins: 'subpkg_images/v6_ico_currency_cash.png',
@@ -174,71 +177,107 @@ export const ORDER_BUBBLE_ICONS: Readonly<Record<OutfitId, readonly [string, str
   tweed: [SHOP_STICKER_ICONS.law, ICONS.gift, ICONS.boutique],
   suit: [SHOP_STICKER_ICONS.hotel, SHOP_STICKER_ICONS.agency, SHOP_STICKER_ICONS.group],
   gown: [ICONS.crown, SHOP_STICKER_ICONS.clinic, SHOP_STICKER_ICONS.group],
+  cheongsam: [SHOP_STICKER_ICONS.cafe, SHOP_STICKER_ICONS.dessert, ICONS.gift],
+  rose_dress: [SHOP_STICKER_ICONS.dessert, ICONS.currencyRose, SHOP_STICKER_ICONS.hotel],
+  trench: [SHOP_STICKER_ICONS.cafe, ICONS.boutique, SHOP_STICKER_ICONS.agency],
+  crimson_gown: [ICONS.crown, SHOP_STICKER_ICONS.hotel, SHOP_STICKER_ICONS.group],
 };
 
-/** 男主拍立得回忆卡封面插画映射（优先使用已生成的高精韩漫 CG） */
+/** 男主拍立得回忆卡封面插画映射（76 张专属韩漫 CG 已全量配齐） */
 export const HERO_THUMB_POOL: Readonly<Record<HeroId, readonly string[]>> = {
   luyu: [
     'subpkg_images/cg_luyu_b4.jpg',
     'subpkg_images/cg_luyu_b5.jpg',
-    'subpkg_images/cg_luyu_extra.jpg',
     'subpkg_images/cg_luyu_h1.jpg',
+    'subpkg_images/cg_luyu_h2.jpg',
+    'subpkg_images/cg_luyu_extra.jpg',
   ],
   jiangxubai: [
     'subpkg_images/cg_jiangxubai_b1.jpg',
+    'subpkg_images/cg_jiangxubai_b2.jpg',
+    'subpkg_images/cg_jiangxubai_b3.jpg',
     'subpkg_images/cg_jiangxubai_b4.jpg',
     'subpkg_images/cg_jiangxubai_b5.jpg',
     'subpkg_images/cg_jiangxubai_ending.jpg',
+    'subpkg_images/cg_jiangxubai_h1.jpg',
     'subpkg_images/cg_jiangxubai_h2.jpg',
+    'subpkg_images/cg_jiangxubai_extra.jpg',
   ],
   guye: [
     'subpkg_images/cg_guye_b1.jpg',
+    'subpkg_images/cg_guye_b2.jpg',
     'subpkg_images/cg_guye_b3.jpg',
     'subpkg_images/cg_guye_b4.jpg',
+    'subpkg_images/cg_guye_b5.jpg',
     'subpkg_images/cg_guye_ending.jpg',
     'subpkg_images/cg_guye_h1.jpg',
+    'subpkg_images/cg_guye_h2.jpg',
+    'subpkg_images/cg_guye_extra.jpg',
   ],
   shenyan: [
     'subpkg_images/cg_shenyan_b1.jpg',
     'subpkg_images/cg_shenyan_b2.jpg',
+    'subpkg_images/cg_shenyan_b3.jpg',
     'subpkg_images/cg_shenyan_b4.jpg',
+    'subpkg_images/cg_shenyan_b5.jpg',
     'subpkg_images/cg_shenyan_ending.jpg',
     'subpkg_images/cg_shenyan_h1.jpg',
+    'subpkg_images/cg_shenyan_h2.jpg',
+    'subpkg_images/cg_shenyan_extra.jpg',
   ],
   qinye: [
     'subpkg_images/cg_qinye_b1.jpg',
     'subpkg_images/cg_qinye_b2.jpg',
+    'subpkg_images/cg_qinye_b3.jpg',
     'subpkg_images/cg_qinye_b4.jpg',
+    'subpkg_images/cg_qinye_b5.jpg',
     'subpkg_images/cg_qinye_ending.jpg',
+    'subpkg_images/cg_qinye_h1.jpg',
     'subpkg_images/cg_qinye_h2.jpg',
+    'subpkg_images/cg_qinye_extra.jpg',
   ],
   xuzhiheng: [
     'subpkg_images/cg_xuzhiheng_b1.jpg',
+    'subpkg_images/cg_xuzhiheng_b2.jpg',
+    'subpkg_images/cg_xuzhiheng_b3.jpg',
     'subpkg_images/cg_xuzhiheng_b4.jpg',
     'subpkg_images/cg_xuzhiheng_b5.jpg',
     'subpkg_images/cg_xuzhiheng_ending.jpg',
     'subpkg_images/cg_xuzhiheng_h1.jpg',
+    'subpkg_images/cg_xuzhiheng_h2.jpg',
+    'subpkg_images/cg_xuzhiheng_extra.jpg',
   ],
   zhouyining: [
     'subpkg_images/cg_zhouyining_b1.jpg',
+    'subpkg_images/cg_zhouyining_b2.jpg',
     'subpkg_images/cg_zhouyining_b3.jpg',
     'subpkg_images/cg_zhouyining_b4.jpg',
     'subpkg_images/cg_zhouyining_b5.jpg',
     'subpkg_images/cg_zhouyining_ending.jpg',
+    'subpkg_images/cg_zhouyining_h1.jpg',
+    'subpkg_images/cg_zhouyining_h2.jpg',
+    'subpkg_images/cg_zhouyining_extra.jpg',
   ],
   huotingchen: [
     'subpkg_images/cg_huotingchen_b1.jpg',
+    'subpkg_images/cg_huotingchen_b2.jpg',
+    'subpkg_images/cg_huotingchen_b3.jpg',
     'subpkg_images/cg_huotingchen_b4.jpg',
     'subpkg_images/cg_huotingchen_b5.jpg',
     'subpkg_images/cg_huotingchen_ending.jpg',
     'subpkg_images/cg_huotingchen_h1.jpg',
+    'subpkg_images/cg_huotingchen_h2.jpg',
+    'subpkg_images/cg_huotingchen_extra.jpg',
   ],
   fujingshen: [
     'subpkg_images/cg_fujingshen_b1.jpg',
+    'subpkg_images/cg_fujingshen_b2.jpg',
+    'subpkg_images/cg_fujingshen_b3.jpg',
     'subpkg_images/cg_fujingshen_b4.jpg',
     'subpkg_images/cg_fujingshen_b5.jpg',
     'subpkg_images/cg_fujingshen_alt.jpg',
     'subpkg_images/cg_fujingshen_h1.jpg',
+    'subpkg_images/cg_fujingshen_h2.jpg',
   ],
 };
 
@@ -267,14 +306,20 @@ export function heroCardThumbPath(heroId: HeroId, index: number, hidden = false)
   return pool[index % pool.length];
 }
 
-/** v10 提亮精修版 2D 场景背景图（包内直出，彻底绕开旧版暗色 CDN 缓存） */
+const V13_AD_OUTFIT_SET = new Set<OutfitId>(['cheongsam', 'rose_dress', 'trench', 'crimson_gown']);
+
+/** v10/v13 提亮精修版 2D 场景背景图（包内直出） */
 export function outfitScenePath(id: OutfitId): string {
-  return `subpkg_images/v10_scene_${id}.jpg`;
+  return V13_AD_OUTFIT_SET.has(id)
+    ? `subpkg_images/v13_scene_${id}.jpg`
+    : `subpkg_images/v10_scene_${id}.jpg`;
 }
 
-/** v10 无损提亮精修版苏晚原设站立立绘（100% 保持原设五官与 2D 画风，肤色与明度通透提亮） */
+/** v10/v13 苏晚原设站立立绘 */
 export function outfitFigurePath(id: OutfitId): string {
-  return `subpkg_images/v10_suwan_${id}.png`;
+  return V13_AD_OUTFIT_SET.has(id)
+    ? `subpkg_images/v13_suwan_${id}.png`
+    : `subpkg_images/v10_suwan_${id}.png`;
 }
 
 export function staffFigurePath(id: StaffId): string {
@@ -288,3 +333,80 @@ export function heroFigurePath(id: HeroId): string {
 export function heroPortraitPath(id: HeroId): string {
   return `subpkg_images/portrait_${id}.jpg`;
 }
+
+/** v13 爆品研发室：高定调配台背景 + 神秘鎏金餐盖 + 外婆秘方手札 + 18款食材与20款成品插画 */
+export const RECIPE_LAB_ASSETS = {
+  stageBg: 'subpkg_images/v13_lab_stage_bg.jpg',
+  mysteryCloche: 'subpkg_images/v13_prod_mystery.png',
+  notebook: 'subpkg_images/v13_ico_notebook.png',
+} as const;
+
+export const INGREDIENT_ICONS: Readonly<Record<string, string>> = {
+  // 核心基底
+  puff: 'subpkg_images/v13_ing_puff.png',
+  mousse: 'subpkg_images/v13_ing_mousse.png',
+  brew: 'subpkg_images/v13_ing_brew.png',
+  nectar: 'subpkg_images/v13_ing_nectar.png',
+  aroma: 'subpkg_images/v13_ing_aroma.png',
+  essence: 'subpkg_images/v13_ing_essence.png',
+  // 灵魂风味
+  osmanthus: 'subpkg_images/v13_ing_osmanthus.png',
+  berry: 'subpkg_images/v13_ing_berry.png',
+  matcha: 'subpkg_images/v13_ing_matcha.png',
+  truffle: 'subpkg_images/v13_ing_truffle.png',
+  goldleaf: 'subpkg_images/v13_ing_goldleaf.png',
+  camellia: 'subpkg_images/v13_ing_camellia.png',
+  // 破圈造势
+  tasting: 'subpkg_images/v13_ing_tasting.png',
+  starbox: 'subpkg_images/v13_ing_starbox.png',
+  campus_pop: 'subpkg_images/v13_ing_campus_pop.png',
+  blindbox: 'subpkg_images/v13_ing_blindbox.png',
+  patent: 'subpkg_images/v13_ing_patent.png',
+  gala_auction: 'subpkg_images/v13_ing_gala_auction.png',
+};
+
+export const SIGNATURE_RECIPE_ICONS: Readonly<Record<string, string>> = {
+  puff_osmanthus_starbox: 'subpkg_images/v13_sig_puff_osmanthus_starbox.png',
+  puff_osmanthus_tasting: 'subpkg_images/v13_sig_puff_osmanthus_tasting.png',
+  mousse_berry_starbox: 'subpkg_images/v13_sig_mousse_berry_starbox.png',
+  brew_matcha_campus_pop: 'subpkg_images/v13_sig_brew_matcha_campus_pop.png',
+  mousse_matcha_tasting: 'subpkg_images/v13_sig_mousse_matcha_tasting.png',
+  brew_berry_campus_pop: 'subpkg_images/v13_sig_brew_berry_campus_pop.png',
+  nectar_osmanthus_blindbox: 'subpkg_images/v13_sig_nectar_osmanthus_blindbox.png',
+  puff_truffle_blindbox: 'subpkg_images/v13_sig_puff_truffle_blindbox.png',
+  nectar_goldleaf_starbox: 'subpkg_images/v13_sig_nectar_goldleaf_starbox.png',
+  aroma_matcha_patent: 'subpkg_images/v13_sig_aroma_matcha_patent.png',
+  aroma_truffle_patent: 'subpkg_images/v13_sig_aroma_truffle_patent.png',
+  essence_goldleaf_gala_auction: 'subpkg_images/v13_sig_essence_goldleaf_gala_auction.png',
+  essence_camellia_patent: 'subpkg_images/v13_sig_essence_camellia_patent.png',
+  essence_camellia_gala_auction: 'subpkg_images/v13_sig_essence_camellia_gala_auction.png',
+};
+
+export const BASE_PRODUCT_ICONS: Readonly<Record<string, string>> = {
+  puff: 'subpkg_images/v13_base_puff.png',
+  mousse: 'subpkg_images/v13_base_mousse.png',
+  brew: 'subpkg_images/v13_base_brew.png',
+  nectar: 'subpkg_images/v13_base_nectar.png',
+  aroma: 'subpkg_images/v13_base_aroma.png',
+  essence: 'subpkg_images/v13_base_essence.png',
+};
+
+export function ingredientIconPath(id: string): string {
+  return INGREDIENT_ICONS[id] ?? INGREDIENT_ICONS.puff;
+}
+
+export function recipeIconPath(comboKey: string): string {
+  const sig = SIGNATURE_RECIPE_ICONS[comboKey];
+  if (sig) return sig;
+  const baseId = comboKey.split('_')[0] || 'puff';
+  return BASE_PRODUCT_ICONS[baseId] ?? BASE_PRODUCT_ICONS.puff;
+}
+
+export const ALL_RECIPE_LAB_TEXTURES: readonly string[] = [
+  RECIPE_LAB_ASSETS.stageBg,
+  RECIPE_LAB_ASSETS.mysteryCloche,
+  RECIPE_LAB_ASSETS.notebook,
+  ...Object.values(INGREDIENT_ICONS),
+  ...Object.values(SIGNATURE_RECIPE_ICONS),
+  ...Object.values(BASE_PRODUCT_ICONS),
+];

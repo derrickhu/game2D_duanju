@@ -10,6 +10,7 @@ import {
   ORDER_BUBBLE_ICONS,
   UI_SLICES,
   outfitFigurePath,
+  recipeIconPath,
 } from '@/data/art';
 import { BALANCE } from '@/data/balance';
 import { CHAPTERS, HEROES, heroById, type ChapterDef, type HeroId } from '@/data/story';
@@ -28,8 +29,11 @@ import { TUTORIAL_DONE } from '@/managers/SaveManager';
 import { playChapterFlow, playStory, playStorySequence } from '@/services/StoryService';
 import { computeOffline, rushOrderCooldownLeft, rushOrdersLeftToday } from '@/sim/actions';
 import { resolveSkillBuyCount, skillUpgradeCostN } from '@/sim/economy';
+import { getMissionOrFallback, hasCompletedDispatch, recommendDispatchTeam } from '@/sim/dispatchSim';
 import { formatDuration, formatMoney } from '@/sim/format';
+import { resolveRecipe } from '@/sim/recipeSim';
 import type { BuyMode } from '@/sim/save';
+import { hasProfitablePosition } from '@/sim/stockSim';
 import { currentChapter, nextGoal, pendingBattleChapter, unlikedMomentCount, unreadChatCount } from '@/sim/unlocks';
 import { Button } from '@/ui/Button';
 import { showDialog } from '@/ui/Dialog';
@@ -44,13 +48,17 @@ import {
   makeText,
 } from '@/ui/theme';
 import { gameTexture, isTextureReady, whenTextureReady } from '@/utils/assets';
+import { DecisionModal } from './home/DecisionModal';
+import { DispatchSheet } from './home/DispatchSheet';
 import { HeroPage } from './home/HeroPage';
 import { heroHasNews } from './home/heroInfo';
 import { LivingStage } from './home/LivingStage';
 import { OutfitSheet } from './home/OutfitSheet';
 import { PhoneSheet } from './home/PhoneSheet';
+import { RecipeLabSheet } from './home/RecipeLabSheet';
 import { ShopMap } from './home/ShopMap';
 import { StaffSheet, staffHasAffordable } from './home/StaffSheet';
+import { StockMarketSheet } from './home/StockMarketSheet';
 import { StorySheet } from './home/StorySheet';
 
 const OFFLINE_MIN_SEC = 60;
@@ -119,6 +127,11 @@ export class HomeScene implements Scene {
   private readonly _quickDrawer = new PIXI.Container();
   private readonly _quickPhonePill = new PIXI.Container();
   private readonly _phoneBadge = new PIXI.Container();
+  private readonly _sideHubLayer = new PIXI.Container();
+  private readonly _labBadge = new PIXI.Container();
+  private readonly _stockDot = new PIXI.Graphics();
+  private readonly _dispatchDot = new PIXI.Graphics();
+  private _eventBaseY = 300;
   private readonly _rushDrawerLabel = makeText('接急单', 18, COLORS.ink, true);
   private readonly _boostDrawerLabel = makeText('直播×2', 18, COLORS.ink, true);
   private readonly _quickDot = new PIXI.Graphics();
@@ -157,12 +170,18 @@ export class HomeScene implements Scene {
   private readonly _navTabs: NavTabEntry[] = [];
 
   // 二级页面面板
-  private readonly _shopSheet = new ShopMap();
+  private readonly _recipeLabSheet = new RecipeLabSheet();
+  private readonly _dispatchSheet = new DispatchSheet();
+  private readonly _stockSheet = new StockMarketSheet();
+  private readonly _shopSheet = new ShopMap(
+    (shopId) => this._recipeLabSheet.openForShop(shopId),
+    () => this._dispatchSheet.openManagersTab(),
+  );
   private readonly _phoneSheet = new PhoneSheet();
   private readonly _heroPage = new HeroPage((heroId) => this._phoneSheet.openForHero(heroId));
   private readonly _storySheet = new StorySheet();
   private readonly _outfitSheet = new OutfitSheet();
-  private readonly _staffSheet = new StaffSheet();
+  private readonly _staffSheet = new StaffSheet(() => this._dispatchSheet.open());
 
   private _orders: OrderBubble[] = [];
   private _orderTimer = 1.1;
@@ -187,6 +206,7 @@ export class HomeScene implements Scene {
 
     this._buildTopHeader();
     this._buildQuickPills();
+    this._buildSideHub();
     this._buildBottomConsole();
 
     this._livingStage.mask = this._stageMask;
@@ -203,6 +223,7 @@ export class HomeScene implements Scene {
       this._chapterTab,
       this._quickLeftPill,
       this._quickPhonePill,
+      this._sideHubLayer,
       this._quickDrawer,
       this._bottomConsole,
     );
@@ -218,6 +239,9 @@ export class HomeScene implements Scene {
         this._shopSheet.refreshAffordable();
         this._staffSheet.refreshAffordable();
         this._heroPage.refreshAffordable();
+        this._recipeLabSheet.refreshAffordable();
+        this._dispatchSheet.refreshAffordable();
+        this._stockSheet.refreshAffordable();
       };
       EventBus.on(EV.moneyChanged, refreshPanels);
       EventBus.on(EV.rosesChanged, () => {
@@ -349,28 +373,83 @@ export class HomeScene implements Scene {
     });
   }
 
-  /** 顶栏下方左右各一枚轻巧珠光胶囊：平时完全让出中央阳光舞台，展开即用直播/急单/光环/GM */
-  private _buildQuickPills(): void {
-    // 左侧：经营助手折叠签
-    const lw = 148;
-    const lh = 42;
-    const lBg = new PIXI.Graphics();
-    drawCreamCard(lBg, 0, 0, lw, lh, lh / 2, { fill: 0xFFFDF8, alpha: 0.94, borderColor: 0xDFB870 });
-    const lIco = makeStickerSprite(ICONS.live, 34, 34, true);
-    lIco.position.set(24, lh / 2);
-    const lTxt = makeText('福利助手 ▾', 17, COLORS.ink, true);
-    lTxt.anchor.set(0, 0.5);
-    lTxt.position.set(45, lh / 2);
-    this._quickDot.lineStyle(2, 0xFFFFFF).beginFill(0xF0554D).drawCircle(lw - 10, 8, 6.5).endFill();
-    this._quickLeftPill.addChild(lBg, lIco, lTxt, this._quickDot);
-    this._quickLeftPill.eventMode = 'static';
-    this._quickLeftPill.cursor = 'pointer';
-    this._quickLeftPill.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
+  /** 统一构建大号 2.5D 糖果珐琅贴纸图标 + 底部高对比描边标题（彻底告别文本框感） */
+  private _makeStageIconButton(
+    iconPath: string,
+    title: string,
+    onTap: () => void,
+    opts?: { badge?: PIXI.Container; dot?: PIXI.Graphics },
+  ): PIXI.Container {
+    const wrap = new PIXI.Container();
+
+    // 柔光珍珠圆托（轻盈通透，衬托大图标立体感且不抢背景）
+    const halo = makeStickerSprite(UI_SLICES.badgeSidePearl, 72, 72, true);
+    halo.alpha = 0.84;
+    halo.position.set(0, -6);
+
+    // 大号彩绘贴纸主图标
+    const ico = makeStickerSprite(iconPath, 82, 82, true);
+    ico.position.set(0, -8);
+
+    // 图标正下方高对比描边文字（无矩形底框）
+    const lbl = makeDisplayText(title, 20, 0xFFFDF9, 0x4A2B16, 4.8);
+    lbl.style.dropShadow = true;
+    lbl.style.dropShadowColor = 0x261409;
+    lbl.style.dropShadowAlpha = 0.46;
+    lbl.style.dropShadowBlur = 2;
+    lbl.style.dropShadowDistance = 1.5;
+    lbl.style.dropShadowAngle = Math.PI / 2;
+    lbl.anchor.set(0.5);
+    lbl.position.set(0, 41);
+
+    wrap.addChild(halo, ico, lbl);
+
+    if (opts?.dot) {
+      opts.dot.clear()
+        .lineStyle(2.4, 0xFFFFFF, 1)
+        .beginFill(0xF0554D, 1)
+        .drawCircle(27, -36, 7.5)
+        .endFill();
+      opts.dot.visible = false;
+      wrap.addChild(opts.dot);
+    }
+    if (opts?.badge) {
+      wrap.addChild(opts.badge);
+    }
+
+    wrap.hitArea = new PIXI.Rectangle(-46, -52, 92, 110);
+    wrap.eventMode = 'static';
+    wrap.cursor = 'pointer';
+    wrap.on('pointerdown', () => {
+      TweenManager.cancelTarget(wrap.scale);
+      wrap.scale.set(0.91);
+    });
+    const restore = (): void => {
+      TweenManager.to({ target: wrap.scale, props: { x: 1, y: 1 }, duration: 0.16, ease: Ease.easeOutBack });
+    };
+    wrap.on('pointerup', restore);
+    wrap.on('pointerupoutside', restore);
+    wrap.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
       e.stopPropagation();
       AudioManager.play('ui_click');
-      this._drawerOpen = !this._drawerOpen;
-      this._quickDrawer.visible = this._drawerOpen;
+      onTap();
     });
+    return wrap;
+  }
+
+  /** 左右侧边栏大图标列：左侧「福利」「奇遇」，右侧「微聊」「研发」「操盘」「外勤」 */
+  private _buildQuickPills(): void {
+    // 左侧 1：福利大图标
+    const welfareBtn = this._makeStageIconButton(
+      ICONS.gift,
+      '福利',
+      () => {
+        this._drawerOpen = !this._drawerOpen;
+        this._quickDrawer.visible = this._drawerOpen;
+      },
+      { dot: this._quickDot },
+    );
+    this._quickLeftPill.addChild(welfareBtn);
 
     // 展开抽屉（直播×2 / 接急单 / 帝国光环 / 开发态 GM）
     this._quickDrawer.visible = false;
@@ -426,24 +505,45 @@ export class HomeScene implements Scene {
       });
     }
 
-    // 右侧：微聊直达珠光签（带实时消息红点）
-    const rw = 118;
-    const rh = 42;
-    const rBg = new PIXI.Graphics();
-    drawCreamCard(rBg, 0, 0, rw, rh, rh / 2, { fill: 0xFFFDF8, alpha: 0.94, borderColor: 0xDFB870 });
-    const rIco = makeStickerSprite(ICONS.phone, 34, 34, true);
-    rIco.position.set(24, rh / 2);
-    const rTxt = makeText('微聊', 18, COLORS.ink, true);
-    rTxt.anchor.set(0, 0.5);
-    rTxt.position.set(48, rh / 2);
-    this._quickPhonePill.addChild(rBg, rIco, rTxt, this._phoneBadge);
-    this._quickPhonePill.eventMode = 'static';
-    this._quickPhonePill.cursor = 'pointer';
-    this._quickPhonePill.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
-      e.stopPropagation();
-      AudioManager.play('ui_click');
-      this._phoneSheet.open();
-    });
+    // 右侧 1：微聊大图标（带实时未读消息角标）
+    const phoneBtn = this._makeStageIconButton(
+      ICONS.phone,
+      '微聊',
+      () => this._phoneSheet.open(),
+      { badge: this._phoneBadge },
+    );
+    this._quickPhonePill.addChild(phoneBtn);
+  }
+
+  /** 主舞台右侧常驻三大核心扩充玩法大图标：「研发」「操盘」「外勤」 */
+  private _buildSideHub(): void {
+    const stepY = 108;
+
+    const labBtn = this._makeStageIconButton(
+      ICONS.sideLab,
+      '研发',
+      () => this._recipeLabSheet.open(),
+      { badge: this._labBadge },
+    );
+    labBtn.position.set(0, 0);
+
+    const stockBtn = this._makeStageIconButton(
+      ICONS.sideStock,
+      '操盘',
+      () => this._stockSheet.open(),
+      { dot: this._stockDot },
+    );
+    stockBtn.position.set(0, stepY);
+
+    const dispatchBtn = this._makeStageIconButton(
+      ICONS.sideDispatch,
+      '外勤',
+      () => this._dispatchSheet.open(),
+      { dot: this._dispatchDot },
+    );
+    dispatchBtn.position.set(0, stepY * 2);
+
+    this._sideHubLayer.addChild(labBtn, stockBtn, dispatchBtn);
   }
 
   private _buildBottomConsole(): void {
@@ -660,11 +760,16 @@ export class HomeScene implements Scene {
     this._roseSlot.position.set(508, 14);
     this._cashSlot.position.set(508, 62);
 
-    // 垂挂鎏金章节牌 + 左右轻量胶囊
+    // 垂挂鎏金章节牌 + 左右两侧大号彩绘图标列（无笨重横框）
     this._chapterTab.position.set(W / 2, topDockY + 132);
-    this._quickLeftPill.position.set(16, topDockY + 162);
-    this._quickDrawer.position.set(16, topDockY + 210);
-    this._quickPhonePill.position.set(W - 16 - 118, topDockY + 162);
+    const sideColX = 58;
+    const firstRowY = topDockY + 198;
+    const stepY = 108;
+
+    this._quickLeftPill.position.set(sideColX, firstRowY);
+    this._quickDrawer.position.set(16, firstRowY + 58);
+    this._quickPhonePill.position.set(W - sideColX, firstRowY);
+    this._sideHubLayer.position.set(W - sideColX, firstRowY + stepY);
 
     // 3. 底部双层一体化操控台
     const consoleTop = bottom - CONSOLE_H;
@@ -684,7 +789,7 @@ export class HomeScene implements Scene {
     this._feverBadge.position.set(W / 2, -24);
 
     this._relayoutOrders(consoleTop);
-    this._relayoutEventPin(topDockY + 254);
+    this._relayoutEventPin(topDockY + 306);
     this._drawFeverBadge();
   }
 
@@ -723,11 +828,26 @@ export class HomeScene implements Scene {
     const freeSlot = [0, 1].find((s) => !usedSlots.has(s));
     if (freeSlot === undefined) return;
 
-    const outfitId = GameState.save.outfit;
+    const save = GameState.save;
+    const outfitId = save.outfit;
     const outfit = OUTFITS.find((o) => o.id === outfitId) ?? OUTFITS[0];
     const pickIdx = Math.floor(Math.random() * 3) as 0 | 1 | 2;
-    const cleanName = outfit.orderItems[pickIdx].replace(/^[^\s]+\s*/, '');
-    const iconPath = ORDER_BUBBLE_ICONS[outfit.id][pickIdx];
+    let cleanName = outfit.orderItems[pickIdx].replace(/^[^\s]+\s*/, '');
+    let iconPath = ORDER_BUBBLE_ICONS[outfit.id][pickIdx];
+
+    // 若玩家已在研发室创制或挂载镇店爆品，主舞台顾客高概率直接点单自研爆品并展示成品美图
+    const equippedKeys = Object.values(save.equippedRecipes ?? {}).filter(
+      (k): k is string => Boolean(k && (save.discoveredRecipes?.[k] ?? 0) > 0),
+    );
+    const activePool = equippedKeys.length > 0
+      ? equippedKeys
+      : Object.keys(save.discoveredRecipes ?? {}).filter((k) => (save.discoveredRecipes[k] ?? 0) > 0);
+    if (activePool.length > 0 && Math.random() < 0.68) {
+      const rKey = activePool[Math.floor(Math.random() * activePool.length)];
+      const rec = resolveRecipe(rKey, save.discoveredRecipes[rKey] ?? 1);
+      cleanName = rec.name;
+      iconPath = recipeIconPath(rec.comboKey);
+    }
 
     const node = new PIXI.Container();
     const skin = makeStickerSprite(UI_SLICES.v8BubbleSpeech, 204, 86, true);
@@ -766,12 +886,12 @@ export class HomeScene implements Scene {
   }
 
   private _placeOrder(entry: OrderBubble, consoleTop: number): void {
-    // 分列原设站立女主左右两侧，绝不遮挡面部与衣裙主体
+    // 分列原设站立女主左右两侧下半区，与上方功能图标列保持充裕留白
     const W = Game.logicWidth;
-    const xs = [138, W - 138];
-    const ys = [consoleTop - 420, consoleTop - 348];
-    entry.baseY = ys[entry.slot] ?? consoleTop - 384;
-    entry.node.position.set(xs[entry.slot] ?? 138, entry.baseY);
+    const xs = [142, W - 142];
+    const ys = [consoleTop - 384, consoleTop - 296];
+    entry.baseY = ys[entry.slot] ?? consoleTop - 340;
+    entry.node.position.set(xs[entry.slot] ?? 142, entry.baseY);
   }
 
   private _relayoutOrders(consoleTop: number): void {
@@ -781,11 +901,14 @@ export class HomeScene implements Scene {
   private _collectOrder(entry: OrderBubble, globalPos: PIXI.Point): void {
     const idx = this._orders.indexOf(entry);
     if (idx >= 0) this._orders.splice(idx, 1);
-    const { amount } = GameState.serveOrder();
+    const { amount, inspirationGained } = GameState.serveOrder();
     AudioManager.play('coin_gain');
     Platform.vibrateShort('light');
     this._livingStage.triggerJoyReaction(globalPos, this._walletGlobalPos(), 6);
-    this._spawnFloatText(globalPos, `出单 +¥${formatMoney(amount)}`, 0xFFF2B2, 30);
+    const floatStr = inspirationGained > 0
+      ? `出单 +¥${formatMoney(amount)} · 灵感+1`
+      : `出单 +¥${formatMoney(amount)}`;
+    this._spawnFloatText(globalPos, floatStr, 0xFFF2B2, 28);
     TweenManager.to({
       target: entry.node,
       props: { alpha: 0, y: entry.node.y - 28 },
@@ -804,28 +927,22 @@ export class HomeScene implements Scene {
     this._pendingEvent = picked;
 
     for (const c of this._eventPinLayer.removeChildren()) c.destroy({ children: true });
-    const pin = new PIXI.Container();
-    const skin = makeStickerSprite(UI_SLICES.v8BubbleSpeech, 166, 74, true);
-    const ico = makeStickerSprite(ICONS.event, 46, 46, true);
-    ico.position.set(-40, -6);
-    const txt = makeText('奇遇!', 20, COLORS.roseDeep, true);
-    txt.anchor.set(0.5);
-    txt.position.set(20, -6);
-    pin.addChild(skin, ico, txt);
-    pin.hitArea = new PIXI.Rectangle(-84, -38, 168, 76);
-    pin.eventMode = 'static';
-    pin.cursor = 'pointer';
-    pin.on('pointertap', (e: PIXI.FederatedPointerEvent) => {
-      e.stopPropagation();
-      void this._openStreetEventModal();
-    });
+    const dot = new PIXI.Graphics();
+    const pin = this._makeStageIconButton(
+      ICONS.event,
+      '奇遇',
+      () => { void this._openStreetEventModal(); },
+      { dot },
+    );
+    dot.visible = true;
     this._eventPinLayer.addChild(pin);
-    this._relayoutEventPin(this._topDockY + 254);
+    this._relayoutEventPin(this._topDockY + 306);
   }
 
   private _relayoutEventPin(y: number): void {
+    this._eventBaseY = y;
     const child = this._eventPinLayer.children[0];
-    if (child) child.position.set(Game.logicWidth - 94, y);
+    if (child) child.position.set(58, y);
   }
 
   private async _openStreetEventModal(): Promise<void> {
@@ -833,17 +950,7 @@ export class HomeScene implements Scene {
     if (!ev) return;
     this._pendingEvent = null;
     for (const c of this._eventPinLayer.removeChildren()) c.destroy({ children: true });
-
-    const pickFirst = await showDialog({
-      title: ev.title,
-      content: `${ev.desc}\n\n✦ 方案一：${ev.options[0].label}\n✦ 方案二：${ev.options[1].label}`,
-      confirmText: '选方案一',
-      cancelText: '选方案二',
-    });
-    const idx: 0 | 1 = pickFirst ? 0 : 1;
-    const res = GameState.resolveStreetEvent(ev, idx);
-    AudioManager.play('bond_up');
-    ToastManager.show(`${ev.options[idx].outcome}（+¥${formatMoney(res.cash)} · 玫瑰+${res.roses}）`, 'success');
+    await DecisionModal.open(ev);
     this._refreshHud();
   }
 
@@ -877,7 +984,11 @@ export class HomeScene implements Scene {
     Platform.vibrateShort('light');
     this._livingStage.triggerJoyReaction(e.global, this._walletGlobalPos(), res.crit ? 6 : 3);
 
-    const text = res.crit ? `✦ 暴击 +¥${formatMoney(res.amount)}` : `+¥${formatMoney(res.amount)}`;
+    const text = res.crit
+      ? `✦ 暴击 +¥${formatMoney(res.amount)}${res.inspirationGained > 0 ? ' · 灵感+1' : ''}`
+      : res.inspirationGained > 0
+        ? `+¥${formatMoney(res.amount)} · ✦灵感+1`
+        : `+¥${formatMoney(res.amount)}`;
     const col = res.crit ? 0xFFE896 : 0xFFFFFF;
     this._spawnFloatText(e.global, text, col, res.crit ? 34 : 28);
     this._refreshHud();
@@ -957,6 +1068,10 @@ export class HomeScene implements Scene {
     for (const o of this._orders) {
       o.node.y = o.baseY + Math.sin(this._animTime * 2.5 + o.phase) * 4.2;
     }
+    const evPin = this._eventPinLayer.children[0];
+    if (evPin) {
+      evPin.y = this._eventBaseY + Math.sin(this._animTime * 3.4) * 3.8;
+    }
 
     if (
       !this._shopSheet.isOpen
@@ -964,6 +1079,9 @@ export class HomeScene implements Scene {
       && !this._staffSheet.isOpen
       && !this._storySheet.isOpen
       && !this._outfitSheet.isOpen
+      && !this._recipeLabSheet.isOpen
+      && !this._dispatchSheet.isOpen
+      && !this._stockSheet.isOpen
     ) {
       this._setActiveNav(0);
     }
@@ -1016,20 +1134,22 @@ export class HomeScene implements Scene {
       .endFill();
   }
 
-  private _refreshPhoneBadge(count: number): void {
-    for (const c of this._phoneBadge.removeChildren()) c.destroy({ children: true });
+  private _renderCornerCountBadge(container: PIXI.Container, count: number, fill = 0xF0554D): void {
+    for (const c of container.removeChildren()) c.destroy({ children: true });
     if (count <= 0) return;
     const str = count > 99 ? '99+' : String(count);
-    const txt = makeText(str, 13, 0xFFFFFF, true);
+    const txt = makeText(str, 14, 0xFFFFFF, true);
     txt.anchor.set(0.5);
-    const bw = Math.max(24, txt.width + 12);
+    const bw = Math.max(26, txt.width + 13);
+    const cx = 27;
+    const cy = -36;
     const g = new PIXI.Graphics()
-      .lineStyle(2, 0xFFFFFF, 1)
-      .beginFill(0xF0554D, 1)
-      .drawRoundedRect(108 - bw / 2, -8, bw, 22, 11)
+      .lineStyle(2.2, 0xFFFFFF, 1)
+      .beginFill(fill, 1)
+      .drawRoundedRect(cx - bw / 2, cy - 12, bw, 24, 12)
       .endFill();
-    txt.position.set(108, 3);
-    this._phoneBadge.addChild(g, txt);
+    txt.position.set(cx, cy);
+    container.addChild(g, txt);
   }
 
   private _refreshHud(): void {
@@ -1118,7 +1238,20 @@ export class HomeScene implements Scene {
     this._quickDot.visible = rushReady;
 
     const phoneNews = unreadChatCount(save) + unlikedMomentCount(save);
-    this._refreshPhoneBadge(phoneNews);
+    this._renderCornerCountBadge(this._phoneBadge, phoneNews, 0xF0554D);
+
+    // 刷新右侧常驻三大扩充玩法大图标右上角红点/数量角标
+    const insp = save.inspiration ?? 0;
+    this._renderCornerCountBadge(this._labBadge, insp, 0xE46C5E);
+
+    this._stockDot.visible = hasProfitablePosition(save)
+      || ((save.insiderTokens ?? 0) > 0 && Object.keys(save.stockPositions ?? {}).length === 0 && save.money >= 500);
+
+    const dispatchDone = hasCompletedDispatch(save, now);
+    const activeCount = (save.dispatches ?? []).length;
+    const canSendIdle = activeCount < 4
+      && recommendDispatchTeam(save, getMissionOrFallback(save.dispatchBoard?.[0] ?? 'dp_osmanthus_pick')).length > 0;
+    this._dispatchDot.visible = dispatchDone || canSendIdle;
 
     this._refreshQuest();
     this._setNavDot('店员', staffHasAffordable());

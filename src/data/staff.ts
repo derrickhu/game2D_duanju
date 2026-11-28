@@ -1,5 +1,18 @@
 /** 店员（策划案 §4.7 / §6.3）：每家门店 A、B 两位，★3 解锁工作拍立得，★5 解锁下班专属心动卡面。 */
-import type { ShopId } from './world.ts';
+import type { ShopId, StaffSpecialty } from './world.ts';
+export type { StaffSpecialty };
+
+export const SPECIALTY_META: Readonly<Record<StaffSpecialty, {
+  label: string;
+  short: string;
+  color: number;
+  bg: number;
+}>> = {
+  craft: { label: '匠心研发', short: '研发', color: 0xC85542, bg: 0xFDEAE4 },
+  ops: { label: '金牌运营', short: '运营', color: 0x2F855A, bg: 0xE3F5EB },
+  pr: { label: '危机公关', short: '公关', color: 0xB86B19, bg: 0xFFF2DA },
+  fin: { label: '铁腕风控', short: '风控', color: 0x4A5B8C, bg: 0xE8ECF8 },
+};
 
 export type StaffId =
   | 'abei' | 'linqi' | 'xiaoman' | 'wenyan' | 'liang' | 'xiaxiao' | 'baiyu' | 'chenlie'
@@ -19,6 +32,7 @@ export interface StaffDef {
   title: string;
   shop: ShopId;
   slot: 'A' | 'B';
+  specialty: StaffSpecialty;
   /** [入职台词, ★2 台词] */
   lines: readonly [string, string];
   /** [★3 工作瞬间拍立得, ★5 下班专属心动卡] */
@@ -27,7 +41,7 @@ export interface StaffDef {
 
 export const STAFF: readonly StaffDef[] = [
   {
-    id: 'abei', name: '阿北', title: '外卖小哥', shop: 'stall', slot: 'A',
+    id: 'abei', name: '阿北', title: '外卖小哥', shop: 'stall', slot: 'A', specialty: 'ops',
     lines: ['姐，以后你的单我包了，五公里内二十分钟送到！', '今天雨大，我把保温箱裹了三层，一块都没塌。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '雨夜跨上小电驴前，阿北把最后一盒热腾腾的星星酥护在怀里露出虎牙笑。', quote: '姐你放心，哪怕全城堵车，晚星的点心也绝对热乎到客人手里！', note: '—— 你的头号骑士 阿北' },
@@ -35,7 +49,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'linqi', name: '林栖', title: '街头吉他手', shop: 'stall', slot: 'B',
+    id: 'linqi', name: '林栖', title: '街头吉他手', shop: 'stall', slot: 'B', specialty: 'pr',
     lines: ['你的摊子旁边，正好缺一首歌。', '有人问我这首歌叫什么，我说叫《老板》。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '暖黄灯串下，林栖抱木吉他拨弦，排队买甜品的客人们跟着轻轻哼唱。', quote: '以前唱歌没人停下来听，自从站在你摊子旁，每天都是满座。', note: '—— 驻唱 林栖' },
@@ -43,7 +57,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'xiaoman', name: '小满', title: '烘焙学徒', shop: 'dessert', slot: 'A',
+    id: 'xiaoman', name: '小满', title: '烘焙学徒', shop: 'dessert', slot: 'A', specialty: 'craft',
     lines: ['老板！我会打发奶油，打一百次都不累！', '今天的草莓蛋糕，第一块留给你。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '鼻尖沾了一点鲜奶油的小满捧着刚出炉的舒芙蕾，眼睛亮晶晶地求表扬。', quote: '老板快尝一口！按你教的火候烤的，这次一毫米都没塌！', note: '—— 努力转正的小满' },
@@ -51,7 +65,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'wenyan', name: '温禾', title: '裱花师', shop: 'dessert', slot: 'B',
+    id: 'wenyan', name: '温禾', title: '裱花师', shop: 'dessert', slot: 'B', specialty: 'craft',
     lines: ['裱花和做人一样，手要稳。', '这朵玫瑰裱了四十分钟，送你，不卖。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '午后阳光透过橱窗落在温禾修长的指节上，奶油转盘上绽开一朵香槟金玫瑰。', quote: '客人都在拍橱窗里的蛋糕，只有我知道，配色灵感是你今天的发夹。', note: '—— 温禾 谨制' },
@@ -59,7 +73,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'liang', name: '黎昂', title: '混血咖啡师', shop: 'cafe', slot: 'A',
+    id: 'liang', name: '黎昂', title: '混血咖啡师', shop: 'cafe', slot: 'A', specialty: 'craft',
     lines: ['第一杯拉花，送老板。是一颗心，你没看错。', '我在杯底写了一句话，喝完才能看。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '蒸汽氤氲的意式浓缩机后，黎昂灰绿色的眼眸弯起，手腕轻晃拉出天鹅奶泡。', quote: '今天大学城来了三波星探塞名片，我都拒了——给苏老板打工比较酷。', note: '—— Leon 黎昂' },
@@ -67,7 +81,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'xiaxiao', name: '夏骁', title: '篮球队长', shop: 'cafe', slot: 'B',
+    id: 'xiaxiao', name: '夏骁', title: '篮球队长', shop: 'cafe', slot: 'B', specialty: 'ops',
     lines: ['学姐，我下课就来，搬货这种事交给我。', '今天比赛赢了，奖杯放店里镇店。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '夏骁单手扛起两箱进口咖啡豆，额角挂着汗珠，笑容比正午阳光还灿烂。', quote: '学姐别动手！十箱豆子五分钟入库，我这身肌肉就是给店里备着的！', note: '—— 苦力担当 夏骁' },
@@ -75,7 +89,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'baiyu', name: '安澜', title: '瑜伽老师', shop: 'gym', slot: 'A',
+    id: 'baiyu', name: '安澜', title: '瑜伽老师', shop: 'gym', slot: 'A', specialty: 'ops',
     lines: ['先深呼吸。你最近太累了，老板。', '肩膀放松，剩下的交给我们。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '落地窗洒满晨光的冥想室里，安澜点亮白鼠尾草香薰，温声引导会员舒展。', quote: '店里的续卡率全区第一，大家说一走进这里心就静下来了。', note: '—— 安澜' },
@@ -83,7 +97,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'chenlie', name: '陈烈', title: '拳击陪练', shop: 'gym', slot: 'B',
+    id: 'chenlie', name: '陈烈', title: '拳击陪练', shop: 'gym', slot: 'B', specialty: 'fin',
     lines: ['谁敢来闹事，先过我这关。', '想学两招吗？我教你，不收钱。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '沙袋在沉闷撞击声中剧烈摇晃，陈烈咬开手腕黑色缠带，眼神凌厉如刃。', quote: '上次苏家派来偷拍的狗仔，看见我在门口热身，掉头跑出二里地。', note: '—— 陈烈' },
@@ -91,7 +105,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'songzhiyi', name: '宋书意', title: '律师助理', shop: 'law', slot: 'A',
+    id: 'songzhiyi', name: '宋书意', title: '律师助理', shop: 'law', slot: 'A', specialty: 'fin',
     lines: ['沈律师让我跟着你，合同我已经逐字核过了。', '对方律师的漏洞，我标了十七处。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '案卷堆成小山的会议桌前，宋书意贴满五色索引签，清秀的脸上满是笃定。', quote: '苏总，对方合同第三页埋的免责陷阱已经被我改写成了违约金双倍条款。', note: '—— 法务助理 宋书意' },
@@ -99,7 +113,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'jihuai', name: '季淮', title: '首席秘书', shop: 'law', slot: 'B',
+    id: 'jihuai', name: '季淮', title: '首席秘书', shop: 'law', slot: 'B', specialty: 'fin',
     lines: ['今天的行程已排好，您只需要负责赢。', '您的咖啡，三分糖，和昨天一样。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '电梯门缓缓合上，金丝眼镜后的季淮一手托平板核对议程，一手挡住电梯门沿。', quote: '三家风投的报价已按溢价率排序，不值得见的人我已全部回绝。', note: '—— 首席秘书 季淮' },
@@ -107,7 +121,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'luochuan', name: '罗川', title: '机修技师', shop: 'garage', slot: 'A',
+    id: 'luochuan', name: '罗川', title: '机修技师', shop: 'garage', slot: 'A', specialty: 'ops',
     lines: ['车交给我，保证比新的还猛。', '你的车我顺手打了蜡，能照镜子。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '升降架冷白灯光下，罗川用扳手拧紧最后一颗钛合金螺丝，小臂线条紧实有力。', quote: '发动机调校完毕，零百加速快了半秒——老板出门谈生意绝不迟到！', note: '—— 首席技师 罗川' },
@@ -115,7 +129,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'ouyangche', name: '欧阳澈', title: '涂装设计师', shop: 'garage', slot: 'B',
+    id: 'ouyangche', name: '欧阳澈', title: '涂装设计师', shop: 'garage', slot: 'B', specialty: 'craft',
     lines: ['给你的车画一颗星，全城独一份。', '这套配色，我叫它“晚星蓝”。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '无尘烤漆房里，银白短发的欧阳澈摘下防毒面具，跑车流线折射出梦幻星河蓝。', quote: '豪门阔少排队加价二十万求同款漆面，不好意思，晚星蓝全球仅限老板座驾。', note: '—— 欧阳澈' },
@@ -123,7 +137,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'sumu', name: '程朗', title: '护士小哥', shop: 'clinic', slot: 'A',
+    id: 'sumu', name: '程朗', title: '护士小哥', shop: 'clinic', slot: 'A', specialty: 'ops',
     lines: ['别紧张，我会一直在旁边。', '记得按时吃饭，我会监督你的。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '阳光明媚的VIP导诊台前，程朗眉眼弯弯地分装定制维生素小袋，字迹圆润工整。', quote: '老板这周连轴转开了四场会，护嗓润喉糖和叶黄素我都按顿装好啦！', note: '—— 监督员 程朗' },
@@ -131,7 +145,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'jitang', name: '裴棠', title: '形象顾问', shop: 'clinic', slot: 'B',
+    id: 'jitang', name: '裴棠', title: '形象顾问', shop: 'clinic', slot: 'B', specialty: 'pr',
     lines: ['你本来就好看，我只是让所有人都看见。', '今晚的造型，会让所有人记住你的名字。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '挂满高定礼服与璀璨珠宝的衣帽间里，裴棠捻起一枚星芒胸针在你领口比对。', quote: '今晚财经周刊的封面拍摄，这套妆造一出场，全城名媛都得黯然失色。', note: '—— 美学总监 裴棠' },
@@ -139,7 +153,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'nanxing', name: '南星', title: '练习生', shop: 'agency', slot: 'A',
+    id: 'nanxing', name: '南星', title: '练习生', shop: 'agency', slot: 'A', specialty: 'pr',
     lines: ['等我出道，第一个感谢的人就是你！', '新歌的 demo，你是第一个听的。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '深夜灯火通明的练习室镜前，粉灰发少年汗湿衣襟仍在反复卡点，见你推门立刻立正欢呼。', quote: '姐姐老板！初舞台C位拿下了！我没给咱们晚星娱乐丢脸！', note: '—— 练习生 南星' },
@@ -147,7 +161,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'xiaomo', name: '凌陌', title: '超模', shop: 'agency', slot: 'B',
+    id: 'xiaomo', name: '凌陌', title: '超模', shop: 'agency', slot: 'B', specialty: 'pr',
     lines: ['走秀的时候，我只看台下的你。', '下一季的封面，我想和你的品牌一起拍。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '聚光灯交错的T台尽头，黑高领大衣的凌陌定点回眸，清冷气场秒杀全场快门。', quote: '三大顶奢合约全签在晚星名下了，分成按最高档归公司，我不挑。', note: '—— 凌陌' },
@@ -155,7 +169,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'qiye', name: '祁曜', title: '首席调酒师', shop: 'hotel', slot: 'A',
+    id: 'qiye', name: '祁曜', title: '首席调酒师', shop: 'hotel', slot: 'A', specialty: 'craft',
     lines: ['这杯叫“身价暴涨”，只调给你一个人。', '今晚的特调，我加了一点星光。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '云顶酒店百米高空吧台，祁曜指尖翻转雪克壶，琥珀色酒液中浮起一颗金箔冰球。', quote: '金融街那帮投行大佬每晚来包场点这杯“身价暴涨”，成了云顶的摇钱树。', note: '—— 首席调酒师 祁曜' },
@@ -163,7 +177,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'wensheng', name: '迟笙', title: '驻场钢琴师', shop: 'hotel', slot: 'B',
+    id: 'wensheng', name: '迟笙', title: '驻场钢琴师', shop: 'hotel', slot: 'B', specialty: 'pr',
     lines: ['今晚的曲子，都是为你选的。', '这首是新写的，还没有名字，你来取。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '水晶吊灯倾泻柔光的大堂中央，白色燕尾服的迟笙十指流淌出华丽的圆舞曲。', quote: '只要苏总踏进旋转门，琴声就会自动切到您最喜欢的大调变奏。', note: '—— 迟笙' },
@@ -171,7 +185,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'allen', name: '艾伦', title: '私人管家', shop: 'group', slot: 'A',
+    id: 'allen', name: '艾伦', title: '私人管家', shop: 'group', slot: 'A', specialty: 'fin',
     lines: ['小姐，您的茶，七十五度，刚刚好。', '您今天辛苦了，热水已经放好。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '晚星集团顶层大宅长廊，白手套英伦管家艾伦手持银盘，分秒不差地候在门侧。', quote: '盛老先生生前常念叨小姐，如今见您执掌大局，比我们想象中还要耀眼百倍。', note: '—— 管家 艾伦' },
@@ -179,7 +193,7 @@ export const STAFF: readonly StaffDef[] = [
     ],
   },
   {
-    id: 'lifeng', name: '厉锋', title: '首席保镖', shop: 'group', slot: 'B',
+    id: 'lifeng', name: '厉锋', title: '首席保镖', shop: 'group', slot: 'B', specialty: 'fin',
     lines: ['从今天起，没人能再动你一根头发。', '我站在这里，你只管往前走。'],
     polaroids: [
       { tag: '★3 工作瞬间', scene: '红毯两侧闪光灯如潮，黑西装墨镜的厉锋一步不离守在半步侧后，耳麦微光闪烁。', quote: '外围安保三道防线已清场，无关人员连苏总三米之内都靠近不了。', note: '—— 安保主管 厉锋' },

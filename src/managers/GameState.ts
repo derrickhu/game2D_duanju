@@ -1,12 +1,13 @@
 /**
  * 玩法状态门面：UI 只通过这里改存档。
- * 负责每帧结算挂机收益（含江叙白自动接单）、跨门槛发解锁事件、爆单状态与定时存盘。
+ * 负责每帧结算挂机收益（含江叙白自动接单与股市定时跳动）、跨门槛发解锁事件、爆单状态与定时存盘。
  */
 import { BALANCE } from '@/data/balance';
 import type { StaffId } from '@/data/staff';
+import type { StockId } from '@/data/stocks';
 import type { HeroId } from '@/data/story';
 import type { StreetEventDef } from '@/data/streetEvents';
-import type { OutfitId, ShopId } from '@/data/world';
+import type { AreaId, OutfitId, ShopId } from '@/data/world';
 import { TUTORIAL_STEPS, analytics } from '@/analytics';
 import { EV } from '@/config/events';
 import { EventBus } from '@/core/EventBus';
@@ -69,7 +70,7 @@ class GameStateClass {
     return r;
   }
 
-  serveOrder(): { amount: number; feverTriggered: boolean } {
+  serveOrder(): { amount: number; feverTriggered: boolean; inspirationGained: number } {
     const r = this._mutate(() => A.serveCustomerOrder(this.save, Date.now()));
     if (r.feverTriggered) EventBus.emit(EV.feverChanged, true);
     return r;
@@ -100,7 +101,6 @@ class GameStateClass {
     return currentQuest(this.save);
   }
 
-  /** 领当前任务奖励（现金 + 玫瑰）；没完成返回 0 */
   claimQuest(): { cash: number; roses: number } {
     const p = currentQuest(this.save);
     if (!p || !p.done) return { cash: 0, roses: 0 };
@@ -131,7 +131,7 @@ class GameStateClass {
     return ok;
   }
 
-  resolveStreetEvent(event: StreetEventDef, optionIdx: 0 | 1): { cash: number; roses: number; feverTriggered: boolean } {
+  resolveStreetEvent(event: StreetEventDef, optionIdx: 0 | 1 | 2): A.StreetEventResolution {
     const r = this._mutate(() => A.resolveStreetEvent(this.save, event, optionIdx, Date.now()));
     if (r.feverTriggered) EventBus.emit(EV.feverChanged, true);
     this.flush();
@@ -144,10 +144,113 @@ class GameStateClass {
     return roses;
   }
 
+  winAreaCrown(areaId: AreaId): ReturnType<typeof A.winAreaCrownBattle> {
+    const res = this._mutate(() => A.winAreaCrownBattle(this.save, areaId));
+    if (res) {
+      EventBus.emit(EV.areaCrownChanged, areaId);
+      EventBus.emit(EV.shopChanged, null);
+      this.flush();
+    }
+    return res;
+  }
+
   claimChapterClimax(chapterId: number, choice: 'A' | 'B'): number {
     const roses = this._mutate(() => A.claimChapterClimax(this.save, chapterId, choice));
     if (roses > 0) this.flush();
     return roses;
+  }
+
+  // ---- 招牌爆品研发室 ----
+  craftRecipe(baseId: string, soulId: string, hypeId: string): A.CraftRecipeResult | null {
+    const res = this._mutate(() => A.craftRecipe(this.save, baseId, soulId, hypeId));
+    if (res) {
+      EventBus.emit(EV.recipeChanged);
+      EventBus.emit(EV.shopChanged, null);
+      this.flush();
+    }
+    return res;
+  }
+
+  buyInspiration(): boolean {
+    const ok = this._mutate(() => A.buyInspiration(this.save));
+    if (ok) {
+      EventBus.emit(EV.recipeChanged);
+      this.flush();
+    }
+    return ok;
+  }
+
+  equipShopRecipe(shopId: ShopId, comboKey: string | null): boolean {
+    const ok = this._mutate(() => A.equipShopRecipe(this.save, shopId, comboKey));
+    if (ok) {
+      EventBus.emit(EV.recipeChanged);
+      EventBus.emit(EV.shopChanged, shopId);
+      this.flush();
+    }
+    return ok;
+  }
+
+  // ---- 店员专长驻店 & 商业外勤差遣 ----
+  assignShopManager(shopId: ShopId, staffId: StaffId | null): boolean {
+    const ok = this._mutate(() => A.assignShopManager(this.save, shopId, staffId));
+    if (ok) {
+      EventBus.emit(EV.dispatchChanged);
+      EventBus.emit(EV.shopChanged, shopId);
+      this.flush();
+    }
+    return ok;
+  }
+
+  startDispatch(slotIdx: number, missionId: string, staffIds: StaffId[]): boolean {
+    const ok = this._mutate(() => A.startStaffDispatch(this.save, slotIdx, missionId, staffIds, Date.now()));
+    if (ok) {
+      EventBus.emit(EV.dispatchChanged);
+      this.flush();
+    }
+    return ok;
+  }
+
+  claimDispatch(slotIdx: number): A.DispatchClaimResult | null {
+    const res = this._mutate(() => A.claimStaffDispatch(this.save, slotIdx, Date.now()));
+    if (res) {
+      EventBus.emit(EV.dispatchChanged);
+      this.flush();
+    }
+    return res;
+  }
+
+  refreshDispatchBoard(): void {
+    A.refreshDispatchBoard(this.save);
+    EventBus.emit(EV.dispatchChanged);
+    this.flush();
+  }
+
+  // ---- 晚星风投 · 股市做空操盘 ----
+  tradeStock(stockId: StockId, direction: 'long' | 'short', budgetRatio: number): ReturnType<typeof A.tradeStock> {
+    const res = this._mutate(() => A.tradeStock(this.save, stockId, direction, budgetRatio));
+    if (res.ok) {
+      EventBus.emit(EV.stockChanged);
+      this.flush();
+    }
+    return res;
+  }
+
+  settleStock(stockId: StockId): ReturnType<typeof A.settleStock> {
+    const res = this._mutate(() => A.settleStock(this.save, stockId));
+    if (res.ok) {
+      EventBus.emit(EV.stockChanged);
+      this.flush();
+    }
+    return res;
+  }
+
+  spendInsiderToken(): boolean {
+    const ok = this._mutate(() => A.spendInsiderToken(this.save, Date.now()));
+    if (ok) {
+      EventBus.emit(EV.stockChanged);
+      this.flush();
+    }
+    return ok;
   }
 
   replyChat(threadId: string, optionIdx: 0 | 1): number {
@@ -211,6 +314,14 @@ class GameStateClass {
     this.flush();
   }
 
+  unlockOutfitByAd(id: OutfitId): void {
+    A.unlockByAd(this.save, `outfit:${id}`);
+    this.save.outfit = id;
+    EventBus.emit(EV.moneyChanged);
+    EventBus.emit(EV.saveChanged);
+    this.flush();
+  }
+
   setOutfit(id: OutfitId): void {
     this.save.outfit = id;
     EventBus.emit(EV.saveChanged);
@@ -232,14 +343,14 @@ class GameStateClass {
     }
   }
 
-  /** 开发用：加钱，会正常触发跨章节提示 */
   gmAddMoney(): number {
     const amount = this._mutate(() => A.gmAddMoney(this.save));
+    EventBus.emit(EV.recipeChanged);
+    EventBus.emit(EV.stockChanged);
     this.flush();
     return amount;
   }
 
-  /** 开发用：解锁全部视频与CG。只改存档，不弹章节、换装那些提示。 */
   gmUnlockAllVideos(): void {
     A.gmUnlockAllVideos(this.save);
     EventBus.emit(EV.moneyChanged);
@@ -256,7 +367,11 @@ class GameStateClass {
 
   private _update(dtSec: number): void {
     const dt = Math.min(dtSec, 1);
+    const prevStockTick = this.save.stockNextTickAt;
     this._mutate(() => A.tick(this.save, dt, Date.now()));
+    if (this.save.stockNextTickAt !== prevStockTick) {
+      EventBus.emit(EV.stockChanged);
+    }
     if (Date.now() - this._lastSaveAt > AUTOSAVE_MS) this.flush();
   }
 
@@ -264,9 +379,11 @@ class GameStateClass {
     const before = this.save.netWorth;
     const moneyBefore = this.save.money;
     const rosesBefore = this.save.roses;
+    const inspBefore = this.save.inspiration;
     const result = fn();
     if (this.save.money !== moneyBefore) EventBus.emit(EV.moneyChanged);
     if (this.save.roses !== rosesBefore) EventBus.emit(EV.rosesChanged);
+    if (this.save.inspiration !== inspBefore) EventBus.emit(EV.inspirationChanged);
     if (this.save.netWorth > before) this._emitCrossed(before, this.save.netWorth);
     return result;
   }

@@ -26,8 +26,20 @@ export function unlockedAreas(netWorth: number): AreaDef[] {
   return AREAS.filter((a) => netWorth >= a.unlockNetWorth);
 }
 
-export function unlockedOutfits(netWorth: number): OutfitDef[] {
-  return OUTFITS.filter((o) => netWorth >= o.unlockNetWorth);
+export function outfitAdKey(id: string): string {
+  return `outfit:${id}`;
+}
+
+export function isOutfitUnlocked(save: GameSave, o: OutfitDef): boolean {
+  if (o.unlockByAd) return save.adUnlocked.includes(outfitAdKey(o.id));
+  return save.netWorth >= o.unlockNetWorth;
+}
+
+export function unlockedOutfits(saveOrNetWorth: GameSave | number): OutfitDef[] {
+  if (typeof saveOrNetWorth === 'number') {
+    return OUTFITS.filter((o) => !o.unlockByAd && saveOrNetWorth >= o.unlockNetWorth);
+  }
+  return OUTFITS.filter((o) => isOutfitUnlocked(saveOrNetWorth, o));
 }
 
 /** 羁绊能否升到下一级；不能时给出原因文案 */

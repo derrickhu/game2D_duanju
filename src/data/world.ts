@@ -2,6 +2,8 @@
 
 export type AreaId = 'oldstreet' | 'campus' | 'cbd' | 'riverside' | 'ent' | 'finance';
 
+export type StaffSpecialty = 'craft' | 'ops' | 'pr' | 'fin';
+
 export interface AreaDef {
   id: AreaId;
   name: string;
@@ -55,6 +57,8 @@ export interface ShopDef {
   products: readonly [string, string, string, string, string];
   /** 老店不淘汰机制：达到 Lv25 / Lv50 给全商业帝国提供永久协同增益 */
   synergy: ShopSynergyDef;
+  /** 驻店金牌店长契合专长（专长一致时触发 ×1.35 共振加成） */
+  preferredSpecialty: StaffSpecialty;
 }
 
 /**
@@ -67,69 +71,90 @@ export const SHOPS: readonly ShopDef[] = [
     unlockNetWorth: 0, baseCost: 100, baseIncome: 1,
     products: ['红糖桂花糕', '古法星星酥', '流心奶黄酥', '晚星伴手礼', '老街非遗排队王'],
     synergy: { kind: 'tapMult', label: '手艺点击收益', lv25: 0.25, lv50: 0.60, unit: 'pct' },
+    preferredSpecialty: 'craft',
   },
   {
     id: 'dessert', name: '甜品店', badge: '🍰', area: 'oldstreet',
     unlockNetWorth: 1e4, baseCost: 3.2e3, baseIncome: 10,
     products: ['草莓拿破仑', '星空慕斯杯', '法式歌剧院', '高定翻糖甜品台', '云城甜品地标'],
     synergy: { kind: 'allShopMult', label: '全门店基础收益', lv25: 0.15, lv50: 0.35, unit: 'pct' },
+    preferredSpecialty: 'craft',
   },
   {
     id: 'cafe', name: '咖啡馆', badge: '☕', area: 'campus',
     unlockNetWorth: 1e5, baseCost: 4.5e4, baseIncome: 70,
     products: ['小猫拉花拿铁', '桂花冰萃美式', '晚星特调Dirty', '庄园手冲瑰夏', '高校打卡圣地'],
     synergy: { kind: 'staffMult', label: '全员店员产出', lv25: 0.25, lv50: 0.60, unit: 'pct' },
+    preferredSpecialty: 'ops',
   },
   {
     id: 'gym', name: '健身房', badge: '🥊', area: 'cbd',
     unlockNetWorth: 1e6, baseCost: 5.5e5, baseIncome: 480,
     products: ['燃脂团课卡', '女子防身私教', '拳击减压特训', '明星体态定制', 'CBD运动生活馆'],
     synergy: { kind: 'tapShare', label: '点击转化秒伤比例', lv25: 0.008, lv50: 0.018, unit: 'pt' },
+    preferredSpecialty: 'ops',
   },
   {
     id: 'law', name: '律所（合作）', badge: '⚖️', area: 'cbd',
     unlockNetWorth: 1e7, baseCost: 6.5e6, baseIncome: 3.6e3,
     products: ['秘方专利维权', '商业合同风控', '反商业诋毁诉讼', '跨国并购法务', '红圈金牌律所'],
     synergy: { kind: 'costDiscount', label: '全门店升级减免', lv25: 0.08, lv50: 0.18, unit: 'pct' },
+    preferredSpecialty: 'fin',
   },
   {
     id: 'garage', name: '改装车行', badge: '🏎️', area: 'riverside',
     unlockNetWorth: 5e7, baseCost: 3.8e7, baseIncome: 1.5e4,
     products: ['晚星蓝改色膜', '赛道级氮气调校', '超跑私人养护', '冠军车队联名', '江景超跑俱乐部'],
     synergy: { kind: 'rushMult', label: '急单与奇遇收益', lv25: 0.30, lv50: 0.70, unit: 'pct' },
+    preferredSpecialty: 'ops',
   },
   {
     id: 'clinic', name: '医美诊所', badge: '💎', area: 'riverside',
     unlockNetWorth: 1.5e8, baseCost: 1.3e8, baseIncome: 4.5e4,
     products: ['水光焕肤管理', '光电轻奢抗衰', '红毯急救SPA', '私人健康顾问', '名流高定美学馆'],
     synergy: { kind: 'offlineRate', label: '离线收益转化率', lv25: 0.12, lv50: 0.25, unit: 'pt' },
+    preferredSpecialty: 'craft',
   },
   {
     id: 'agency', name: '经纪公司', badge: '🌟', area: 'ent',
     unlockNetWorth: 1e9, baseCost: 9e8, baseIncome: 2.6e5,
     products: ['新星练习生企划', '金曲《晚星》首发', 'S级漫剧出品', '万人体育场巡演', '亚洲造星娱乐集团'],
     synergy: { kind: 'feverMult', label: '爆单与直播收益', lv25: 0.30, lv50: 0.75, unit: 'pct' },
+    preferredSpecialty: 'pr',
   },
   {
     id: 'hotel', name: '云顶酒店', badge: '🏰', area: 'finance',
     unlockNetWorth: 4e9, baseCost: 3.2e9, baseIncome: 1.1e6,
     products: ['云端行政酒廊', '米其林三星晚宴', '停机坪皇家礼宾', '慈善名流夜宴', '七星地标奢华酒店'],
     synergy: { kind: 'areaMult', label: '城区团建加成增幅', lv25: 0.20, lv50: 0.50, unit: 'pct' },
+    preferredSpecialty: 'pr',
   },
   {
     id: 'group', name: '晚星集团', badge: '👑', area: 'finance',
     unlockNetWorth: 1.8e10, baseCost: 1.2e10, baseIncome: 5.5e6,
     products: ['晚星商业综合体', '全国餐饮供应链', '盛氏家族信托合流', '跨国资本控股', '云城首富商业帝国'],
     synergy: { kind: 'empireMult', label: '全帝国最终乘区', lv25: 0.30, lv50: 0.80, unit: 'pct' },
+    preferredSpecialty: 'fin',
   },
 ];
 
-export type OutfitId = 'tee' | 'shirt' | 'tweed' | 'suit' | 'gown';
+export type OutfitId =
+  | 'tee'
+  | 'shirt'
+  | 'tweed'
+  | 'suit'
+  | 'gown'
+  | 'cheongsam'
+  | 'rose_dress'
+  | 'trench'
+  | 'crimson_gown';
 
 export interface OutfitDef {
   id: OutfitId;
   name: string;
   unlockNetWorth: number;
+  /** true 表示在衣橱中通过看激励视频广告免费解锁（同样享受 +8% 帝国总收益） */
+  unlockByAd?: boolean;
   scene: string;
   counterName: string;
   orderItems: readonly [string, string, string];
@@ -160,6 +185,26 @@ export const OUTFITS: readonly OutfitDef[] = [
     id: 'gown', name: '星河藏青高定礼服', unlockNetWorth: 1e11,
     scene: '首富发布会盛典', counterName: '晚星盛典主礼台',
     orderItems: ['👑 盛氏遗产交接', '💎 跨国敲钟席', '🥂 慈善主宾席'],
+  },
+  {
+    id: 'cheongsam', name: '玉兰珠扣高定旗袍', unlockNetWorth: 0, unlockByAd: true,
+    scene: '苏绣江南茶轩', counterName: '云锦茶席雅间',
+    orderItems: ['🍵 玉兰冷泡茶', '🥮 苏式鲜花饼', '🏮 江南非遗伴手礼'],
+  },
+  {
+    id: 'rose_dress', name: '巴黎樱粉高定套装', unlockNetWorth: 0, unlockByAd: true,
+    scene: '塞纳露台花园', counterName: '法式玫瑰花房',
+    orderItems: ['🌹 玫瑰荔枝冻', '🍓 绯色马卡龙', '🥂 露台香槟席'],
+  },
+  {
+    id: 'trench', name: '驼色羊绒大衣静奢装', unlockNetWorth: 0, unlockByAd: true,
+    scene: '秋日梧桐画廊', counterName: '名流艺术沙龙',
+    orderItems: ['☕ 焦糖玛奇朵', '🎨 联名艺术礼盒', '💼 画廊定制茶歇'],
+  },
+  {
+    id: 'crimson_gown', name: '正红蝴蝶结拖尾礼服', unlockNetWorth: 0, unlockByAd: true,
+    scene: '星光红毯酒会', counterName: '摩天云端宴会厅',
+    orderItems: ['💎 红毯高定邀约', '🥂 庄园年份香槟', '👑 慈善夜压轴拍品'],
   },
 ];
 

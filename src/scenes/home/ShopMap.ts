@@ -11,10 +11,12 @@ import {
   SHOP_MAP_SPOTS,
   UI_SLICES,
   heroPortraitPath,
+  recipeIconPath,
   shopBannerPath,
   shopBuildingPath,
 } from '@/data/art';
 import { heroForShop } from '@/data/story';
+import { STAFF, staffById } from '@/data/staff';
 import { AREAS, SHOPS, shopProductAt, type ShopDef, type ShopId } from '@/data/world';
 import { AudioManager } from '@/core/AudioManager';
 import { Game } from '@/core/Game';
@@ -22,9 +24,11 @@ import { OverlayManager } from '@/core/OverlayManager';
 import { ToastManager } from '@/core/ToastManager';
 import { Ease, TweenManager } from '@/core/TweenManager';
 import { GameState } from '@/managers/GameState';
-import { resolveShopBuyCount, shopIncomeIn, shopUpgradeCostIn } from '@/sim/economy';
+import { areaCrownMultiplier, resolveShopBuyCount, shopIncomeIn, shopUpgradeCostIn } from '@/sim/economy';
 import { formatMoney } from '@/sim/format';
+import { resolveRecipe } from '@/sim/recipeSim';
 import { effectiveBond, isShopUnlocked } from '@/sim/unlocks';
+import { BusinessBattleModal } from './BusinessBattleModal';
 import { Button } from '@/ui/Button';
 import { BuyModeBar } from '@/ui/BuyModeBar';
 import { drawDiamondStar } from '@/ui/EditorialIcons';
@@ -50,7 +54,7 @@ const MAP_ASPECT = 2000 / 900;
 const CARD_W = 704;
 const CARD_H = 186;
 const CARD_GAP = 16;
-const DOCK_H = 166;
+const DOCK_H = 188;
 
 interface LandmarkEntry {
   id: ShopId;
@@ -120,9 +124,13 @@ export class ShopMap extends PIXI.Container {
   private _velY = 0;
 
   private readonly _tickFn = (): void => this._tick();
+  private readonly _onOpenRecipe?: (shopId: ShopId) => void;
+  private readonly _onOpenManagers?: () => void;
 
-  constructor() {
+  constructor(onOpenRecipe?: (shopId: ShopId) => void, onOpenManagers?: () => void) {
     super();
+    this._onOpenRecipe = onOpenRecipe;
+    this._onOpenManagers = onOpenManagers;
     this.visible = false;
     this._bgLayer.eventMode = 'static';
 
@@ -304,9 +312,10 @@ export class ShopMap extends PIXI.Container {
     this._mapSprite.height = this._worldH;
     this._mapWorld.hitArea = new PIXI.Rectangle(0, -280, W, this._worldH + 560);
 
-    // 900×2000 全出血韩漫落日江湾画布：上下边界严丝合缝贴合屏幕顶底，零空白露底，且首尾建筑与铭牌完全避开顶栏和底舱
+    // 底舱顶部坐标：滚动下限需预留底舱 + 安全区高度，确保最南端的甜品摊/甜品店及其铭牌也能完全滑出底舱上方不被遮挡
+    const dockTopY = H - Game.safeBottom - DOCK_H - 12;
     this._maxScrollY = 0;
-    this._minScrollY = Math.min(0, H - this._worldH);
+    this._minScrollY = Math.min(0, dockTopY + 18 - this._worldH);
 
     this._scrollY = Math.max(this._minScrollY, Math.min(this._maxScrollY, this._scrollY));
     this._mapWorld.y = this._scrollY;
@@ -438,18 +447,18 @@ export class ShopMap extends PIXI.Container {
     modes.forEach(([m, label], idx) => {
       const active = this._mode === m;
       const tab = new PIXI.Container();
-      const tw = 152;
-      const th = 44;
-      tab.position.set(PAGE_PAD + idx * (tw + 10), barY);
+      const tw = 126;
+      const th = 42;
+      tab.position.set(PAGE_PAD + idx * (tw + 8), barY);
 
       const spec = active
-        ? { path: UI_SLICES.btnSmCoral, pad2x: 18, left2x: 88, top2x: 68, right2x: 88, bottom2x: 68 }
-        : { path: UI_SLICES.btnMdCream, pad2x: 14, left2x: 102, top2x: 70, right2x: 102, bottom2x: 70 };
+        ? { path: UI_SLICES.btnSmCoral, pad2x: 16, left2x: 88, top2x: 68, right2x: 88, bottom2x: 68 }
+        : { path: UI_SLICES.btnMdCream, pad2x: 12, left2x: 102, top2x: 70, right2x: 102, bottom2x: 70 };
       tab.addChild(createNineSlice2x(spec, tw, th, false));
 
       const txt = active
-        ? makeDisplayText(label, 19, 0xFFFFFF, 0x8C322B, 3.2)
-        : makeText(label, 19, COLORS.ink, true);
+        ? makeDisplayText(label, 18, 0xFFFFFF, 0x8C322B, 3.0)
+        : makeText(label, 18, COLORS.ink, true);
       txt.anchor.set(0.5);
       txt.position.set(tw / 2, th / 2 - 0.5);
       tab.addChild(txt);
@@ -466,8 +475,45 @@ export class ShopMap extends PIXI.Container {
       this._toolbarLayer.addChild(tab);
     });
 
-    const buyBar = new BuyModeBar(212, 42, () => this.rebuild());
-    buyBar.position.set(W - PAGE_PAD - 212, barY + 1);
+    // 中部：当前选中门店所在商圈的「商圈冠名竞标战」快捷按钮
+    const save = GameState.save;
+    const curShop = SHOPS.find((s) => s.id === this._selected) ?? SHOPS[0];
+    const areaDef = AREAS.find((a) => a.id === curShop.area) ?? AREAS[0];
+    const areaOpen = save.netWorth >= areaDef.unlockNetWorth;
+    const crownTier = save.areaCrownLevels?.[areaDef.id] ?? 0;
+    const crownW = 216;
+    const crownPill = new PIXI.Container();
+    crownPill.position.set(PAGE_PAD + 268, barY);
+    crownPill.addChild(drawCreamCard(new PIXI.Graphics(), 0, 0, crownW, 42, 21, {
+      fill: crownTier < 3 && areaOpen ? 0xFFF4E4 : 0xFFFDF8,
+      borderColor: crownTier < 3 && areaOpen ? COLORS.rose : 0xDFB870,
+      borderWidth: 2,
+    }));
+    const crownStr = !areaOpen
+      ? `${areaDef.name}·待开放`
+      : crownTier >= 3
+        ? `✦ ${areaDef.name}满冠+60%`
+        : `✦ ${areaDef.name}竞标 ${crownTier}/3`;
+    const crownTxt = makeText(crownStr, 16, crownTier < 3 && areaOpen ? COLORS.roseDeep : COLORS.goldDeep, true);
+    crownTxt.anchor.set(0.5);
+    crownTxt.position.set(crownW / 2, 21);
+    if (crownTxt.width > crownW - 20) crownTxt.scale.set((crownW - 20) / crownTxt.width);
+    crownPill.addChild(crownTxt);
+    crownPill.eventMode = 'static';
+    crownPill.cursor = 'pointer';
+    crownPill.on('pointertap', () => {
+      if (!areaOpen) {
+        ToastManager.show(`身价达到 ¥${formatMoney(areaDef.unlockNetWorth)} 开放「${areaDef.name}」竞标`);
+        return;
+      }
+      void BusinessBattleModal.showAreaCrown(areaDef.id).then((won) => {
+        if (won) this.rebuild();
+      });
+    });
+    this._toolbarLayer.addChild(crownPill);
+
+    const buyBar = new BuyModeBar(200, 42, () => this.rebuild());
+    buyBar.position.set(W - PAGE_PAD - 200, barY);
     this._toolbarLayer.addChild(buyBar);
   }
 
@@ -510,6 +556,22 @@ export class ShopMap extends PIXI.Container {
         sp.alpha = 0.62;
       }
       bldgWrap.addChild(sp);
+
+      // 已挂载镇店爆品的开业建筑：屋檐右上悬浮白瓷描金镇店招牌小图章
+      const eqMapKey = level > 0 ? save.equippedRecipes?.[shop.id] : undefined;
+      if (eqMapKey && (save.discoveredRecipes?.[eqMapKey] ?? 0) > 0) {
+        const badge = new PIXI.Container();
+        badge.position.set(Math.round(spot.size * 0.34), -Math.round(spot.size * 0.56));
+        const bRing = new PIXI.Graphics()
+          .lineStyle(2.2, COLORS.rose, 1)
+          .beginFill(0xFFFDF8, 0.97)
+          .drawCircle(0, 0, 22)
+          .endFill();
+        const bIco = makeStickerSprite(recipeIconPath(eqMapKey), 36, 36, true);
+        badge.addChild(bRing, bIco);
+        bldgWrap.addChild(badge);
+      }
+
       root.addChild(bldgWrap);
 
       // 3. 干净克制的底座铭牌（白瓷底统一视觉，减少大面积红底色块喧宾夺主）
@@ -748,14 +810,85 @@ export class ShopMap extends PIXI.Container {
         ? `+¥${formatMoney(curInc)}/秒  →  +¥${formatMoney(nextInc)}`
         : `开业秒伤  +¥${formatMoney(nextInc)}/秒`;
       const incNode = makeNumText(incStr, 22, 0xB8731E);
-      incNode.position.set(rx, 49);
+      incNode.position.set(rx, 46);
       if (incNode.width > rw) incNode.scale.set(rw / incNode.width);
       card.addChild(incNode);
 
-      const synNode = makeText(synergyShort(shop, level), 15, level >= 25 ? COLORS.mint : COLORS.inkSoft, true);
-      synNode.position.set(rx, 80);
-      if (synNode.width > rw) synNode.scale.set(rw / synNode.width);
-      card.addChild(synNode);
+      if (level > 0) {
+        // 已开业门店：展示可点击的「镇店爆品」与「驻店店长」双槽位快捷签
+        const eqKey = save.equippedRecipes?.[shop.id];
+        const eqLv = eqKey ? (save.discoveredRecipes?.[eqKey] ?? 0) : 0;
+        const eqRec = eqKey && eqLv > 0 ? resolveRecipe(eqKey, eqLv) : null;
+        const mgrId = save.shopManagers?.[shop.id];
+        const mgrDef = mgrId && (save.staff[mgrId] ?? 0) > 0 ? staffById(mgrId) : null;
+
+        const chipGap = 8;
+        const chipW = Math.floor((rw - chipGap) / 2);
+        const chipH = 32;
+        const chipY = 82;
+
+        const buildSlotChip = (
+          x: number,
+          label: string,
+          active: boolean,
+          onTap?: () => void,
+          iconPath?: string,
+        ): void => {
+          const ch = new PIXI.Container();
+          ch.position.set(x, chipY);
+          ch.addChild(drawCreamCard(new PIXI.Graphics(), 0, 0, chipW, chipH, 16, {
+            fill: active ? 0xFFF4E4 : 0xFFFDF8,
+            borderColor: active ? COLORS.rose : 0xDFB870,
+            borderWidth: 1.6,
+          }));
+          const padLeft = iconPath ? 30 : 0;
+          if (iconPath) {
+            const ic = makeStickerSprite(iconPath, 26, 26, true);
+            ic.position.set(18, chipH / 2);
+            ch.addChild(ic);
+          }
+          const t = makeText(label, 15, active ? COLORS.roseDeep : COLORS.inkSoft, true);
+          t.anchor.set(0.5);
+          t.position.set(padLeft * 0.5 + chipW / 2, chipH / 2);
+          const maxTW = chipW - 16 - padLeft;
+          if (t.width > maxTW) t.scale.set(maxTW / t.width);
+          ch.addChild(t);
+          if (onTap) {
+            ch.eventMode = 'static';
+            ch.cursor = 'pointer';
+            ch.on('pointertap', () => {
+              AudioManager.play('ui_click');
+              onTap();
+            });
+          }
+          card.addChild(ch);
+        };
+
+        buildSlotChip(
+          rx,
+          eqRec ? `镇店:${eqRec.name}` : '+ 挂载镇店爆品',
+          Boolean(eqRec),
+          () => {
+            this.close(true);
+            this._onOpenRecipe?.(shop.id);
+          },
+          eqRec ? recipeIconPath(eqRec.comboKey) : undefined,
+        );
+        buildSlotChip(rx + chipW + chipGap, mgrDef ? `✦ 店长:${mgrDef.name}` : '+ 委任驻店店长', Boolean(mgrDef), () => {
+          const hasAnyStaff = STAFF.some((s) => (save.staff[s.id] ?? 0) > 0);
+          if (!hasAnyStaff) {
+            ToastManager.show('先去「店员」录用一位精英店员即可委任店长！');
+            return;
+          }
+          this.close(true);
+          this._onOpenManagers?.();
+        });
+      } else {
+        const synNode = makeText(synergyShort(shop, level), 15, level >= 25 ? COLORS.mint : COLORS.inkSoft, true);
+        synNode.position.set(rx, 86);
+        if (synNode.width > rw) synNode.scale.set(rw / synNode.width);
+        card.addChild(synNode);
+      }
 
       const cost = shopUpgradeCostIn(save, shop.id, level, count);
       const btnLabel = level === 0
@@ -892,18 +1025,39 @@ export class ShopMap extends PIXI.Container {
       card.addChild(ring, hMask, face);
     }
 
+    const eqListKey = level > 0 ? save.equippedRecipes?.[shop.id] : undefined;
+    const eqListLv = eqListKey ? (save.discoveredRecipes?.[eqListKey] ?? 0) : 0;
+    const eqListRec = eqListKey && eqListLv > 0 ? resolveRecipe(eqListKey, eqListLv) : null;
+
     const areaName = AREAS.find((a) => a.id === shop.area)?.name ?? '';
-    const tagStr = level > 0 ? `招牌 · ${shopProductAt(shop, level)}` : `${areaName}`;
+    const tagStr = eqListRec
+      ? `镇店 · ${eqListRec.name}`
+      : level > 0
+        ? `招牌 · ${shopProductAt(shop, level)}`
+        : `${areaName}`;
     const tagTxt = makeText(tagStr, 14, 0xFFFDF8, true);
-    const tagW = Math.min(pw - 20, tagTxt.width + 20);
+    const tagW = Math.min(pw - (eqListRec ? 66 : 20), tagTxt.width + 20);
     const tagBg = new PIXI.Graphics()
-      .beginFill(0x362415, 0.72)
+      .beginFill(eqListRec ? 0x8F2E24 : 0x362415, 0.80)
       .drawRoundedRect(px + 10, py + ph - 32, tagW, 24, 12)
       .endFill();
     tagTxt.anchor.set(0.5);
     tagTxt.position.set(px + 10 + tagW / 2, py + ph - 20);
     if (tagTxt.width > tagW - 14) tagTxt.scale.set((tagW - 14) / tagTxt.width);
     card.addChild(tagBg, tagTxt);
+
+    if (eqListRec) {
+      const rxBadge = px + pw - 28;
+      const ryBadge = py + ph - 28;
+      const rRing = new PIXI.Graphics()
+        .lineStyle(2.2, COLORS.rose, 1)
+        .beginFill(0xFFFDF8, 0.98)
+        .drawCircle(rxBadge, ryBadge, 22)
+        .endFill();
+      const rIco = makeStickerSprite(recipeIconPath(eqListRec.comboKey), 36, 36, true);
+      rIco.position.set(rxBadge, ryBadge);
+      card.addChild(rRing, rIco);
+    }
 
     if (!unlocked) {
       const lockIco = makeStickerSprite(ICONS.lock, 48, 48, true);
